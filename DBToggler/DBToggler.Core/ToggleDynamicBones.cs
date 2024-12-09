@@ -13,7 +13,7 @@ namespace DBToggler
         {
             if (Init.SelectAllKey.Value.IsUp())
             {
-                var nodes = GetAllNodes();
+                var nodes = TreeView.GetAllNodes();
                 var treeNodeCtrl = Singleton<Studio.Studio>.Instance.treeNodeCtrl;
                 if (treeNodeCtrl.selectNodes.Length < nodes.Length)
                 {
@@ -87,17 +87,6 @@ namespace DBToggler
 
             var ctrl = Singleton<Studio.Studio>.Instance.treeNodeCtrl;
             ctrl.selectNodes = objects;
-        }
-
-        /// <summary>
-        /// Retrieves all TreeNodeObject nodes from the TreeView.
-        /// </summary>
-        /// <returns>
-        /// An array of TreeNodeObject nodes.
-        /// </returns>
-        private static TreeNodeObject[] GetAllNodes()
-        {
-            return Singleton<Studio.Studio>.Instance.treeNodeCtrl.m_TreeNodeObject.ToArray();
         }
     }
     
