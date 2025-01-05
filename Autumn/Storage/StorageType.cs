@@ -1,4 +1,4 @@
-﻿namespace Autumn
+﻿namespace Autumn.Storage
 {
     public enum StorageType
     {

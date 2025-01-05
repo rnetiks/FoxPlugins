@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Autumn.Configuration;
 using PrismaLib.Settings;
+using PrismaLib.Settings.Type;
 using UnityEngine;
 
 namespace Autumn

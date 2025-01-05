@@ -12,6 +12,7 @@
         <AssemblyName>Autumn</AssemblyName>
         <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -51,14 +52,12 @@
       <Compile Include="Helper.cs" />
       <Compile Include="Localization\Language.cs" />
       <Compile Include="Localization\Locale.cs" />
-      <Compile Include="SmartRect.cs" />
       <Compile Include="Storage\AutumnStorage.cs" />
       <Compile Include="Storage\PrefStorage.cs" />
       <Compile Include="Storage\StorageType.cs" />
       <Compile Include="Style.cs" />
       <Compile Include="StyleDefaults.cs" />
       <Compile Include="StyleSettings.cs" />
-      <Compile Include="Test.cs" />
       <Compile Include="UIBase.cs" />
       <Compile Include="UIManager.cs" />
     </ItemGroup>
@@ -96,6 +95,10 @@
       <ProjectReference Include="..\PrismaLib\PrismaLib.csproj">
         <Project>{837a4f87-485d-4b70-8975-1561f9635db4}</Project>
         <Name>PrismaLib</Name>
+      </ProjectReference>
+      <ProjectReference Include="..\SmartRect\SmartRect.csproj">
+        <Project>{1ed1725e-4e53-402e-ad34-40f5ac117a74}</Project>
+        <Name>SmartRect</Name>
       </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
