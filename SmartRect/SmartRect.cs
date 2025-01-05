@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace SmartRect
+namespace SmartRectV0
 {
     /// <summary>
     /// Represents a smart rectangle that provides advanced manipulation of a rectangle's dimensions and position.

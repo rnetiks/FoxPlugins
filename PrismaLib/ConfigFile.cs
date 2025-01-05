@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.IO;
-using File = Autumn.Configuration.File;
+using System.Globalization;
+using File = PrismaLib.File;
 
 namespace PrismaLib
 {
@@ -243,7 +243,7 @@ public class ConfigFile : File
             }
             foreach (var pair in floats)
             {
-                RefreshValue(pair.Key, pair.Value.ToString());
+                RefreshValue(pair.Key, pair.Value.ToString(CultureInfo.InvariantCulture));
             }
             foreach (var pair in integers)
             {

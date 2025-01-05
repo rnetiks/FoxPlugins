@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Autumn.Configuration
+namespace PrismaLib
 {
     public abstract class File : IDisposable
     {
@@ -42,10 +42,6 @@ namespace Autumn.Configuration
                 Open();
             }
             AlwaysOpen = alwaysOpen;
-        }
-
-        ~File()
-        {
         }
 
         public void Close()

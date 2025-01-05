@@ -1,5 +1,4 @@
-﻿using Autumn.Configuration;
-using PrismaLib;
+﻿using PrismaLib;
 using PrismaLib.Interfaces;
 using UnityEngine;
 

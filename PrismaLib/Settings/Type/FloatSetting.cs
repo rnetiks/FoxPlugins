@@ -1,4 +1,4 @@
-﻿namespace PrismaLib.Settings
+﻿namespace PrismaLib.Settings.Type
 {
     public class FloatSetting : Setting<float>
     {

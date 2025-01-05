@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿using System.Reflection.Emit;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -24,7 +25,7 @@ namespace DBToggler.Core
             EnableDynamicBonesKey = Config.Bind("Bones", "Enable", new KeyboardShortcut(KeyCode.G), "Partial support");
             DisableDynamicBonesKey =
                 Config.Bind("Bones", "Disable", new KeyboardShortcut(KeyCode.H), "Partial support");
-            SelectAllKey = Config.Bind("TreeView", "Select", new KeyboardShortcut(KeyCode.A));
+            SelectAllKey = Config.Bind("TreeView", "Select All (KKS Only)", new KeyboardShortcut(KeyCode.A));
             _logger = Logger;
             bepinex = gameObject;
             Harmony.CreateAndPatchAll(GetType());

@@ -1,7 +1,7 @@
 ﻿using System;
 using Autumn.Animation;
-using Autumn.Configuration;
 using PrismaLib.Settings;
+using SmartRectV0;
 using UnityEngine;
 
 namespace Autumn.Elements

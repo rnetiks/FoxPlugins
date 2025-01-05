@@ -1,4 +1,4 @@
-﻿namespace PrismaLib.Settings
+﻿namespace PrismaLib.Enums
 {
     public enum DefaultStorageType
     {

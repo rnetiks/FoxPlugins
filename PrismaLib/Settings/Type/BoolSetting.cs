@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PrismaLib.Settings
+namespace PrismaLib.Settings.Type
 {
     public class BoolSetting : Setting<Boolean>
     {
