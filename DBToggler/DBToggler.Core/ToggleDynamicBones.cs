@@ -11,6 +11,7 @@ namespace DBToggler
     {
         private void Update()
         {
+#if KKS
             if (Init.SelectAllKey.Value.IsUp())
             {
                 var nodes = TreeView.GetAllNodes();
@@ -27,6 +28,7 @@ namespace DBToggler
                 }
                 return;
             }
+#endif
 
             var selectedCharacters = StudioAPI.GetSelectedCharacters().ToArray();
             if (selectedCharacters.Length > 0)
@@ -43,7 +45,7 @@ namespace DBToggler
                 {
                     foreach (var selectedCharacter in selectedCharacters)
                     {
-                        var bones = selectedCharacter.charReference.GetComponentsInChildren<DynamicBone>();                                        
+                        var bones = selectedCharacter.charReference.GetComponentsInChildren<DynamicBone>();
                         SetBones(bones, false);
                     }
                 }
@@ -77,6 +79,7 @@ namespace DBToggler
             }
         }
 
+#if KKS
         /// <summary>
         /// Selects the given array of TreeNodeObject nodes in the TreeView.
         /// </summary>
@@ -88,8 +91,9 @@ namespace DBToggler
             var ctrl = Singleton<Studio.Studio>.Instance.treeNodeCtrl;
             ctrl.selectNodes = objects;
         }
+#endif
     }
-    
+
     public class TreeView
     {
         /// <summary>
@@ -100,7 +104,9 @@ namespace DBToggler
         /// </returns>
         public static TreeNodeObject[] GetAllNodes()
         {
-            return StudioAPI.StudioLoaded ? Singleton<Studio.Studio>.Instance.treeNodeCtrl.m_TreeNodeObject.ToArray() : Array.Empty<TreeNodeObject>();
+            return StudioAPI.StudioLoaded
+                ? Singleton<Studio.Studio>.Instance.treeNodeCtrl.m_TreeNodeObject.ToArray()
+                : Array.Empty<TreeNodeObject>();
         }
     }
 }

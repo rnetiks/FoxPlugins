@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
-using Autumn.Configuration;
+using Sirenix.Serialization.Utilities;
 using UnityEngine;
 using File = System.IO.File;
-using Object = UnityEngine.Object;
 
 namespace Autumn.Attributes
 {
@@ -33,7 +31,7 @@ namespace Autumn.Attributes
                 }
 
                 if (!File.Exists(_texture)) continue;
-                var tempTexture = new Texture2D(1,1);
+                var tempTexture = new Texture2D(1, 1);
                 field.SetValue(field, tempTexture.LoadImage(File.ReadAllBytes(_texture)));
             }
         }

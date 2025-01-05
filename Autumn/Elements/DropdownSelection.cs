@@ -1,7 +1,7 @@
 ﻿using System;
 using Autumn.Animation;
-using Autumn.Configuration;
 using PrismaLib.Settings;
+using SmartRectV0;
 using UnityEngine;
 
 namespace Autumn.Elements
@@ -49,6 +49,7 @@ namespace Autumn.Elements
             var wasPressed = false;
             for (int i = 0; i < _selections.Length; i++)
             {
+                
                 if (GUI.Button(_rect, _selections[i], i == _refSet.Value ? _activeButtonStyle : Style.Button))
                 {
                     _refSet.Value = i;

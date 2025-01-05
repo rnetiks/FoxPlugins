@@ -1,5 +1,5 @@
-﻿using Autumn.Configuration;
-using PrismaLib.Settings;
+﻿using PrismaLib.Settings;
+using PrismaLib.Settings.Type;
 
 namespace Autumn
 {

@@ -38,14 +38,14 @@ namespace Autumn.Animation
 
         protected override bool Open()
         {
-            UnityEngine.GUI.Box(position, string.Empty, boxStyle ?? Style.Box);
+            GUI.Box(position, string.Empty, boxStyle ?? Style.Box);
             position.height += Time.unscaledDeltaTime * 1000f;
             return resultHeight >= position.height;
         }
 
         protected override bool Close()
         {
-            UnityEngine.GUI.Box(position, string.Empty, boxStyle ?? Style.Box);
+            GUI.Box(position, string.Empty, boxStyle ?? Style.Box);
             position.height -= Time.unscaledDeltaTime * 1350f;
             return basePosition.height < position.height;
         }

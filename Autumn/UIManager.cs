@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
-using Autumn.Configuration;
 using JetBrains.Annotations;
 using PrismaLib.Settings;
+using PrismaLib.Settings.Type;
 using UnityEngine;
+using UnityEngine.Profiling.Experimental;
 
 namespace Autumn
 {
@@ -136,7 +137,7 @@ namespace Autumn
                     gui.Drawer.Enable();
                     UpdateDepths();
                 }
-
+                
                 return true;
             }
         }
