@@ -1,5 +1,4 @@
 ﻿using System;
-
 using g3;
 using UnityEngine;
 
@@ -87,6 +86,20 @@ namespace NonKoiTests
                 return;
 
             GenerateBooleanCutoutMesh();
+        }
+
+        private Mesh GenerateBooleanMesh()
+        {
+            var mesh1 = go1.GetComponent<MeshFilter>().mesh;
+            var mesh2 = go2.GetComponent<MeshFilter>().mesh;
+            MeshBoolean mb = new MeshBoolean()
+            {
+                Target = UnityToDMesh3(go1),
+                Tool = UnityToDMesh3(go2)
+            };
+            mb.Compute();
+
+            return DMeshToUnityMesh(mb.Result);
         }
 
         private void GenerateBooleanCutoutMesh()
