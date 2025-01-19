@@ -10,5 +10,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)KoiUpdaterUI.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Windows\ListWindow.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Windows\SetupWindow.cs" />
   </ItemGroup>
 </Project>

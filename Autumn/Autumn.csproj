@@ -58,6 +58,7 @@
       <Compile Include="Style.cs" />
       <Compile Include="StyleDefaults.cs" />
       <Compile Include="StyleSettings.cs" />
+      <Compile Include="TextureFactory.cs" />
       <Compile Include="UIBase.cs" />
       <Compile Include="UIManager.cs" />
     </ItemGroup>

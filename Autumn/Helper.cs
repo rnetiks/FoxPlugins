@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using SmartRectV0;
 using UnityEngine;
@@ -257,6 +258,7 @@ namespace Autumn
         }*/
 
         #endregion Useless stuff
+
         /// <summary>
         /// Applies given parameters to style   
         /// </summary>
@@ -265,8 +267,8 @@ namespace Autumn
         /// <param name="fontStyle"></param>
         /// <param name="fontSize"></param>
         /// <param name="wordWrap"></param>
-
-        public static void ApplyStyle(this GUIStyle style, TextAnchor anchor, FontStyle fontStyle, int fontSize, bool wordWrap)
+        public static void ApplyStyle(this GUIStyle style, TextAnchor anchor, FontStyle fontStyle, int fontSize,
+            bool wordWrap)
         {
             if (style == null)
             {
@@ -278,11 +280,13 @@ namespace Autumn
             style.fontSize = fontSize;
             style.wordWrap = wordWrap;
             style.padding = new RectOffset(1, 1, 1, 1);
-            style.margin = new RectOffset(Style.HorizontalMargin, Style.HorizontalMargin, Style.VerticalMargin, Style.VerticalMargin);
+            style.margin = new RectOffset(Style.HorizontalMargin, Style.HorizontalMargin, Style.VerticalMargin,
+                Style.VerticalMargin);
             style.border = new RectOffset(0, 0, 0, 0);
         }
 
-        public static void ApplyStyle(this GUIStyle style, TextAnchor anchor, FontStyle fstyle, int fontSize, bool wordWrap, Color color)
+        public static void ApplyStyle(this GUIStyle style, TextAnchor anchor, FontStyle fstyle, int fontSize,
+            bool wordWrap, Color color)
         {
             if (style == null)
             {
@@ -292,7 +296,8 @@ namespace Autumn
             style.ApplyStyle(anchor, fstyle, fontSize, wordWrap, new Color[6].Select(x => color).ToArray());
         }
 
-        public static void ApplyStyle(this GUIStyle res, TextAnchor anchor, FontStyle style, int fontSize, bool wordWrap, Color[] colors)
+        public static void ApplyStyle(this GUIStyle res, TextAnchor anchor, FontStyle style, int fontSize,
+            bool wordWrap, Color[] colors)
         {
             if (res == null)
             {
@@ -308,7 +313,8 @@ namespace Autumn
             res.onActive.textColor = colors[5];
         }
 
-        public static Texture2D BorderedTexture(int width, int height, int borderWidthX, int borderWidthY, Color border, Color center)
+        public static Texture2D BorderedTexture(int width, int height, int borderWidthX, int borderWidthY, Color border,
+            Color center)
         {
             Texture2D texture2D = new Texture2D(width, height, TextureFormat.RGBA32, false);
             for (int i = 0; i < width; i++)
@@ -324,17 +330,17 @@ namespace Autumn
                 {
                     for (int k = 0; k < height; k++)
                     {
-                        texture2D.SetPixel(i,k, k < borderWidthY || k > height - 1 - borderWidthY ? border : center);
+                        texture2D.SetPixel(i, k, k < borderWidthY || k > height - 1 - borderWidthY ? border : center);
                     }
                 }
             }
+
             texture2D.Apply();
             return texture2D;
         }
 
         public static GUIStyle CreateStyle(TextAnchor anchor, FontStyle fontStyle, int fontSize, bool wordWrap)
         {
-            
             GUIStyle style = new GUIStyle();
             style.ApplyStyle(anchor, fontStyle, fontSize, wordWrap);
             return style;
@@ -345,7 +351,8 @@ namespace Autumn
             return CreateStyle(anchor, style, fontSize, wordWrap, new Color[6].Select(x => color).ToArray());
         }
 
-        public static GUIStyle CreateStyle(TextAnchor anchor, FontStyle style, int fontSize, bool wordWrap, Color[] colors)
+        public static GUIStyle CreateStyle(TextAnchor anchor, FontStyle style, int fontSize, bool wordWrap,
+            Color[] colors)
         {
             GUIStyle res = CreateStyle(anchor, style, fontSize, wordWrap);
             res.normal.textColor = colors[0];
@@ -363,6 +370,7 @@ namespace Autumn
             {
                 return Texture2D.whiteTexture;
             }
+
             Texture2D result = new Texture2D(1, 1, TextureFormat.ARGB32, false);
             byte[] data = File.ReadAllBytes(path);
             result.LoadImage(data);
@@ -372,7 +380,8 @@ namespace Autumn
 
         public static Rect GetScreenMiddle(float width, float height)
         {
-            return new Rect(Style.ScreenWidth / 2f - (width / 2f), Style.ScreenHeight / 2f - (height / 2f), width, height);
+            return new Rect(Style.ScreenWidth / 2f - (width / 2f), Style.ScreenHeight / 2f - (height / 2f), width,
+                height);
         }
 
         public static SmartRect[] GetSmartRects(Rect baseWindow, int count)
@@ -387,6 +396,7 @@ namespace Autumn
                 result[i] = new SmartRect(x, y, width, Style.Height, Style.HorizontalMargin, Style.VerticalMargin);
                 x += width + Style.WindowSideOffset;
             }
+
             return result;
         }
 
@@ -400,6 +410,7 @@ namespace Autumn
                     result.SetPixel(i, j, color);
                 }
             }
+
             result.Apply();
             return result;
         }
@@ -435,8 +446,37 @@ namespace Autumn
                     result[i] = Style.TextureColors[i];
                 }
             }
-            
+
             return result;
+        }
+
+        class GUIStyleButton
+        {
+            public RectOffset Border { private get; set; } = new RectOffset(0, 0, 0, 0);
+            public TextAnchor Alignment { private get; set; } = TextAnchor.MiddleCenter;
+            public RectOffset Padding { get; set; } = new RectOffset(0, 0, 0, 0);
+            public GUIStyleState Active { get; set; } = new GUIStyleState();
+            public GUIStyleState Normal { get; set; } = new GUIStyleState();
+            public GUIStyleState Focused { get; set; } = new GUIStyleState();
+            public GUIStyleState Hover { get; set; } = new GUIStyleState();
+            public RectOffset Margin { get; set; } = new RectOffset(0, 0, 0, 0);
+            public TextClipping Clipping { get; set; } = TextClipping.Overflow;
+
+            public GUIStyle Build()
+            {
+                return new GUIStyle
+                {
+                    border = Border ?? default,
+                    alignment = Alignment,
+                    active = Active ?? default,
+                    normal = Normal ?? default,
+                    padding = Padding ?? default,
+                    hover = Hover ?? default,
+                    margin = Margin ?? default,
+                    clipping = Clipping,
+                    focused = Focused ?? default
+                };
+            }
         }
     }
 }
