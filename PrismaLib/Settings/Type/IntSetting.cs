@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-
-namespace PrismaLib.Settings.Type
+﻿namespace PrismaLib.Settings.Type
 {
     public class IntSetting : Setting<int>
     {

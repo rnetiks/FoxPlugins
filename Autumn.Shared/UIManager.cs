@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using PrismaLib.Settings;
 using PrismaLib.Settings.Type;
 using UnityEngine;
-using UnityEngine.Profiling.Experimental;
 
 namespace Autumn
 {

@@ -1,4 +1,5 @@
-﻿using System.Reflection.Emit;
+﻿using System;
+using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -11,6 +12,7 @@ namespace DBToggler.Core
     [BepInProcess("CharaStudio")]
     public class Init : BaseUnityPlugin
     {
+        private bool liveedit = true;
         private const string GUID = "fox.dbtoggler";
         private const string NAME = "Dynamic Bone Toggler";
         private const string VERSION = "1.0";
@@ -19,6 +21,7 @@ namespace DBToggler.Core
         internal static ConfigEntry<KeyboardShortcut> SelectAllKey;
         public static ManualLogSource _logger;
         private static GameObject bepinex;
+        private static Harmony harmony;
 
         private void Awake()
         {
@@ -28,14 +31,21 @@ namespace DBToggler.Core
             SelectAllKey = Config.Bind("TreeView", "Select All (KKS Only)", new KeyboardShortcut(KeyCode.A));
             _logger = Logger;
             bepinex = gameObject;
-            Harmony.CreateAndPatchAll(GetType());
+            harmony = Harmony.CreateAndPatchAll(GetType());
+            if (KKAPI.Studio.StudioAPI.StudioLoaded)
+                bepinex.GetOrAddComponent<ToggleDynamicBones>();
+        }
+
+        private void OnDestroy()
+        {
+            harmony?.UnpatchSelf();
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(StudioScene), nameof(StudioScene.Start))]
         private static void StudioEntry()
         {
-            bepinex.GetOrAddComponent<ToggleDynamicBones>();
+            //bepinex.GetOrAddComponent<ToggleDynamicBones>();
         }
     }
 }

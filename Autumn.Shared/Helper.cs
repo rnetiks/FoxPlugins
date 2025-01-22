@@ -373,7 +373,8 @@ namespace Autumn
 
             Texture2D result = new Texture2D(1, 1, TextureFormat.ARGB32, false);
             byte[] data = File.ReadAllBytes(path);
-            result.LoadImage(data);
+            //result.LoadImage(data);
+            result.LoadRawTextureData(data);
             result.Apply();
             return result;
         }

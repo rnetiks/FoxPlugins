@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace PrismaLib.Settings.Type
+﻿namespace PrismaLib.Settings.Type
 {
-    public class BoolSetting : Setting<Boolean>
+    public class BoolSetting : Setting<bool>
     {
         public BoolSetting(string key) : base(key)
         {

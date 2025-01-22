@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
-using File = PrismaLib.File;
 
 namespace PrismaLib
 {
@@ -154,13 +153,9 @@ public class ConfigFile : File
         private string[] ParseString(string val)
         {
             string[] parse = val.Split(Separator);
-            switch (parse.Length)
-            {
-                case < 2:
-                    return null;
-                case 2:
-                    return parse;
-            }
+            if (parse.Length < 2)
+                return null;
+            if (parse.Length == 2) return parse;
 
             string[] result = new string[2];
             result[0] = parse[0];

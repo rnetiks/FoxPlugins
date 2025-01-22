@@ -1,28 +1,16 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Reflection;
 using System.Security.Cryptography;
-using System.Security.Policy;
 using System.Text;
-using BepInEx.Logging;
-using Illusion;
 using KoiUpdater.Shared.Windows;
-using Manager;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Sirenix.Serialization;
 using SmartRectV0;
-using Studio;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.Playables;
-using Random = UnityEngine.Random;
 
 namespace KoiUpdater.Shared;
 
@@ -82,7 +70,7 @@ static class JsonExtension
 internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
 {
     private SmartRect _logRect = new(0, 0, 200, 25);
-    private Progress<float> _progressor;
+    private UniRx.Progress<float> _progressor;
     public static int loadedPluginCount = 0;
     public static string currentFile;
     public static string[] p = new string[0];
@@ -96,12 +84,12 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
 
     private void Awake()
     {
-        PluginsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, @"BepInEx/plugins");
+        PluginsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, @"BepInEx\plugins");
         cctrl = setcctrl();
         progressSubject.ObserveOnMainThread().Subscribe(progress => { loadedPluginCount = progress; });
         Observable.Start(() =>
         {
-            Entry._logger.LogError(PluginsPath);
+            Entry._logger.LogInfo("Plugins Path: " + PluginsPath);
             p = Directory.GetFiles(PluginsPath, "*.dll", SearchOption.AllDirectories);
             var t = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             int i = 1;
@@ -129,7 +117,10 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
         var serverUri = Entry._serverUrl.Value;
         if (!serverUri.EndsWith("/"))
             serverUri += "/";
-        var uwr = UnityWebRequest.Post(serverUri + "resolve", requestData);
+        serverUri += "resolve";
+        Entry._logger.LogInfo("Request to " + serverUri);
+        var uwr = UnityWebRequest.Post(serverUri, requestData);
+#if KKS
         uwr.SendWebRequest().AsAsyncOperationObservable(_progressor).Subscribe(operation =>
         {
             try
@@ -137,20 +128,21 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
                 var data = operation.webRequest.downloadHandler.text;
                 if (data == string.Empty)
                 {
-                    Entry._logger.LogError("Server did not respond");
+                    Entry._logger.LogError("Server did not respond > " + operation.webRequest.responseCode);
                     return;
                 }
+
                 var js = data.FromJSONArray();
                 foreach (var j in js)
                 {
                     var Name = (j["Name"] ?? throw new InvalidOperationException()).Value<string>();
                     var Hash = (j["Hash"] ?? throw new InvalidOperationException()).Value<string>();
-                    var Uid =  (j["Uid"]  ?? throw new InvalidOperationException()).Value<string>();
-                
+                    var Uid = (j["Uid"] ?? throw new InvalidOperationException()).Value<string>();
+
                     var pluginInfo = plugins.FirstOrDefault(e => e.Name == Name);
-                    if (pluginInfo != null && Hash == pluginInfo.Hash)
-                        pluginInfo.Updatable = true;
-                    if (pluginInfo != null) pluginInfo.Uid = Uid;
+                    if (pluginInfo == null || Hash == pluginInfo.Hash) continue;
+                    pluginInfo.Updatable = true;
+                    pluginInfo.Uid = Uid;
                 }
             }
             catch (Exception e)
@@ -158,6 +150,7 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
                 Entry._logger.LogError(e);
             }
         });
+#endif
     }
 
     private ListWindow lst = new ListWindow();
@@ -166,8 +159,8 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
     private void OnGUI()
     {
         cctrl.GetComponent<Studio.CameraControl>().enabled = !ListWindow._isEnabled;
-        if (!SetupWindow._finishSetup) sst.OnGui();
         if (plugins.Count > 0) lst.OnGui();
+        if (!SetupWindow._finishSetup) sst.OnGui();
     }
 
     private Camera cctrl;
@@ -214,7 +207,7 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
         JsonWriter writer = new JsonTextWriter(tw);
 
 
-        string[] plugins = Directory.GetFiles(@"E:\sunshine\BepInEx\plugins", "*.dll", SearchOption.AllDirectories)
+        string[] plugins = Directory.GetFiles(PluginsPath, "*.dll", SearchOption.AllDirectories)
             .Select(
                 e =>
                 {

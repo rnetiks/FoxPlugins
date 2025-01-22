@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+		<HasSharedItems>true</HasSharedItems>
+		<SharedGUID>{0C316EC8-BB4C-41E5-B9FC-70DCF80C518C}</SharedGUID>
+	</PropertyGroup>
+	<PropertyGroup Label="Configuration">
+		<Import_RootNamespace>PrismaLib</Import_RootNamespace>
+	</PropertyGroup>
+	<ItemGroup>        <Compile Include="$(MSBuildThisFileDirectory)ConfigFile.cs" />
+<Compile Include="$(MSBuildThisFileDirectory)Enums\DefaultStorageType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)File.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Interfaces\IDataStorage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Interfaces\ISetting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\Setting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\Settings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\BoolSetting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\FloatSetting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\IntSetting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\StringSetting.cs" />
+</ItemGroup>
+</Project>

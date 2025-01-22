@@ -8,7 +8,7 @@ namespace PrismaLib.Settings
     public class Settings
     {
         private static List<ISetting> allSettings;
-        private static object locker = new();
+        private static object locker = new object();
         public static IDataStorage Storage;
         public static DefaultStorageType PreferredDefaultStorageSolution { get; set; } = DefaultStorageType.Autumn;
 
@@ -16,7 +16,7 @@ namespace PrismaLib.Settings
         {
             lock (locker)
             {
-                allSettings ??= new List<ISetting>();
+                allSettings = allSettings ?? new List<ISetting>();
                 allSettings.Add(set);
             }
         }
@@ -49,7 +49,7 @@ namespace PrismaLib.Settings
             {
                 lock (locker)
                 {
-                    allSettings ??= new List<ISetting>();
+                    allSettings = allSettings ?? new List<ISetting>();
                 }
             }
 
@@ -80,7 +80,7 @@ namespace PrismaLib.Settings
 
         public static void Save()
         {
-            allSettings ??= new List<ISetting>();
+            allSettings = allSettings ?? new List<ISetting>();
 
             lock (locker)
             {

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Autumn.Animation;
-using Autumn.Attributes;
 using Autumn.Localization;
 using UnityEngine;
 
@@ -20,8 +19,7 @@ namespace Autumn
         public Action OnGUI = () => { };
         protected Locale locale { get; }
         public static List<GUIBase> AllBases { get; private set; }
-
-        [AutumnTexture2D("transparent")]
+        
         public static Texture2D EmptyTexture
         {
             get
@@ -221,7 +219,8 @@ namespace Autumn
             }
 
             res = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            res.LoadImage(File.ReadAllBytes(path));
+            res.LoadRawTextureData(File.ReadAllBytes(path));
+            //res.LoadImage(File.ReadAllBytes(path));
             res.Apply();
             textureCache.Add(namebase, res);
             return res;

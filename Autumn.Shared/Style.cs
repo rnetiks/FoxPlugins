@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using PrismaLib.Settings;
 using PrismaLib.Settings.Type;
 using UnityEngine;
 

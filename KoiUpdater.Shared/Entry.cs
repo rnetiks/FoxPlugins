@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections;
-using System.IO;
-using System.Reflection;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Manager;
-using Studio;
 using UnityEngine;
 
 namespace KoiUpdater.Shared

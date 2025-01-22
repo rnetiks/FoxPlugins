@@ -140,7 +140,7 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Moves the Y position of the rectangle represented by the current SmartRect instance
+        /// Moves the Y position of the rectangle represented by the current sSmartRect1 instance
         /// to the bottom of the specified 'box' plus the specified 'height'.
         /// </summary>
         /// <param name="box">The reference rectangle used to determine the new Y position.</param>
@@ -151,9 +151,9 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Moves the rectangle horizontally by a predefined offset and returns the updated SmartRect instance.
+        /// Moves the rectangle horizontally by a predefined offset and returns the updated sSmartRect1 instance.
         /// </summary>
-        /// <returns>The updated SmartRect instance.</returns>
+        /// <returns>The updated sSmartRect1 instance.</returns>
         public SmartRect MoveX()
         {
             _source.x += _moveX;
@@ -213,7 +213,7 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Resets the SmartRect to its default position and dimensions.
+        /// Resets the sSmartRect1 to its default position and dimensions.
         /// </summary>
         public void Reset()
         {
@@ -253,19 +253,19 @@ namespace SmartRectV0
 
 
         /// <summary>
-        /// Converts the current SmartRect instance into a Rect object.
+        /// Converts the current sSmartRect1 instance into a Rect object.
         /// </summary>
-        /// <returns>A Rect object representing the current SmartRect.</returns>
+        /// <returns>A Rect object representing the current sSmartRect1.</returns>
         public Rect ToRect()
         {
             return _source;
         }
 
         /// <summary>
-        /// Defines an implicit conversion from a SmartRect instance to a UnityEngine.Rect instance.
+        /// Defines an implicit conversion from a sSmartRect1 instance to a UnityEngine.Rect instance.
         /// </summary>
-        /// <param name="r">The SmartRect instance to convert.</param>
-        /// <returns>A Rect instance representing the same dimensions and position as the SmartRect.</returns>
+        /// <param name="r">The sSmartRect1 instance to convert.</param>
+        /// <returns>A Rect instance representing the same dimensions and position as the sSmartRect1.</returns>
         public static implicit operator Rect(SmartRect r)
         {
             return r._source;

@@ -11,7 +11,6 @@ namespace Autumn.Storage
     {
         public AutumnStorage() : base(Application.dataPath + "/Configuration/Settings.cfg", '`', true)
         {
-            BepInEx.Configuration.ConfigFile f = new BepInEx.Configuration.ConfigFile("Autumn.Config", true);
             Load();
         }
 
