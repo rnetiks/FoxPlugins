@@ -19,5 +19,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\FloatSetting.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\IntSetting.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Settings\Type\StringSetting.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Storage\AutumnStorage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Storage\PrefStorage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Storage\StorageType.cs" />
 </ItemGroup>
 </Project>

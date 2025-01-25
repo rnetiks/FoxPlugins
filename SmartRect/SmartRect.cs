@@ -90,11 +90,21 @@ namespace SmartRectV0
         {
         }
 
+        /// <summary>
+        /// Divides the current width of the rectangle into equal segments for horizontal layout.
+        /// Adjusts the width of each segment based on the total number of elements and specified horizontal offsets.
+        /// </summary>
+        /// <param name="elementCount">The number of elements to divide the rectangle horizontally into.</param>
         public void BeginHorizontal(int elementCount)
         {
-            Width = (Width - (_offsetX * (elementCount - 1))) / elementCount;
+            Width = (Width - _offsetX * (elementCount - 1)) / elementCount;
         }
 
+        /// <summary>
+        /// Moves the SmartRect by the specified vector values.
+        /// </summary>
+        /// <param name="vec">A <see cref="Vector2"/> specifying the change in X and Y coordinates.</param>
+        /// <returns>The updated <see cref="SmartRect"/> after applying the movement.</returns>
         public SmartRect Move(Vector2 vec)
         {
             _source.x += vec.x;
@@ -102,6 +112,13 @@ namespace SmartRectV0
             return this;
         }
 
+
+        /// <summary>
+        /// Moves the rectangle by the specified x and y offsets and returns the updated <see cref="SmartRect"/>.
+        /// </summary>
+        /// <param name="x">The offset to move the rectangle along the x-axis.</param>
+        /// <param name="y">The offset to move the rectangle along the y-axis.</param>
+        /// <returns>The updated <see cref="SmartRect"/> after being moved.</returns>
         public SmartRect Move(int x, int y)
         {
             _source.x += x;
@@ -140,7 +157,7 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Moves the Y position of the rectangle represented by the current sSmartRect1 instance
+        /// Moves the Y position of the rectangle represented by the current <see cref="SmartRect"/> instance
         /// to the bottom of the specified 'box' plus the specified 'height'.
         /// </summary>
         /// <param name="box">The reference rectangle used to determine the new Y position.</param>
@@ -151,15 +168,21 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Moves the rectangle horizontally by a predefined offset and returns the updated sSmartRect1 instance.
+        /// Moves the rectangle horizontally by a predefined offset and returns the updated <see cref="SmartRect"/> instance.
         /// </summary>
-        /// <returns>The updated sSmartRect1 instance.</returns>
+        /// <returns>The updated <see cref="SmartRect"/> instance.</returns>
         public SmartRect MoveX()
         {
             _source.x += _moveX;
             return this;
         }
 
+        /// <summary>
+        /// Moves the rectangle along the X-axis by the specified offset and optionally considers its width during the move.
+        /// </summary>
+        /// <param name="off">The offset by which to move the rectangle along the X-axis.</param>
+        /// <param name="considerWidth">Determines whether the rectangle's width should be added to the offset.</param>
+        /// <returns>The current instance of <see cref="SmartRect"/> after applying the movement.</returns>
         public SmartRect MoveX(float off, bool considerWidth = false)
         {
             _source.x += off;
@@ -193,6 +216,10 @@ namespace SmartRectV0
             }
         }
 
+        /// <summary>
+        /// Moves to the next column by shifting the rectangle horizontally by a predefined offset.
+        /// </summary>
+        /// <returns>An updated instance of <see cref="SmartRect"/> representing the next column.</returns>
         public SmartRect NextColumn()
         {
             MoveX();
@@ -213,7 +240,7 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Resets the sSmartRect1 to its default position and dimensions.
+        /// Resets the <see cref="SmartRect"/> to its default position and dimensions.
         /// </summary>
         public void Reset()
         {
@@ -253,19 +280,19 @@ namespace SmartRectV0
 
 
         /// <summary>
-        /// Converts the current sSmartRect1 instance into a Rect object.
+        /// Converts the current <see cref="SmartRect"/> instance into a Rect object.
         /// </summary>
-        /// <returns>A Rect object representing the current sSmartRect1.</returns>
+        /// <returns>A Rect object representing the current <see cref="SmartRect"/>.</returns>
         public Rect ToRect()
         {
             return _source;
         }
 
         /// <summary>
-        /// Defines an implicit conversion from a sSmartRect1 instance to a UnityEngine.Rect instance.
+        /// Defines an implicit conversion from a <see cref="SmartRect"/> instance to a UnityEngine.Rect instance.
         /// </summary>
-        /// <param name="r">The sSmartRect1 instance to convert.</param>
-        /// <returns>A Rect instance representing the same dimensions and position as the sSmartRect1.</returns>
+        /// <param name="r">The <see cref="SmartRect"/> instance to convert.</param>
+        /// <returns>A Rect instance representing the same dimensions and position as the <see cref="SmartRect"/>.</returns>
         public static implicit operator Rect(SmartRect r)
         {
             return r._source;

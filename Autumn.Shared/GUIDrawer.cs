@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Autumn.Elements;
+using UnityEngine;
 
 namespace Autumn
 {
@@ -100,6 +101,19 @@ namespace Autumn
             {
                 owner.owner.Update();
             }
+        }
+    }
+
+    public class Window: GUIBase
+    {
+        public Window(string name, int layer = -1) : base(name, layer)
+        {
+            EnableImmediate();
+        }
+
+        protected internal override void Draw()
+        {
+            DropdownSelection.CreateNew(Rect.zero, new[] { "12", "123" }, null);
         }
     }
 }

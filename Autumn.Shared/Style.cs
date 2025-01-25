@@ -83,9 +83,18 @@ namespace Autumn
         public static float LabelOffset { get; private set; }
         public static float LabelOffsetSlider { get; private set; }
         public static string LabelSpace { get; private set; }
-        public static float ScreenHeight { get; set; }
+
+        public static float ScreenHeight
+        {
+            get;
+            set;
+        }
         public static float ScreenHeightDefault { get; private set; }
-        public static float ScreenWidth { get; set; }
+        public static float ScreenWidth
+        {
+            get;
+            set;
+        }
         public static float ScreenWidthDefault { get; private set; }
         public static int VerticalMargin { get; private set; }
         public static float WindowBottomOffset { get; private set; }
@@ -100,6 +109,14 @@ namespace Autumn
         public static void UpdateScaling()
         {
             BigLabelOffset = SetScaling(StyleSettings.BigLabelOffset);
+        }
+
+        public static void ResetScreenParameters()
+        {
+            ScreenHeightDefault = Screen.height;
+            ScreenWidthDefault = Screen.width;
+            ScreenHeight = ScreenHeightDefault;
+            ScreenWidth = ScreenWidthDefault;
         }
 
         private static void InitializeStyles()

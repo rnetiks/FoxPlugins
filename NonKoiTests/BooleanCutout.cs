@@ -11,12 +11,12 @@ namespace NonKoiTests
 
         /// <summary>
         /// The amount of cells used for Marching Cubes, higher values equal higher quality, but take longer to calculate.
-        /// Do not go above 99, will cause geometry to break, 16-72 prefered
+        /// Do not go above 99, will cause geometry to break, 16-72 preferred
         /// </summary>
         public int CellNum = 32;
 
         /// <summary>
-        /// Used to reset the original mesh, if livemode is enabled
+        /// Used to reset the original mesh, if live mode is enabled
         /// </summary>
         private Mesh backupMesh;
 

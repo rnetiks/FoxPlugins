@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using PrismaLib.Enums;
 using PrismaLib.Interfaces;
+using PrismaLib.Storage;
 
 namespace PrismaLib.Settings
 {
@@ -35,8 +36,14 @@ namespace PrismaLib.Settings
         {
             switch (type)
             {
-                // Add more here
                 case DefaultStorageType.Internal:
+                    // TODO
+                    break;
+                case DefaultStorageType.PrefStorage:
+                    Storage = new PrefStorage();
+                    break;
+                case DefaultStorageType.Autumn:
+                    Storage = new AutumnStorage();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);

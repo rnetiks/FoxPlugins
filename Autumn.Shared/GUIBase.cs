@@ -15,11 +15,35 @@ namespace Autumn
         private static int maxLayer;
         private readonly Dictionary<string, Texture2D> textureCache;
         protected GUIAnimation animator;
+
+        /// <summary>
+        /// The "Name" property represents the identifier or name of the current GUIBase instance.
+        /// This property is used to uniquely distinguish between different GUIBase elements within the application.
+        /// It is typically assigned during instance initialization and remains immutable throughout the lifecycle of the object.
+        /// </summary>
         public readonly string Name;
+
+        /// <summary>
+        /// The "OnGUI" delegate represents an action to be executed during the GUI rendering phase.
+        /// This property can be assigned custom GUI rendering logic, enabling dynamic updates to the GUI's visual state.
+        /// It is typically called during the Unity OnGUI method for the associated object.
+        /// </summary>
         public Action OnGUI = () => { };
         protected Locale locale { get; }
+
+        /// <summary>
+        /// The "AllBases" property holds a static collection of all existing instances of the GUIBase class.
+        /// This property enables centralized access to and management of all active GUIBase objects within the application.
+        /// It is automatically updated when instances are created or destroyed.
+        /// </summary>
         public static List<GUIBase> AllBases { get; private set; }
-        
+
+        /// <summary>
+        /// The "EmptyTexture" property provides a static, single-pixel texture with a fully transparent color.
+        /// This texture is commonly used as a placeholder or default visual element for user interfaces where
+        /// no specific texture is required. The property ensures that the texture is initialized and cached
+        /// to improve performance by reusing the same instance throughout the application lifecycle.
+        /// </summary>
         public static Texture2D EmptyTexture
         {
             get
@@ -39,7 +63,7 @@ namespace Autumn
         public GUIDrawer Drawer { get; }
         public bool IsActive { get; private set; }
         public int Layer { get; }
-
+        
         ~GUIBase()
         {
             lock (usedLayers)
@@ -61,6 +85,10 @@ namespace Autumn
                 AllBases.Remove(this);
         }
 
+        /// <summary>
+        /// Represents the base class for creating and managing GUI elements in the Autumn framework.
+        /// Provides functionality such as animation handling, caching, localization, and layer management.
+        /// </summary>
         public GUIBase(string name, int layer = -1)
         {
             Name = name;
@@ -77,6 +105,12 @@ namespace Autumn
             Drawer = new GUIDrawer(this);
         }
 
+        /// <summary>
+        /// Determines and assigns a unique layer for a GUI element instance.
+        /// </summary>
+        /// <param name="layerToSet">The layer to be assigned, if valid. If the provided layer is invalid or already used, a new unique layer is generated.</param>
+        /// <param name="name">The name of the GUI element for which the layer is being assigned. Used for logging purposes in case of conflicts.</param>
+        /// <returns>Returns the assigned unique layer for the GUI element.</returns>
         private static int GetLayer(int layerToSet, string name)
         {
             lock (usedLayers)
@@ -103,26 +137,76 @@ namespace Autumn
 
         private static void UpdateMaxLayer() => maxLayer = usedLayers.Concat(new[] { -1 }).Max();
 
+        /// <summary>
+        /// Executes logic when the GUI element is disabled.
+        /// </summary>
+        /// <remarks>
+        /// This method is triggered when the GUI element transitions from an active to an inactive state.
+        /// It is used for cleaning up, releasing resources, or performing necessary operations to properly
+        /// deactivate the GUI element. The specific implementation details are defined in the deriving class
+        /// to allow customized behavior for different GUI components.
+        /// </remarks>
         protected virtual void OnDisable()
         {
         }
 
+        /// <summary>
+        /// Executes logic when the GUI element is enabled.
+        /// </summary>
+        /// <remarks>
+        /// This method is invoked when the GUI element transitions from an inactive to an active state.
+        /// It is responsible for initializing or preparing any necessary properties or operations required
+        /// for the GUI element to function properly. The specific implementation is defined in the
+        /// corresponding deriving class, allowing customized behavior for different GUI components.
+        /// </remarks>
         protected virtual void OnEnable()
         {
         }
 
+        /// <summary>
+        /// Renders the graphical user interface (GUI) for the current element.
+        /// </summary>
+        /// <remarks>
+        /// This method is responsible for rendering the visual components of the GUI element.
+        /// The implementation details are defined in the deriving classes, ensuring that each specific GUI type
+        /// handles its own rendering logic. If this method is invoked on a GUI element, it will execute the
+        /// drawing logic associated with the specific GUI type's appearance and behavior.
+        /// </remarks>
         protected internal abstract void Draw();
 
+        /// <summary>
+        /// Loads a texture asset from the provided GUIBase instance directory using the specified name and file extension.
+        /// </summary>
+        /// <param name="_base">The GUIBase instance from which the texture is to be loaded.</param>
+        /// <param name="name">The name of the texture file to be loaded, excluding its extension.</param>
+        /// <param name="ext">The extension of the texture file (e.g., "png"). Default is "png".</param>
+        /// <returns>Returns the loaded Texture2D object if the file exists and is valid. Returns null if the file does not exist or loading fails.</returns>
         public static Texture2D LoadTexture(GUIBase _base, string name, string ext = "png")
         {
             return _base.LoadTexture(name, ext);
         }
 
+        /// <summary>
+        /// Clears all cached texture data stored in the GUI element's texture cache.
+        /// </summary>
+        /// <remarks>
+        /// This method is used to free up memory by removing all entries from the texture cache dictionary.
+        /// It is typically invoked to ensure that outdated or unnecessary textures are discarded, allowing
+        /// for fresh loading of resources as needed.
+        /// </remarks>
         public void ClearCache()
         {
             textureCache.Clear();
         }
 
+        /// <summary>
+        /// Disables the GUI element by triggering a closing animation and preparing it for deactivation.
+        /// </summary>
+        /// <remarks>
+        /// This method prevents the GUI element from remaining active by initiating a close animation via the `GUIAnimation` instance.
+        /// It ensures no further interaction with the element by setting the `OnGUI` callback to the animation closure. If the element
+        /// is already inactive, this method returns immediately without performing any actions.
+        /// </remarks>
         public void Disable()
         {
             if (!IsActive)
@@ -130,6 +214,15 @@ namespace Autumn
             OnGUI = animator.StartClose(DisableImmediate);
         }
 
+        /// <summary>
+        /// Immediately disables the GUI element and releases its associated resources.
+        /// </summary>
+        /// <remarks>
+        /// This method ensures that the GUI element is fully disabled by updating its internal state,
+        /// unloading localization resources, disabling the associated drawer, and invoking any required cleanup operations.
+        /// It sets the element to an inactive state and clears the `OnGUI` callback. This method is called
+        /// when the GUI element must transition to its disabled state without delay.
+        /// </remarks>
         public void DisableImmediate()
         {
             if (!UIManager.Disable(this)) return;
@@ -141,6 +234,14 @@ namespace Autumn
             OnGUI = null;
         }
 
+        /// <summary>
+        /// Activates the GUI element, preparing it for interaction and rendering.
+        /// </summary>
+        /// <remarks>
+        /// This method ensures the GUI element is properly enabled by verifying its active state,
+        /// invoking necessary initialization processes, loading related resources, and triggering animations.
+        /// It also updates the internal state of the GUI element to reflect its active status.
+        /// </remarks>
         public void Enable()
         {
             if (IsActive)
@@ -154,8 +255,16 @@ namespace Autumn
             }
         }
 
+        /// <summary>
+        /// Enables the GUI immediately, initializing necessary components and setting its state to active.
+        /// </summary>
+        /// <remarks>
+        /// This method ensures that the GUI is activated instantly by loading its locale,
+        /// invoking the relevant enable actions, and assigning the appropriate drawing function.
+        /// </remarks>
         public void EnableImmediate()
         {
+            // TODO seems to get stuck around here
             if (!UIManager.Enable(this)) return;
             
             locale.Load();
@@ -164,6 +273,10 @@ namespace Autumn
             OnGUI = Draw;
         }
 
+        /// <summary>
+        /// Enables a specified GUI element after the current active GUI element completes its closing process and is disabled.
+        /// </summary>
+        /// <param name="next">The GUI element to be enabled after the current one is disabled.</param>
         public void EnableNext(GUIBase next)
         {
             if (!IsActive)
@@ -179,6 +292,12 @@ namespace Autumn
             });
         }
 
+        /// <summary>
+        /// Loads a texture from the specified directory for the GUI element.
+        /// </summary>
+        /// <param name="namebase">The base name of the texture to be loaded (excluding its extension).</param>
+        /// <param name="ext">The file extension of the texture. If empty, the method expects the base name to already include a valid extension like "png", "jpg", or "jpeg".</param>
+        /// <returns>Returns the loaded Texture2D object if successful, or a black texture in case of failure or invalid input.</returns>
         public Texture2D LoadTexture(string namebase, string ext)
         {
             if (textureCache.TryGetValue(namebase, out Texture2D res) && res != null)
@@ -226,6 +345,11 @@ namespace Autumn
             return res;
         }
 
+        /// <summary>
+        /// Handles scaling updates for the GUIBase element.
+        /// This method can be overridden to implement specific scaling logic for a GUI element
+        /// and is typically called during size or resolution changes to ensure proper UI scaling.
+        /// </summary>
         public virtual void OnUpdateScaling()
         {
         }

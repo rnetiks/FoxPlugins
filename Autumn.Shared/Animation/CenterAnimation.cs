@@ -23,6 +23,13 @@ namespace Autumn.Animation
             CloseSpeed = closeSpeed;
         }
 
+        /// <summary>
+        /// Handles the opening animation of a centered GUI element by resizing and adjusting position
+        /// to simulate a zoom-in effect.
+        /// </summary>
+        /// <returns>
+        /// True if the animation is not yet complete, False when the target end position is reached.
+        /// </returns>
         protected override bool Open()
         {
             Draw();
