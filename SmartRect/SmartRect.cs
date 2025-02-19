@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace SmartRectV0
 {
@@ -9,6 +10,9 @@ namespace SmartRectV0
     {
         private const float DefaultOffsetX = 20;
         private const float DefaultOffsetY = 5f;
+        private Rect animateFrom;
+        private Rect animateTo;
+        private int animateFrameCount;
 
         public readonly float DefaultHeight;
         public readonly float DefaultWidth;
@@ -216,6 +220,98 @@ namespace SmartRectV0
             }
         }
 
+        private int currentFrame;
+        public bool UpdateAnimation(BezierTemplate bezier)
+        {
+            if (animateFrameCount <= 0)
+                return false;
+
+            var xDiff = animateTo.x - _source.x;
+            var yDiff = animateTo.y - _source.y;
+            var widthDiff = animateTo.width - _source.width;
+            var heightDiff = animateTo.height - _source.height;
+
+            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && Math.Abs(widthDiff) <= 0.01f &&
+                Math.Abs(heightDiff) <= 0.01f)
+            {
+                _source = animateTo;
+                animateFrameCount = 0;
+                return false;
+            }
+            
+            var progress = (float)currentFrame / animateFrameCount;
+            var f = Beziers.Vector3(bezier, progress).y;
+            _source.x = Mathf.Ceil(f * (animateTo.x - animateFrom.x) + animateFrom.x);
+            _source.y = Mathf.Ceil(f * (animateTo.y - animateFrom.y) + animateFrom.y);
+            _source.width = Mathf.Ceil(f * (animateTo.width - animateFrom.width) + animateFrom.width);
+            _source.height = Mathf.Ceil(f * (animateTo.height - animateFrom.height) + animateFrom.height);
+            currentFrame++;
+
+            var updateAnimation = currentFrame <= animateFrameCount;
+            if (!updateAnimation)
+            {
+                _source = animateTo;
+                animateFrameCount = 0;
+                currentFrame = 0;
+            }
+            return updateAnimation;
+        }
+
+        public bool UpdateAnimation()
+        {
+            // It *should* work?
+            if (animateFrameCount <= 0)
+            {
+                return false;
+            }
+
+            float xDiff = animateTo.x - _source.x;
+            float yDiff = animateTo.y - _source.y;
+            float widthDiff = animateTo.width - _source.width;
+            float heightDiff = animateTo.height - _source.height;
+
+            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && Math.Abs(widthDiff) <= 0.01f &&
+                Math.Abs(heightDiff) <= 0.01f)
+            {
+                _source = animateTo;
+                animateFrameCount = 0;
+                return false;
+            }
+
+            var xmove = animateFrameCount > 0 ? (animateTo.x - animateFrom.x) / animateFrameCount : 0;
+            var ymove = animateFrameCount > 0 ? (animateTo.y - animateFrom.y) / animateFrameCount : 0;
+            var width = animateFrameCount > 0 ? (animateTo.width - animateFrom.width) / animateFrameCount : 0;
+            var height = animateFrameCount > 0 ? (animateTo.height - animateFrom.height) / animateFrameCount : 0;
+
+            _source.x += xmove;
+            _source.y += ymove;
+            _source.width += width;
+            _source.height += height;
+            return true;
+        }
+
+        public void SetAnimation(Rect from, Rect to, int duration)
+        {
+            currentFrame = 0;
+            animateFrom = from;
+            animateTo = to;
+            _source = from;
+            animateFrameCount = duration;
+        }
+
+        public void SetAnimateTo(Rect to, int duration)
+        {
+            currentFrame = 0;
+            animateFrom = _source;
+            animateTo = to;
+            animateFrameCount = duration;
+        }
+
+        public void SetAnimateTo(Rect to, float duration)
+        {
+            SetAnimateTo(to, (int)(50 * duration));
+        }
+
         /// <summary>
         /// Moves to the next column by shifting the rectangle horizontally by a predefined offset.
         /// </summary>
@@ -296,6 +392,11 @@ namespace SmartRectV0
         public static implicit operator Rect(SmartRect r)
         {
             return r._source;
+        }
+
+        public bool Contains(Vector2 mPos)
+        {
+            return mPos.y <= Y + Height && mPos.y >= Y && mPos.x <= X + Width && mPos.x >= X;
         }
     }
 }
