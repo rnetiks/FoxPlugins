@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 namespace SmartRectV0
@@ -8,11 +9,13 @@ namespace SmartRectV0
     /// </summary>
     public class SmartRect
     {
-        private const float DefaultOffsetX = 20;
-        private const float DefaultOffsetY = 5f;
-        private Rect animateFrom;
-        private Rect animateTo;
-        private int animateFrameCount;
+        private Rect _animateFrom;
+        private Rect _animateTo;
+        private float _animationDuration;
+        private float _elapsedTime;
+
+        public static float DefaultOffsetX { get; } = 20;
+        public static float DefaultOffsetY { get; } = 5f;
 
         public readonly float DefaultHeight;
         public readonly float DefaultWidth;
@@ -99,9 +102,19 @@ namespace SmartRectV0
         /// Adjusts the width of each segment based on the total number of elements and specified horizontal offsets.
         /// </summary>
         /// <param name="elementCount">The number of elements to divide the rectangle horizontally into.</param>
-        public void BeginHorizontal(int elementCount)
+        public SmartRect BeginHorizontal(int elementCount)
         {
             Width = (Width - _offsetX * (elementCount - 1)) / elementCount;
+
+            return this;
+        }
+
+        /// <summary>
+        /// Synonymous to <see cref="ResetX"/>
+        /// </summary>
+        public SmartRect EndHorizontal()
+        {
+            return ResetX();
         }
 
         /// <summary>
@@ -134,20 +147,24 @@ namespace SmartRectV0
         /// Moves the rectangle's X position by the specified offset and adjusts its width accordingly.
         /// </summary>
         /// <param name="off">The offset value to move the rectangle's X position.</param>
-        public void MoveOffsetX(float off)
+        public SmartRect MoveOffsetX(float off)
         {
             _source.x += off;
             _source.width -= off;
+
+            return this;
         }
 
         /// <summary>
         /// Adjusts the Y position and height of the smart rectangle by the specified offset.
         /// </summary>
         /// <param name="off">The offset to apply to the Y position and height.</param>
-        public void MoveOffsetY(float off)
+        public SmartRect MoveOffsetY(float off)
         {
             _source.y += off;
             _source.height -= off;
+
+            return this;
         }
 
         /// <summary>
@@ -155,9 +172,11 @@ namespace SmartRectV0
         /// </summary>
         /// <param name="box">The rectangle to align with.</param>
         /// <param name="width">The width to use for alignment.</param>
-        public void MoveToEndX(Rect box, float width)
+        public SmartRect MoveToEndX(Rect box, float width)
         {
             _source.x += box.x + box.width - _source.x - width;
+
+            return this;
         }
 
         /// <summary>
@@ -166,9 +185,11 @@ namespace SmartRectV0
         /// </summary>
         /// <param name="box">The reference rectangle used to determine the new Y position.</param>
         /// <param name="height">The height to be considered when moving to the end.</param>
-        public void MoveToEndY(Rect box, float height)
+        public SmartRect MoveToEndY(Rect box, float height)
         {
             _source.y += box.y + box.height - _source.y - height;
+
+            return this;
         }
 
         /// <summary>
@@ -201,9 +222,11 @@ namespace SmartRectV0
         /// <summary>
         /// Moves the <seealso cref="SmartRect"/> by it's own height.
         /// </summary>
-        public void MoveY()
+        public SmartRect MoveY()
         {
             _source.y += _moveY;
+
+            return this;
         }
 
         /// <summary>
@@ -211,105 +234,131 @@ namespace SmartRectV0
         /// </summary>
         /// <param name="offset">The amount to move the <seealso cref="SmartRect"/> by.</param>
         /// <param name="considerHeight">If true will also move the <seealso cref="SmartRect"/> by its own height, else only by <paramref name="offset"/></param>
-        public void MoveY(float offset, bool considerHeight = false)
+        public SmartRect MoveY(float offset, bool considerHeight = false)
         {
             _source.y += offset;
             if (considerHeight)
             {
                 _source.y += _source.height;
             }
+
+            return this;
         }
 
-        private int currentFrame;
-        public bool UpdateAnimation(BezierTemplate bezier)
+        public SmartRect SetWidth(float width)
         {
-            if (animateFrameCount <= 0)
+            _source.width = width;
+            return this;
+        }
+
+        public SmartRect SetHeight(float height)
+        {
+            _source.height = height;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the width of the rectangle such that its right edge aligns with the specified x-coordinate.
+        /// </summary>
+        /// <param name="x">The x-coordinate to which the right edge of the rectangle should align.</param>
+        /// <returns>The current instance of <see cref="SmartRect"/> to allow method chaining.</returns>
+        public SmartRect WidthToEnd(float x)
+        {
+            _source.width = x - _source.x;
+            return this;
+        }
+        
+        /// <summary>
+        /// Sets the height of the rectangle such that its bottom edge aligns with the specified y-coordinate.
+        /// </summary>
+        /// <param name="y">The y-coordinate to which the bottom edge of the rectangle should align.</param>
+        /// <returns>The current instance of <see cref="SmartRect"/> to allow method chaining.</returns>
+        public SmartRect HeightToEnd(float y)
+        {
+            _source.height = y - _source.y;
+            return this;
+        }
+        
+        /// <summary>
+        /// Updates the animation of the rectangle using a Bézier curve.
+        /// </summary>
+        /// <param name="bezier">The <see cref="BezierTemplate"/> to use for the animation curve.</param>
+        /// <returns>
+        /// A boolean indicating whether the animation is still in progress.
+        /// Returns <c>true</c> if the animation is ongoing, <c>false</c> if the animation has completed.
+        /// </returns>
+        public bool UpdateAnimationIndependent(BezierTemplate bezier)
+        {
+            if (_animationDuration == 0)
                 return false;
 
-            var xDiff = animateTo.x - _source.x;
-            var yDiff = animateTo.y - _source.y;
-            var widthDiff = animateTo.width - _source.width;
-            var heightDiff = animateTo.height - _source.height;
+            var xDiff = _animateTo.x - _source.x;
+            var yDiff = _animateTo.y - _source.y;
+            var widthDiff = _animateTo.width - _source.width;
+            var heightDiff = _animateTo.height - _source.height;
 
             if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && Math.Abs(widthDiff) <= 0.01f &&
                 Math.Abs(heightDiff) <= 0.01f)
             {
-                _source = animateTo;
-                animateFrameCount = 0;
+                _source = _animateTo;
+                _animationDuration = 0;
+                _elapsedTime = 0;
                 return false;
             }
             
-            var progress = (float)currentFrame / animateFrameCount;
+            // Expecting to be called 50 times per second
+            var progress = Mathf.Clamp01(_elapsedTime / _animationDuration);
             var f = Beziers.Vector3(bezier, progress).y;
-            _source.x = Mathf.Ceil(f * (animateTo.x - animateFrom.x) + animateFrom.x);
-            _source.y = Mathf.Ceil(f * (animateTo.y - animateFrom.y) + animateFrom.y);
-            _source.width = Mathf.Ceil(f * (animateTo.width - animateFrom.width) + animateFrom.width);
-            _source.height = Mathf.Ceil(f * (animateTo.height - animateFrom.height) + animateFrom.height);
-            currentFrame++;
+            
+            _source.x = Mathf.Ceil(f * (_animateTo.x - _animateFrom.x) + _animateFrom.x);
+            _source.y = Mathf.Ceil(f * (_animateTo.y - _animateFrom.y) + _animateFrom.y);
+            _source.width = Mathf.Ceil(f * (_animateTo.width - _animateFrom.width) + _animateFrom.width);
+            _source.height = Mathf.Ceil(f * (_animateTo.height - _animateFrom.height) + _animateFrom.height);
+            
+            _elapsedTime += Time.deltaTime;
 
-            var updateAnimation = currentFrame <= animateFrameCount;
+            var updateAnimation = progress < 1f;
             if (!updateAnimation)
             {
-                _source = animateTo;
-                animateFrameCount = 0;
-                currentFrame = 0;
+                _source = _animateTo;
+                _elapsedTime = 0;
+                _animationDuration = 0;
             }
             return updateAnimation;
         }
 
-        public bool UpdateAnimation()
+        /// <summary>
+        /// Sets the starting and target rectangles, along with the duration for an animation.
+        /// </summary>
+        /// <param name="from">The starting <see cref="Rect"/> of the animation.</param>
+        /// <param name="to">The target <see cref="Rect"/> to animate to.</param>
+        /// <param name="duration">The duration of the animation in seconds.</param>
+        /// <returns>The current instance of <see cref="SmartRect"/> to allow method chaining.</returns>
+        public SmartRect SetAnimation(Rect from, Rect to, float duration)
         {
-            // It *should* work?
-            if (animateFrameCount <= 0)
-            {
-                return false;
-            }
-
-            float xDiff = animateTo.x - _source.x;
-            float yDiff = animateTo.y - _source.y;
-            float widthDiff = animateTo.width - _source.width;
-            float heightDiff = animateTo.height - _source.height;
-
-            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && Math.Abs(widthDiff) <= 0.01f &&
-                Math.Abs(heightDiff) <= 0.01f)
-            {
-                _source = animateTo;
-                animateFrameCount = 0;
-                return false;
-            }
-
-            var xmove = animateFrameCount > 0 ? (animateTo.x - animateFrom.x) / animateFrameCount : 0;
-            var ymove = animateFrameCount > 0 ? (animateTo.y - animateFrom.y) / animateFrameCount : 0;
-            var width = animateFrameCount > 0 ? (animateTo.width - animateFrom.width) / animateFrameCount : 0;
-            var height = animateFrameCount > 0 ? (animateTo.height - animateFrom.height) / animateFrameCount : 0;
-
-            _source.x += xmove;
-            _source.y += ymove;
-            _source.width += width;
-            _source.height += height;
-            return true;
-        }
-
-        public void SetAnimation(Rect from, Rect to, int duration)
-        {
-            currentFrame = 0;
-            animateFrom = from;
-            animateTo = to;
+            _elapsedTime = 0f;
+            _animateFrom = from;
+            _animateTo = to;
             _source = from;
-            animateFrameCount = duration;
+            _animationDuration = duration;
+
+            return this;
         }
 
-        public void SetAnimateTo(Rect to, int duration)
+        /// <summary>
+        /// Sets the target rectangle and duration for an animation.
+        /// </summary>
+        /// <param name="to">The target <see cref="Rect"/> to animate to.</param>
+        /// <param name="duration">The duration of the animation in seconds.</param>
+        /// <returns>The current instance of <see cref="SmartRect"/> to allow method chaining.</returns>
+        public SmartRect SetAnimateTo(Rect to, float duration)
         {
-            currentFrame = 0;
-            animateFrom = _source;
-            animateTo = to;
-            animateFrameCount = duration;
-        }
+            _elapsedTime = 0f;
+            _animateFrom = _source;
+            _animateTo = to;
+            _animationDuration = duration;
 
-        public void SetAnimateTo(Rect to, float duration)
-        {
-            SetAnimateTo(to, (int)(50 * duration));
+            return this;
         }
 
         /// <summary>
@@ -326,6 +375,7 @@ namespace SmartRectV0
         /// Moves the rectangle to the next row, optionally resetting the column position.
         /// </summary>
         /// <param name="resetColumn">Indicates whether the column position should be reset to the default X position.</param>
+        /// <param name="returnPrevious"></param>
         /// <returns>The updated instance of <see cref="SmartRect"/> after moving to the next row.</returns>
         public SmartRect NextRow(bool resetColumn = true)
         {
@@ -338,12 +388,13 @@ namespace SmartRectV0
         /// <summary>
         /// Resets the <see cref="SmartRect"/> to its default position and dimensions.
         /// </summary>
-        public void Reset()
+        public SmartRect Reset()
         {
             _source.x = DefaultX;
             _source.y = DefaultY;
             Height = DefaultHeight;
             Width = DefaultWidth;
+            return this;
         }
 
         /// <summary>
@@ -351,13 +402,15 @@ namespace SmartRectV0
         /// Optionally resets the width to its default value.
         /// </summary>
         /// <param name="includeWidth">If true, the width will also be reset to its default value.</param>
-        public void ResetX(bool includeWidth = true)
+        public SmartRect ResetX(bool includeWidth = true)
         {
             _source.x = DefaultX;
             if (includeWidth)
             {
                 _source.width = DefaultWidth;
             }
+
+            return this;
         }
 
         /// <summary>
@@ -365,13 +418,15 @@ namespace SmartRectV0
         /// Optionally resets the height to its default value.
         /// </summary>
         /// <param name="includeHeight">If true, the height will also be reset to its default value.</param>
-        public void ResetY(bool includeHeight = false)
+        public SmartRect ResetY(bool includeHeight = false)
         {
             _source.y = DefaultY;
             if (includeHeight)
             {
                 _source.height = DefaultHeight;
             }
+
+            return this;
         }
 
 
@@ -392,11 +447,6 @@ namespace SmartRectV0
         public static implicit operator Rect(SmartRect r)
         {
             return r._source;
-        }
-
-        public bool Contains(Vector2 mPos)
-        {
-            return mPos.y <= Y + Height && mPos.y >= Y && mPos.x <= X + Width && mPos.x >= X;
         }
     }
 }
