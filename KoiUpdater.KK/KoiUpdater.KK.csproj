@@ -69,10 +69,6 @@
       <Analyzer Include="..\packages\Microsoft.Unity.Analyzers.1.18.0\analyzers\dotnet\cs\Microsoft.Unity.Analyzers.dll" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Autumn.KK\Autumn.KK.csproj">
-        <Project>{89cc5475-ca62-4769-827b-ec38aa6a3148}</Project>
-        <Name>Autumn.KK</Name>
-      </ProjectReference>
       <ProjectReference Include="..\SmartRect\SmartRect.KK\SmartRect.KK.csproj">
         <Project>{c91df2a5-b779-4d7a-9639-82ec78ddce23}</Project>
         <Name>SmartRect.KK</Name>

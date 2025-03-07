@@ -14,8 +14,8 @@ namespace SmartRectV0
         private float _animationDuration;
         private float _elapsedTime;
 
-        public static float DefaultOffsetX { get; } = 20;
-        public static float DefaultOffsetY { get; } = 5f;
+        public static float DefaultOffsetX => 20;
+        public static float DefaultOffsetY => 5f;
 
         public readonly float DefaultHeight;
         public readonly float DefaultWidth;
@@ -37,6 +37,9 @@ namespace SmartRectV0
                 _moveY = value + _offsetY;
             }
         }
+        
+        public float TotalWidth => Width + _offsetX;
+        public float TotalHeight => Height + _offsetY;
 
         public float Width
         {
@@ -267,7 +270,7 @@ namespace SmartRectV0
             _source.width = x - _source.x;
             return this;
         }
-        
+
         /// <summary>
         /// Sets the height of the rectangle such that its bottom edge aligns with the specified y-coordinate.
         /// </summary>
@@ -278,7 +281,7 @@ namespace SmartRectV0
             _source.height = y - _source.y;
             return this;
         }
-        
+
         /// <summary>
         /// Updates the animation of the rectangle using a Bézier curve.
         /// </summary>
@@ -305,16 +308,16 @@ namespace SmartRectV0
                 _elapsedTime = 0;
                 return false;
             }
-            
+
             // Expecting to be called 50 times per second
             var progress = Mathf.Clamp01(_elapsedTime / _animationDuration);
             var f = Beziers.Vector3(bezier, progress).y;
-            
+
             _source.x = Mathf.Ceil(f * (_animateTo.x - _animateFrom.x) + _animateFrom.x);
             _source.y = Mathf.Ceil(f * (_animateTo.y - _animateFrom.y) + _animateFrom.y);
             _source.width = Mathf.Ceil(f * (_animateTo.width - _animateFrom.width) + _animateFrom.width);
             _source.height = Mathf.Ceil(f * (_animateTo.height - _animateFrom.height) + _animateFrom.height);
-            
+
             _elapsedTime += Time.deltaTime;
 
             var updateAnimation = progress < 1f;
@@ -324,6 +327,7 @@ namespace SmartRectV0
                 _elapsedTime = 0;
                 _animationDuration = 0;
             }
+
             return updateAnimation;
         }
 
@@ -370,6 +374,9 @@ namespace SmartRectV0
             MoveX();
             return this;
         }
+
+        public SmartRect Col(int col) => new SmartRect(_source.x + _moveX * col, _source.y, _source.width, _source.height);
+        public SmartRect Row(int row) => new SmartRect(_source.x, _source.y + _moveY * row, _source.width, _source.height);
 
         /// <summary>
         /// Moves the rectangle to the next row, optionally resetting the column position.

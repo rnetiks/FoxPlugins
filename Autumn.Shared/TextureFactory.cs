@@ -3,12 +3,15 @@ using System.IO;
 using PrismaLib.Enums;
 using PrismaLib.Settings;
 using PrismaLib.Settings.Type;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace Autumn
 {
     public static class TextureFactory
     {
+        private static string _combinedPath;
+
         [Flags]
         public enum Border
         {
@@ -381,24 +384,36 @@ namespace Autumn
             tex.Apply();
             return tex;
         }
-
+        
+        
         public static Texture2D Hue(this Texture2D tex, float hue)
         {
-            for (int x = 0; x < tex.width; x++)
+            Texture2D newTex = new Texture2D(tex.width, tex.height);
+            Color[] pixels = tex.GetPixels();
+
+            float cosA = Mathf.Cos(hue * Mathf.PI * 2);
+            float sinA = Mathf.Sin(hue * Mathf.PI * 2);
+
+            double[,] hueMatrix = {
+                { 0.299d + 0.701d * cosA + 0.168d * sinA, 0.587d - 0.587d * cosA + 0.330d * sinA, 0.114d - 0.114d * cosA - 0.497d * sinA },
+                { 0.299d - 0.299d * cosA - 0.328d * sinA, 0.587d + 0.413d * cosA + 0.035d * sinA, 0.114d - 0.114d * cosA + 0.292d * sinA },
+                { 0.299d - 0.3d * cosA + 1.25d * sinA, 0.587d - 0.588d * cosA - 1.05d * sinA, 0.114d + 0.886d * cosA - 0.203d * sinA }
+            };
+            
+            for (int i = 0; i < pixels.Length; i++)
             {
-                for (int y = 0; y < tex.height; y++)
-                {
-                    Color pixelColor = tex.GetPixel(x, y);
-                    float h, s, v;
-                    Color.RGBToHSV(pixelColor, out h, out s, out v);
-                    h = (h + hue) % 1.0f;
-                    Color adjustedColor = Color.HSVToRGB(h, s, v);
-                    tex.SetPixel(x, y, adjustedColor);
-                }
+                Color c = pixels[i];
+                
+                float r = (float)(c.r * hueMatrix[0, 0] + c.g * hueMatrix[0, 1] + c.b * hueMatrix[0, 2]);
+                float g = (float)(c.r * hueMatrix[1, 0] + c.g * hueMatrix[1, 1] + c.b * hueMatrix[1, 2]);
+                float b = (float)(c.r * hueMatrix[2, 0] + c.g * hueMatrix[2, 1] + c.b * hueMatrix[2, 2]);
+
+                pixels[i] = new Color(r, g, b, c.a);
             }
 
-            tex.Apply();
-            return tex;
+            newTex.SetPixels(pixels);
+            newTex.Apply();
+            return newTex;
         }
 
         public static Texture2D Sharpen(this Texture2D tex)
@@ -564,17 +579,64 @@ namespace Autumn
             return newTex;
         }
 
-        public static Texture2D Fill(this Texture2D tex, Color c)
+        enum BorderStyle
         {
-            for (int x = 0; x < tex.width; x++)
+            Solid,
+            Dotted
+        }
+
+        /// <summary>
+        /// <see cref="BorderWidth"/> creates a solid border of <paramref name="borderWidth"/> pixels and colors it using <paramref name="color"/>
+        /// It ignores transparent pixels with an alpha value of 0
+        /// </summary>
+        /// <param name="borderWidth"></param>
+        /// <param name="border"></param>
+        /// <param name="color"></param>
+        public static void BorderWidth(int borderWidth, Border border, Color32 color)
+        {
+            Vector2Int borderSize = new Vector2Int(borderWidth, borderWidth);
+        }
+
+        public static Texture2D Fill(this Texture2D tex, Color color)
+        {
+            int width = tex.width;
+            int height = tex.height;
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < tex.height; y++)
+                for (int y = 0; y < height; y++)
                 {
-                    tex.SetPixel(x, y, c);
+                    tex.SetPixel(x, y, color);
                 }
             }
 
             tex.Apply();
+
+            return tex;
+        }
+
+        public static unsafe Texture2D Fill(this Texture2D tex, byte r, byte g, byte b, byte a)
+        {
+            var data = tex.GetRawTextureData<Color32>();
+            var unsafePtr = data.GetUnsafePtr();
+            Color32* cr = (Color32*)unsafePtr;
+            switch (tex.format)
+            {
+                case TextureFormat.RGBA32:
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        cr[i].r = r;
+                        cr[i].g = g;
+                        cr[i].b = b;
+                        cr[i].a = a;
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentException("The provided texture format is not supported yet.");
+            }
+
+            tex.Apply();
+
             return tex;
         }
 
@@ -828,7 +890,8 @@ namespace Autumn
             if (!Directory.Exists("AutumnTextures"))
                 Directory.CreateDirectory("AutumnTextures");
 
-            if (!File.Exists(Path.Combine("AutumnTextures", filepath)))
+            _combinedPath = Path.Combine("AutumnTextures", filepath);
+            if (!File.Exists(_combinedPath))
             {
                 var texture2D = onNotFound(filepath);
                 return texture2D;
@@ -836,7 +899,7 @@ namespace Autumn
 
             var data = new Texture2D(1, 1);
 
-            data.LoadImage(File.ReadAllBytes(Path.Combine("AutumnTextures", filepath)));
+            data.LoadImage(File.ReadAllBytes(_combinedPath));
             data.Apply();
             return data;
         }

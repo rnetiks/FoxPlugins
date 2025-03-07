@@ -69,11 +69,11 @@ static class JsonExtension
 
 internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
 {
-    private SmartRect _logRect = new(0, 0, 200, 25);
-    private UniRx.Progress<float> _progressor;
-    public static int loadedPluginCount = 0;
     public static string currentFile;
+    private UniRx.Progress<float> _progressor;
     public static string[] p = new string[0];
+    private SmartRect _logRect = new(0, 0, 200, 25);
+    public static int loadedPluginCount = 0;
     private Subject<int> progressSubject = new();
     internal static Texture2D progressDot = new(1, 1);
     internal static Texture2D progressBar = new(1, 1);
@@ -201,12 +201,13 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
         }
     }
 
+    
     private string PluginList()
     {
         TextWriter tw = new StringWriter();
         JsonWriter writer = new JsonTextWriter(tw);
-
-
+    
+    
         string[] plugins = Directory.GetFiles(PluginsPath, "*.dll", SearchOption.AllDirectories)
             .Select(
                 e =>
@@ -219,13 +220,14 @@ internal class KoiUpdaterUI : UnityEngine.MonoBehaviour
         {
             writer.WriteValue(plugin);
         }
-
+    
         writer.WriteEndArray();
-
+    
         writer.Close();
-
+    
         return tw.ToString();
     }
+
 
     private void ProgressHandler(float obj)
     {
