@@ -24,6 +24,8 @@ namespace BoneShortcut
         public static ManualLogSource Logger;
         private static GameObject _gameObject;
 
+        #region FK Binds
+
         public static ConfigEntry<KeyboardShortcut> FK_LEFT_WRIST;
         public static ConfigEntry<KeyboardShortcut> FK_LEFT_ELBOW;
         public static ConfigEntry<KeyboardShortcut> FK_LEFT_ARMPIT;
@@ -54,12 +56,38 @@ namespace BoneShortcut
 
         public static ConfigEntry<KeyboardShortcut> FK_LEFT_TOE; // cf_j_spine01
         public static ConfigEntry<KeyboardShortcut> FK_RIGHT_TOE; // cf_j_spine01
-        
+
+        #endregion
+
+        #region IK Binds
+
+        public static ConfigEntry<KeyboardShortcut> IK_LEFT_HAND;
+        public static ConfigEntry<KeyboardShortcut> IK_RIGHT_HAND;
+
+        public static ConfigEntry<KeyboardShortcut> IK_LEFT_ELBOW;
+        public static ConfigEntry<KeyboardShortcut> IK_RIGHT_ELBOW;
+
+        public static ConfigEntry<KeyboardShortcut> IK_LEFT_SHOULDER;
+        public static ConfigEntry<KeyboardShortcut> IK_RIGHT_SHOULDER;
+
+        public static ConfigEntry<KeyboardShortcut> IK_STOMACH;
+        public static ConfigEntry<KeyboardShortcut> IK_LEFT_WAIST;
+        public static ConfigEntry<KeyboardShortcut> IK_RIGHT_WAIST;
+        public static ConfigEntry<KeyboardShortcut> IK_LEFT_KNEE;
+        public static ConfigEntry<KeyboardShortcut> IK_RIGHT_KNEE;
+        public static ConfigEntry<KeyboardShortcut> IK_LEFT_FOOT;
+        public static ConfigEntry<KeyboardShortcut> IK_RIGHT_FOOT;
+
+        #endregion
+
         public static ConfigEntry<bool> Debug;
 
         private void Awake()
         {
             Debug = Config.Bind("Config", "Debug", false);
+
+            #region FK
+
             FK_LEFT_WRIST = Config.Bind("Forward Kinematics", "Left Wrist", KeyboardShortcut.Empty);
             FK_RIGHT_WRIST = Config.Bind("Forward Kinematics", "Right Wrist", KeyboardShortcut.Empty);
             FK_LEFT_ELBOW = Config.Bind("Forward Kinematics", "Left Elbow", KeyboardShortcut.Empty);
@@ -87,6 +115,22 @@ namespace BoneShortcut
 
             FK_LEFT_TOE = Config.Bind("Forward Kinematics", "Left Toe", KeyboardShortcut.Empty);
             FK_RIGHT_TOE = Config.Bind("Forward Kinematics", "Right Toe", KeyboardShortcut.Empty);
+
+            #endregion
+
+            IK_LEFT_HAND = Config.Bind("Inverse Kinematics", "Left Hand", KeyboardShortcut.Empty);
+            IK_RIGHT_HAND = Config.Bind("Inverse Kinematics", "Right Hand", KeyboardShortcut.Empty);
+            IK_LEFT_ELBOW = Config.Bind("Inverse Kinematics", "Left Elbow", KeyboardShortcut.Empty);
+            IK_RIGHT_ELBOW = Config.Bind("Inverse Kinematics", "Right Elbow", KeyboardShortcut.Empty);
+            IK_LEFT_SHOULDER = Config.Bind("Inverse Kinematics", "Left Shoulder", KeyboardShortcut.Empty);
+            IK_RIGHT_SHOULDER = Config.Bind("Inverse Kinematics", "Right Shoulder", KeyboardShortcut.Empty);
+            IK_STOMACH = Config.Bind("Inverse Kinematics", "Stomach", KeyboardShortcut.Empty);
+            IK_LEFT_WAIST = Config.Bind("Inverse Kinematics", "Left Waist", KeyboardShortcut.Empty);
+            IK_RIGHT_WAIST = Config.Bind("Inverse Kinematics", "Right Waist", KeyboardShortcut.Empty);
+            IK_LEFT_KNEE = Config.Bind("Inverse Kinematics", "Left Knee", KeyboardShortcut.Empty);
+            IK_RIGHT_KNEE = Config.Bind("Inverse Kinematics", "Right Knee", KeyboardShortcut.Empty);
+            IK_LEFT_FOOT = Config.Bind("Inverse Kinematics", "Left Foot", KeyboardShortcut.Empty);
+            IK_RIGHT_FOOT = Config.Bind("Inverse Kinematics", "Right Foot", KeyboardShortcut.Empty);
 
             Logger = base.Logger;
             Logger.LogWarning($"{NAME} is loaded!");
@@ -117,61 +161,81 @@ namespace BoneShortcut
             if (_ociChars.Length <= 0)
                 return;
 
-            var fkCtrl = _ociChars.First().charReference.transform.GetComponent<FKCtrl>();
-            var ikCtrl = _ociChars.First().charReference.transform.GetComponent<IKCtrl>();
+            var ociChar = _ociChars.First();
+            var fkCtrl = ociChar.charReference.transform.GetComponent<FKCtrl>();
+            var ikCtrl = ociChar.charReference.transform.GetComponent<IKCtrl>();
 
-            Transform target = _ociChars.First().guideObject.parent;
+            Transform target = ociChar.guideObject.parent;
 
             if (fkCtrl != null && fkCtrl.enabled)
-                HandleFK(target);
+                HandleFk(target);
+            else if (ikCtrl != null && ikCtrl.enabled)
+                HandleIK(target);
         }
 
-        private void HandleFK(Transform target)
+        private void HandleIK(Transform target)
         {
-            if (FK_LEFT_WRIST.Value.IsDown())
-                SelectBone("cf_j_hand_L", target);
-            else if (FK_LEFT_ELBOW.Value.IsDown())
-                SelectBone("cf_j_forearm01_L", target);
-            else if (FK_LEFT_ARMPIT.Value.IsDown())
-                SelectBone("cf_j_arm00_L", target);
-            else if (FK_LEFT_SHOULDER.Value.IsDown())
-                SelectBone("cf_j_shoulder_L", target);
-            else if (FK_RIGHT_WRIST.Value.IsDown())
-                SelectBone("cf_j_hand_R", target);
-            else if (FK_RIGHT_ELBOW.Value.IsDown())
-                SelectBone("cf_j_forearm01_R", target);
-            else if (FK_RIGHT_ARMPIT.Value.IsDown())
-                SelectBone("cf_j_arm00_R", target);
-            else if (FK_RIGHT_SHOULDER.Value.IsDown())
-                SelectBone("cf_j_shoulder_R", target);
-            else if (FK_NECK.Value.IsDown())
-                SelectBone("cf_j_neck", target);
-            else if (FK_HEAD.Value.IsDown())
-                SelectBone("cf_j_head", target);
-            else if (FK_HIPS.Value.IsDown())
-                SelectBone("cf_j_hips", target);
-            else if (FK_SPINE.Value.IsDown())
-                SelectBone("cf_j_spine01", target);
-            else if (FK_WAIST.Value.IsDown())
-                SelectBone("cf_j_waist01", target);
-            else if (FK_TORSO.Value.IsDown())
-                SelectBone("cf_j_spine02", target);
-            else if (FK_LEFT_THIGH.Value.IsDown())
-                SelectBone("cf_j_thigh00_L", target);
-            else if (FK_RIGHT_THIGH.Value.IsDown())
-                SelectBone("cf_j_thigh00_R", target);
-            else if (FK_LEFT_KNEE.Value.IsDown())
-                SelectBone("cf_j_leg01_L", target);
-            else if (FK_RIGHT_KNEE.Value.IsDown())
-                SelectBone("cf_j_leg01_R", target);
-            else if (FK_LEFT_FOOT.Value.IsDown())
-                SelectBone("cf_j_leg03_L", target);
-            else if (FK_RIGHT_FOOT.Value.IsDown())
-                SelectBone("cf_j_leg03_R", target);
-            else if (FK_LEFT_TOE.Value.IsDown())
-                SelectBone("cf_j_toes_L", target);
-            else if (FK_RIGHT_TOE.Value.IsDown())
-                SelectBone("cf_j_toes_R", target);
+            var mapping = new Dictionary<KeyboardShortcut, string>()
+            {
+                {IK_LEFT_HAND.Value, "cf_t_hand_L(work)"},
+                {IK_RIGHT_HAND.Value, "cf_t_hand_R(work)"},
+                {IK_LEFT_ELBOW.Value, "cf_t_elbo_L(work)"},
+                {IK_RIGHT_ELBOW.Value, "cf_t_elbo_R(work)"},
+                {IK_LEFT_SHOULDER.Value, "cf_t_shoulder_L(work)"},
+                {IK_RIGHT_SHOULDER.Value, "cf_t_shoulder_R(work)"},
+                {IK_STOMACH.Value, "cf_t_hips(work)"},
+                {IK_LEFT_WAIST.Value, "cf_t_waist_L(work)"},
+                {IK_RIGHT_WAIST.Value, "cf_t_waist_R(work)"},
+                {IK_LEFT_KNEE.Value, "cf_t_knee_L(work)"},
+                {IK_RIGHT_KNEE.Value, "cf_t_knee_R(work)"},
+                {IK_LEFT_FOOT.Value, "cf_t_leg_L(work)"},
+                {IK_RIGHT_FOOT.Value, "cf_t_leg_R(work)"}
+            };
+
+            foreach (var pair in mapping)
+            {
+                if (!pair.Key.IsDown())
+                    continue;
+                SelectBone(pair.Value, target);
+                break;
+            }
+        }
+
+        private void HandleFk(Transform target)
+        {
+            var mapping = new Dictionary<KeyboardShortcut, string>
+            {
+                { FK_LEFT_WRIST.Value, "cf_j_hand_L" },
+                { FK_LEFT_ELBOW.Value, "cf_j_forearm01_L" },
+                { FK_LEFT_ARMPIT.Value, "cf_j_arm00_L" },
+                { FK_LEFT_SHOULDER.Value, "cf_j_shoulder_L" },
+                { FK_RIGHT_WRIST.Value, "cf_j_hand_R" },
+                { FK_RIGHT_ELBOW.Value, "cf_j_forearm01_R" },
+                { FK_RIGHT_ARMPIT.Value, "cf_j_arm00_R" },
+                { FK_RIGHT_SHOULDER.Value, "cf_j_shoulder_R" },
+                { FK_NECK.Value, "cf_j_neck" },
+                { FK_HEAD.Value, "cf_j_head" },
+                { FK_HIPS.Value, "cf_j_hips" },
+                { FK_SPINE.Value, "cf_j_spine01" },
+                { FK_WAIST.Value, "cf_j_waist01" },
+                { FK_TORSO.Value, "cf_j_spine02" },
+                { FK_LEFT_THIGH.Value, "cf_j_thigh00_L" },
+                { FK_RIGHT_THIGH.Value, "cf_j_thigh00_R" },
+                { FK_LEFT_KNEE.Value, "cf_j_leg01_L" },
+                { FK_RIGHT_KNEE.Value, "cf_j_leg01_R" },
+                { FK_LEFT_FOOT.Value, "cf_j_leg03_L" },
+                { FK_RIGHT_FOOT.Value, "cf_j_leg03_R" },
+                { FK_LEFT_TOE.Value, "cf_j_toes_L" },
+                { FK_RIGHT_TOE.Value, "cf_j_toes_R" }
+            };
+
+            foreach (var pair in mapping)
+            {
+                if (!pair.Key.IsDown())
+                    continue;
+                SelectBone(pair.Value, target);
+                break;
+            }
         }
 
         public GuideObject TargetObject()
@@ -187,7 +251,7 @@ namespace BoneShortcut
             var guideObjectManager = Singleton<GuideObjectManager>.Instance;
             var instanceDicGuideObject = guideObjectManager.dicGuideObject;
             var keyValuePairs = instanceDicGuideObject.First(e => e.Key.name == bone && e.Value.parent == target);
-            if(Entry.Debug.Value) Entry.Logger.LogWarning($"Set bone to {keyValuePairs.Key}");
+            if (Entry.Debug.Value) Entry.Logger.LogWarning($"Set bone to {keyValuePairs.Key}");
             guideObjectManager.selectObject = keyValuePairs.Value;
         }
     }
