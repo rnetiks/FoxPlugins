@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
-using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -10,7 +8,6 @@ using UnityEngine;
 namespace Search.KKS
 {
     [BepInPlugin(GUID, "Search", "1.0.0")]
-    [BepInProcess("CharaStudio")]
     public partial class Search : BaseUnityPlugin
     {
         const string GUID = "org.fox.search";
@@ -33,8 +30,6 @@ namespace Search.KKS
 
         private void Update()
         {
-            if (!KKAPI.Studio.StudioAPI.StudioLoaded)
-                return;
             var height = (float)(Screen.height * 0.3);
             var width = (float)(Screen.width * 0.3);
             var mousePos = Event.current.mousePosition;
