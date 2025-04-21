@@ -1,47 +1,63 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using DBToggler.Core;
 using KKAPI.Studio;
+using Studio;
 using UnityEngine;
 
 namespace DBToggler
 {
+    /// <summary>
+    /// Component responsible for enabling/disabling dynamic bones based on keyboard input.
+    /// </summary>
     public class ToggleDynamicBones : MonoBehaviour
     {
         private void Update()
         {
+            bool enableRequested = Init.EnableDynamicBonesKey.Value.IsUp();
+            bool disableRequested = Init.DisableDynamicBonesKey.Value.IsUp();
+
+            if (!enableRequested && !disableRequested)
+                return;
+                
+            bool targetState = enableRequested;
+
             var selectedCharacters = StudioAPI.GetSelectedCharacters().ToArray();
+            
             if (selectedCharacters.Length > 0)
             {
-                if (Init.EnableDynamicBonesKey.Value.IsUp())
-                {
-                    foreach (var selectedCharacter in selectedCharacters)
-                    {
-                        var bones = selectedCharacter.charReference.GetComponentsInChildren<DynamicBone>();
-                        SetBones(bones, true);
-                    }
-                }
-                else if (Init.DisableDynamicBonesKey.Value.IsUp())
-                {
-                    foreach (var selectedCharacter in selectedCharacters)
-                    {
-                        var bones = selectedCharacter.charReference.GetComponentsInChildren<DynamicBone>();
-                        SetBones(bones, false);
-                    }
-                }
-
-                return;
+                ToggleBonesOnSelectedCharacters(selectedCharacters, targetState);
             }
-
-            if (Init.EnableDynamicBonesKey.Value.IsUp())
+            else
             {
-                var bones = FindObjectsOfType<DynamicBone>();
-                SetBones(bones, true);
+                ToggleAllBonesInScene(targetState);
             }
-            else if (Init.DisableDynamicBonesKey.Value.IsUp())
+        }
+        
+        /// <summary>
+        /// Toggle dynamic bones on all selected characters.
+        /// </summary>
+        /// <param name="characters">Array of selected characters.</param>
+        /// <param name="state">Target state for dynamic bones.</param>
+        private void ToggleBonesOnSelectedCharacters(IReadOnlyCollection<OCIChar> characters, bool state)
+        {
+            Init._logger.LogWarning($"{(state ? "Enabling" : "Disabling")} dynamic bones on {characters.Count} character(s)");
+            
+            foreach (var character in characters)
             {
-                var bones = FindObjectsOfType<DynamicBone>();
-                SetBones(bones, false);
+                var bones = character.charReference.GetComponentsInChildren<DynamicBone>();
+                SetBones(bones, state);
             }
+        }
+        
+        /// <summary>
+        /// Toggle all dynamic bones in the scene.
+        /// </summary>
+        /// <param name="state">Target state for dynamic bones.</param>
+        private void ToggleAllBonesInScene(bool state)
+        {
+            var bones = FindObjectsOfType<DynamicBone>();
+            SetBones(bones, state);
         }
 
         /// <summary>
@@ -49,17 +65,22 @@ namespace DBToggler
         /// </summary>
         /// <param name="bones">Array of DynamicBone instances to be modified.</param>
         /// <param name="state">Boolean value indicating the desired enabled state of the bones.</param>
-        private static void SetBones(DynamicBone[] bones, bool state)
+        private static void SetBones(IReadOnlyCollection<DynamicBone> bones, bool state)
         {
-            int n = 0;
-            Init._logger.LogWarning($"{(state ? "Enabling" : "Disabling")} dynamic bones on {bones.Length} bones");
+            if (bones.Count == 0)
+            {
+                Init._logger.LogInfo("No dynamic bones found to modify");
+                return;
+            }
+            
+            Init._logger.LogWarning($"{(state ? "Enabling" : "Disabling")} {bones.Count} dynamic bones");
+            
             foreach (var bone in bones)
             {
-                n++;
                 bone.enabled = state;
             }
             
-            Init._logger.LogInfo($"Changed state on {n} bones");
+            Init._logger.LogInfo($"Changed state on {bones.Count} bones");
         }
     }
 }

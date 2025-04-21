@@ -1,0 +1,66 @@
+﻿<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="AnyCPU" />
+  </Configurations>
+  <Folder Name="/Autumn/">
+    <Project Path="Autumn.KKS\Autumn.KKS.csproj" Type="Classic C#" />
+    <Project Path="Autumn.Shared\Autumn.Shared.shproj" />
+  </Folder>
+  <Folder Name="/BoneShortcut/">
+    <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#" />
+    <Project Path="BoneShortcut\BoneShortcut.KK\BoneShortcut.KK.csproj" Type="Classic C#" />
+    <Project Path="C:\Users\aepod\RiderProjects\FoxPlugins\BoneShortcut\BoneShortcut.shproj" />
+  </Folder>
+  <Folder Name="/ColliderSound/">
+    <Project Path="C:\Users\aepod\RiderProjects\FoxPlugins\ColliderSound\ColliderSound.shproj" />
+    <Project Path="ColliderSound\ColliderSound.KKS\ColliderSound.KKS.csproj" Type="Classic C#" />
+    <Project Path="ColliderSound\ColliderSound.KK\ColliderSound.KK.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/DBToggler/">
+    <Project Path="DBToggler.KKS\DBToggler.KKS.csproj" Type="Classic C#" />
+    <Project Path="DBToggler\DBToggler.Core\DBToggler.Core.shproj" />
+    <Project Path="DBToggler\DBToggler.KK\DBToggler.KK.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/Guiverload/">
+    <Project Path="Guiverload.KKS\Guiverload.KKS.csproj" Type="Classic C#" />
+    <Project Path="Guiverload.Shared\Guiverload.Shared.shproj" />
+  </Folder>
+  <Folder Name="/KoiUpdater/">
+    <Project Path="KoiUpdater.KKS\KoiUpdater.KKS.csproj" Type="Classic C#" />
+    <Project Path="KoiUpdater.Shared\KoiUpdater.Shared.shproj" />
+  </Folder>
+  <Folder Name="/LHC/">
+    <Project Path="LHC.Core\LHC.Core.shproj" />
+    <Project Path="LHC.KKS\LHC.KKS.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/MakerReactiveCanvas/">
+    <Project Path="MakerReactiveCanvas\MakerReactiveCanvas.KKS\MakerReactiveCanvas.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="MakerReactiveCanvas\MakerReactiveCanvas.KK\MakerReactiveCanvas.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="MakerReactiveCanvas\MakerReactiveCanvas.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/PrismaLib/">
+    <Project Path="PrismaLib\PrismaLib.KKS\PrismaLib.KKS.csproj" Type="Classic C#" />
+    <Project Path="PrismaLib\PrismaLib.KK\PrismaLib.KK.csproj" Type="Classic C#" />
+    <Project Path="PrismaLib\PrismaLib.shproj" />
+  </Folder>
+  <Folder Name="/Search/">
+    <Project Path="Search\Search.shproj" />
+    <Project Path="Search\Search.Universal\Search.Universal.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/SmartRect/">
+    <Project Path="SmartRect\SmartRect.KKS\SmartRect.KKS.csproj" Type="Classic C#" />
+    <Project Path="SmartRect\SmartRect.KK\SmartRect.KK.csproj" Type="Classic C#" />
+    <Project Path="SmartRect\SmartRect.shproj" />
+  </Folder>
+  <Project Path="NonKoiTests\NonKoiTests.csproj" Type="Classic C#" />
+</Solution>

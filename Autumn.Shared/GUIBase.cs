@@ -52,7 +52,7 @@ namespace Autumn
                     return cachedEmptyTexture;
                 
                 cachedEmptyTexture = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-                cachedEmptyTexture.SetPixel(0, 0, Colors.Empty);
+                cachedEmptyTexture.SetPixel(0, 0, PRF.ExtraColor.Empty);
                 cachedEmptyTexture.Apply();
                 
                 return cachedEmptyTexture;

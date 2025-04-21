@@ -9,6 +9,12 @@ namespace Autumn
 {
     public static class PRF
     {
+        public static class ExtraColor
+        {
+            public static readonly Color Empty = new Color(0f, 0f, 0f, 0f);
+            public static readonly Color Orange = new Color(1f, 0.35f, 0f, 1f);
+        }
+
         public static string LabelEnabled = "<color=lime>Enabled</color>";
         public static string LabelDisabled = "<color=red>Disabled</color>";
 

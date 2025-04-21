@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 namespace SmartRectV0
@@ -9,11 +8,7 @@ namespace SmartRectV0
     /// </summary>
     public class SmartRect
     {
-        private Rect _animateFrom;
-        private Rect _animateTo;
-        private float _animationDuration;
-        private float _elapsedTime;
-
+        // Default offset values
         public static float DefaultOffsetX => 20;
         public static float DefaultOffsetY => 5f;
 
@@ -22,11 +17,16 @@ namespace SmartRectV0
         public readonly float DefaultX;
         public readonly float DefaultY;
 
-        private float _moveX;
-        private float _moveY;
+        private Rect _source;
         private readonly float _offsetX;
         private readonly float _offsetY;
-        private Rect _source;
+        private float _moveX;
+        private float _moveY;
+
+        private Rect _animateFrom;
+        private Rect _animateTo;
+        private float _animationDuration;
+        private float _elapsedTime;
 
         public float Height
         {
@@ -38,9 +38,6 @@ namespace SmartRectV0
             }
         }
         
-        public float TotalWidth => Width + _offsetX;
-        public float TotalHeight => Height + _offsetY;
-
         public float Width
         {
             get => _source.width;
@@ -50,30 +47,32 @@ namespace SmartRectV0
                 _moveX = value + _offsetX;
             }
         }
-
+        
         public float X
         {
             get => _source.x;
             set => _source.x = value;
         }
-
+        
         public float Y
         {
             get => _source.y;
             set => _source.y = value;
         }
+        
+        public float TotalWidth => Width + _offsetX;
+        public float TotalHeight => Height + _offsetY;
 
         /// <summary>
-        /// Represents a smart rectangle that provides advanced manipulation of a rectangle's dimensions and position.
+        /// Initializes a new instance of the SmartRect class using a specified rectangle.
         /// </summary>
         /// <param name="src">The default <seealso cref="Rect"/> to use.</param>
         public SmartRect(Rect src) : this(src, DefaultOffsetX, DefaultOffsetY)
         {
         }
 
-
         /// <summary>
-        /// Represents a smart rectangle that provides advanced manipulation of a rectangle's dimensions and position.
+        /// Initializes a new instance of the SmartRect class using a specified rectangle and offsets.
         /// </summary>
         /// <param name="src">The default <seealso cref="Rect"/> to use.</param>
         /// <param name="offX">The offset in pixels towards the X coordinate.</param>
@@ -91,12 +90,29 @@ namespace SmartRectV0
             DefaultY = src.y;
         }
 
-        public SmartRect(float x, float y, float width, float height) : this(new Rect(x, y, width, height))
+        /// <summary>
+        /// Initializes a new instance of the SmartRect class using specified coordinates and dimensions.
+        /// </summary>
+        /// <param name="x">The x-coordinate of the rectangle.</param>
+        /// <param name="y">The y-coordinate of the rectangle.</param>
+        /// <param name="width">The width of the rectangle.</param>
+        /// <param name="height">The height of the rectangle.</param>
+        public SmartRect(float x, float y, float width, float height) 
+            : this(new Rect(x, y, width, height))
         {
         }
 
-        public SmartRect(float x, float y, float width, float height, float offX, float offY) : this(
-            new Rect(x, y, width, height), offX, offY)
+        /// <summary>
+        /// Initializes a new instance of the SmartRect class using specified coordinates, dimensions, and offsets.
+        /// </summary>
+        /// <param name="x">The x-coordinate of the rectangle.</param>
+        /// <param name="y">The y-coordinate of the rectangle.</param>
+        /// <param name="width">The width of the rectangle.</param>
+        /// <param name="height">The height of the rectangle.</param>
+        /// <param name="offX">The offset in pixels towards the X coordinate.</param>
+        /// <param name="offY">The offset in pixels towards the Y coordinate.</param>
+        public SmartRect(float x, float y, float width, float height, float offX, float offY) 
+            : this(new Rect(x, y, width, height), offX, offY)
         {
         }
 
@@ -108,7 +124,6 @@ namespace SmartRectV0
         public SmartRect BeginHorizontal(int elementCount)
         {
             Width = (Width - _offsetX * (elementCount - 1)) / elementCount;
-
             return this;
         }
 
@@ -132,7 +147,6 @@ namespace SmartRectV0
             return this;
         }
 
-
         /// <summary>
         /// Moves the rectangle by the specified x and y offsets and returns the updated <see cref="SmartRect"/>.
         /// </summary>
@@ -154,7 +168,6 @@ namespace SmartRectV0
         {
             _source.x += off;
             _source.width -= off;
-
             return this;
         }
 
@@ -166,7 +179,6 @@ namespace SmartRectV0
         {
             _source.y += off;
             _source.height -= off;
-
             return this;
         }
 
@@ -178,7 +190,6 @@ namespace SmartRectV0
         public SmartRect MoveToEndX(Rect box, float width)
         {
             _source.x += box.x + box.width - _source.x - width;
-
             return this;
         }
 
@@ -191,7 +202,6 @@ namespace SmartRectV0
         public SmartRect MoveToEndY(Rect box, float height)
         {
             _source.y += box.y + box.height - _source.y - height;
-
             return this;
         }
 
@@ -218,7 +228,6 @@ namespace SmartRectV0
             {
                 _source.x += _source.width;
             }
-
             return this;
         }
 
@@ -228,7 +237,6 @@ namespace SmartRectV0
         public SmartRect MoveY()
         {
             _source.y += _moveY;
-
             return this;
         }
 
@@ -244,16 +252,25 @@ namespace SmartRectV0
             {
                 _source.y += _source.height;
             }
-
             return this;
         }
 
+        /// <summary>
+        /// Sets the width of the rectangle.
+        /// </summary>
+        /// <param name="width">The new width value.</param>
+        /// <returns>The current instance for method chaining.</returns>
         public SmartRect SetWidth(float width)
         {
             _source.width = width;
             return this;
         }
 
+        /// <summary>
+        /// Sets the height of the rectangle.
+        /// </summary>
+        /// <param name="height">The new height value.</param>
+        /// <returns>The current instance for method chaining.</returns>
         public SmartRect SetHeight(float height)
         {
             _source.height = height;
@@ -300,8 +317,8 @@ namespace SmartRectV0
             var widthDiff = _animateTo.width - _source.width;
             var heightDiff = _animateTo.height - _source.height;
 
-            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && Math.Abs(widthDiff) <= 0.01f &&
-                Math.Abs(heightDiff) <= 0.01f)
+            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && 
+                Math.Abs(widthDiff) <= 0.01f && Math.Abs(heightDiff) <= 0.01f)
             {
                 _source = _animateTo;
                 _animationDuration = 0;
@@ -345,7 +362,6 @@ namespace SmartRectV0
             _animateTo = to;
             _source = from;
             _animationDuration = duration;
-
             return this;
         }
 
@@ -361,7 +377,6 @@ namespace SmartRectV0
             _animateFrom = _source;
             _animateTo = to;
             _animationDuration = duration;
-
             return this;
         }
 
@@ -375,14 +390,26 @@ namespace SmartRectV0
             return this;
         }
 
-        public SmartRect Col(int col) => new SmartRect(_source.x + _moveX * col, _source.y, _source.width, _source.height);
-        public SmartRect Row(int row) => new SmartRect(_source.x, _source.y + _moveY * row, _source.width, _source.height);
+        /// <summary>
+        /// Creates a new SmartRect representing a column at the specified index.
+        /// </summary>
+        /// <param name="col">The column index.</param>
+        /// <returns>A new SmartRect positioned at the specified column.</returns>
+        public SmartRect Col(int col) => 
+            new SmartRect(_source.x + _moveX * col, _source.y, _source.width, _source.height);
+        
+        /// <summary>
+        /// Creates a new SmartRect representing a row at the specified index.
+        /// </summary>
+        /// <param name="row">The row index.</param>
+        /// <returns>A new SmartRect positioned at the specified row.</returns>
+        public SmartRect Row(int row) => 
+            new SmartRect(_source.x, _source.y + _moveY * row, _source.width, _source.height);
 
         /// <summary>
         /// Moves the rectangle to the next row, optionally resetting the column position.
         /// </summary>
         /// <param name="resetColumn">Indicates whether the column position should be reset to the default X position.</param>
-        /// <param name="returnPrevious"></param>
         /// <returns>The updated instance of <see cref="SmartRect"/> after moving to the next row.</returns>
         public SmartRect NextRow(bool resetColumn = true)
         {
@@ -416,7 +443,6 @@ namespace SmartRectV0
             {
                 _source.width = DefaultWidth;
             }
-
             return this;
         }
 
@@ -432,10 +458,8 @@ namespace SmartRectV0
             {
                 _source.height = DefaultHeight;
             }
-
             return this;
         }
-
 
         /// <summary>
         /// Converts the current <see cref="SmartRect"/> instance into a Rect object.

@@ -16,7 +16,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Animation\NoneAnimation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AutoScaleFloat.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PRF.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Colors.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Elements\DropdownSelection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Elements\ScrollableDropdownSelection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUIBase.cs" />

@@ -160,7 +160,7 @@ namespace Autumn
 
             // Text Button
             TextButton.ApplyStyle(TextAnchor.MiddleRight, FontStyle.Normal, FontSize, true,
-                new[] { Color.white, Colors.orange, Color.yellow, Color.white, Color.white, Color.white });
+                new[] { Color.white, PRF.ExtraColor.Orange, Color.yellow, Color.white, Color.white, Color.white });
             TextButton.name = "AutumnTextButton";
 
             CustomStyles = new[]

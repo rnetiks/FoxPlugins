@@ -100,7 +100,6 @@ namespace Search.KKS
         [UsedImplicitly]
         public bool AddCommand(SearchCommand action)
         {
-            Logger.LogError($"Add Command");
             if (callbacks == null || action.callback == null || IsNullOrWhiteSpace(action.command))
             {
                 return false;
