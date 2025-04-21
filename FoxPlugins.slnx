@@ -10,10 +10,10 @@
   <Folder Name="/BoneShortcut/">
     <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#" />
     <Project Path="BoneShortcut\BoneShortcut.KK\BoneShortcut.KK.csproj" Type="Classic C#" />
-    <Project Path="C:\Users\aepod\RiderProjects\FoxPlugins\BoneShortcut\BoneShortcut.shproj" />
+    <Project Path="BoneShortcut\BoneShortcut.shproj" />
   </Folder>
   <Folder Name="/ColliderSound/">
-    <Project Path="C:\Users\aepod\RiderProjects\FoxPlugins\ColliderSound\ColliderSound.shproj" />
+    <Project Path="ColliderSound\ColliderSound.shproj" />
     <Project Path="ColliderSound\ColliderSound.KKS\ColliderSound.KKS.csproj" Type="Classic C#" />
     <Project Path="ColliderSound\ColliderSound.KK\ColliderSound.KK.csproj" Type="Classic C#" />
   </Folder>
