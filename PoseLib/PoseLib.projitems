@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{6b878b06-36cb-434b-9610-01f60542991d}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>PoseLib</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)Entry.cs"/>
+        <Compile Include="$(MSBuildThisFileDirectory)TextureFactory.cs"/>
+        <Compile Include="$(MSBuildThisFileDirectory)TextureFormatHandler.cs"/>
+        <Compile Include="$(MSBuildThisFileDirectory)TextureElement.cs"/>
+    </ItemGroup>
+</Project>
