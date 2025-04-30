@@ -64,7 +64,6 @@ namespace Autumn
                 GetPixel = getPixel;
                 SetPixel = setPixel;
             }
-
         }
 
         /// <summary>
@@ -86,7 +85,6 @@ namespace Autumn
                             b = (byte)((pixel >> 16) & 0xFF);
                             a = (byte)((pixel >> 24) & 0xFF);
                         },
-
                         (data, index, r, g, b, a) =>
                         {
                             ((uint*)data)[index] = ((uint)a << 24) | ((uint)b << 16) | ((uint)g << 8) | r;
@@ -163,16 +161,13 @@ namespace Autumn
                 case TextureFormat.ETC2_RGB:
                 case TextureFormat.ETC2_RGBA1:
                 case TextureFormat.ETC2_RGBA8:
+#if KKS
                 case TextureFormat.ASTC_4x4:
                 case TextureFormat.ASTC_5x5:
                 case TextureFormat.ASTC_6x6:
                 case TextureFormat.ASTC_8x8:
                 case TextureFormat.ASTC_10x10:
                 case TextureFormat.ASTC_12x12:
-                case TextureFormat.ETC_RGB4_3DS:
-                case TextureFormat.ETC_RGBA8_3DS:
-                case TextureFormat.RG16:
-                case TextureFormat.R8:
                 case TextureFormat.ETC_RGB4Crunched:
                 case TextureFormat.ETC2_RGBA8Crunched:
                 case TextureFormat.ASTC_HDR_4x4:
@@ -181,6 +176,11 @@ namespace Autumn
                 case TextureFormat.ASTC_HDR_8x8:
                 case TextureFormat.ASTC_HDR_10x10:
                 case TextureFormat.ASTC_HDR_12x12:
+#endif
+                case TextureFormat.ETC_RGB4_3DS:
+                case TextureFormat.ETC_RGBA8_3DS:
+                case TextureFormat.RG16:
+                case TextureFormat.R8:
                 case TextureFormat.ASTC_RGBA_4x4:
                 case TextureFormat.ASTC_RGBA_5x5:
                 case TextureFormat.ASTC_RGBA_6x6:

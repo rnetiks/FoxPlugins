@@ -49,11 +49,18 @@ namespace PoseLib.KKS
 
         private void Awake()
         {
+            EnsureDirectoriesExist();
             openUIKey = Config.Bind("General", "Open Window", new KeyboardShortcut(KeyCode.N, KeyCode.RightControl));
             var width = Screen.width / 2f;
             var height = Screen.height / 1.3f;
             clientRect = new Rect(100, 100, width, height);
             LoadTextures(width, height);
+            CreateGuiStyles();
+            UpdateWindow();
+        }
+
+        private void CreateGuiStyles()
+        {
             mainWindowStyle = new GUIStyle()
             {
                 normal =
@@ -73,8 +80,14 @@ namespace PoseLib.KKS
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter
             };
+        }
 
-            UpdateWindow();
+        private static void EnsureDirectoriesExist()
+        {
+            if (!Directory.Exists("Poses"))
+                Directory.CreateDirectory("Poses");
+            if (!Directory.Exists("Fox-Textures"))
+                Directory.CreateDirectory("Fox-Textures");
         }
 
         private void Update()
@@ -85,11 +98,13 @@ namespace PoseLib.KKS
 
         private void LoadTextures(float width, float height)
         {
-            backgroundImage = TextureFactory.Load("./wb.png", path => TextureFactory.Create((int)width, (int)height)
-                .BackgroundColor(220, 220, 220, 255)
-                .Border(2, new Color32(0, 119, 255, 255))
-                .Opacity(0.7f)
-                .Save(path));
+            if (!File.Exists("./wb.png"))
+                TextureFactory.Create((int)width, (int)height)
+                    .BackgroundColor(220, 220, 220, 255)
+                    .Border(2, new Color32(0, 119, 255, 255))
+                    .Opacity(0.7f)
+                    .Save("./wb.png");
+            backgroundImage = TextureFactory.Load("./wb.png");
         }
 
         private void OnGUI()
@@ -128,11 +143,12 @@ namespace PoseLib.KKS
                 openSaveWindow = false;
                 chosenData.Clear();
             }
+
             if (GUI.Button(smartRect.MoveToEndX(smartRect, 30).SetWidth(30).SetHeight(30), "X"))
             {
                 openSaveWindow = false;
             }
-            
+
             GUI.DrawTexture(new Rect(Screen.width - 300, Screen.height - 300, 300, 300), screenshot);
 
             var lRects = new SmartRect(CenterX - 150, CenterY - 70, 300, 20);
@@ -144,34 +160,60 @@ namespace PoseLib.KKS
             if (GUI.Button(lRects, "Take Screenshot"))
             {
                 openUI = false;
-                screenshot.CaptureScreenshot();
+                screenshot.LoadScreen();
                 var min = Mathf.Min(screenshot.Width, screenshot.Height);
                 var max = Mathf.Max(screenshot.Width, screenshot.Height);
 
                 float x = 0;
                 float y = 0;
 
-                if (screenshot.Width > screenshot.Height) {
+                if (screenshot.Width > screenshot.Height)
+                {
                     x = (screenshot.Width - min) / 2;
-                } else {
+                }
+                else
+                {
                     y = (screenshot.Height - min) / 2;
                 }
+
                 screenshot.Crop(new Rect(x, y, min, min));
                 screenshot.Scale(256, 256);
                 openUI = true;
             }
 
-            if (GUI.Button(lRects.NextColumn(), "Save") && !string.IsNullOrWhiteSpace(chosenFilename))
+            if (GUI.Button(lRects.NextColumn(), "Save") && !IsEmptyOrWhitespace(chosenFilename))
             {
                 if (!Directory.Exists("Poses"))
                     Directory.CreateDirectory("Poses");
-                SaveFile("Poses/" + chosenFilename + ".png", chosenData);
+                try
+                {
+                    SaveFile("Poses/" + chosenFilename + ".png", chosenData);
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
+                }
+
                 chosenFilename = string.Empty;
                 chosenTags = string.Empty;
                 openSaveWindow = false;
                 chosenData.Clear();
                 UpdateWindow();
             }
+        }
+
+        bool IsEmptyOrWhitespace(string value)
+        {
+            if (value == null || value.Length == 0)
+                return true;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (!char.IsWhiteSpace(value[i]))
+                    return false;
+            }
+
+            return true;
         }
 
 
@@ -221,22 +263,32 @@ namespace PoseLib.KKS
                     GUI.DrawTexture(imageRect, file.Value);
                     if (imageRect.ToRect().Contains(Event.current.mousePosition))
                     {
-                        if (GUI.Button(new SmartRect(imageRect).SetWidth(Mathf.Max(imageRect.Width * 0.33333f, 50)).SetHeight(30), "Delete"))
+                        if (GUI.Button(
+                                new SmartRect(imageRect).SetWidth(Mathf.Max(imageRect.Width * 0.33333f, 50))
+                                    .SetHeight(30), "Delete"))
                         {
                             File.Delete(file.Key);
                             UpdateWindow();
                             break;
                         }
+
                         var smartRect = new SmartRect(imageRect);
                         smartRect.Width = Mathf.Max(imageRect.Width * 0.33333f, 50);
                         smartRect.Height = 30;
                         smartRect.MoveToEndY(imageRect, smartRect.Height);
                         if (GUI.Button(smartRect, "Load"))
                         {
-                            var poseData = LoadFile(file.Key);
-                            foreach (var selectedCharacter in selectedCharacters)
+                            try
                             {
-                                SetFkData(selectedCharacter, poseData);
+                                var poseData = LoadFile(file.Key);
+                                foreach (var selectedCharacter in selectedCharacters)
+                                {
+                                    SetFkData(selectedCharacter, poseData);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                Logger.LogError(e);
                             }
                         }
 
@@ -322,16 +374,25 @@ namespace PoseLib.KKS
             var files = Directory.GetFiles("Poses/", "*.png");
             var idx = 0;
             var offset = page * 10 - 10;
-            foreach (var file in files.Skip(offset))
+
+            for (int i = offset; i < files.Length; i++)
             {
+                string file = files[i];
                 if (idx++ >= 10) break;
+
                 if (searchQuery.Length > 0)
                 {
-                    if (file.ToLower().Contains(searchQuery))
-                        foundFiles.Add(file, TextureFactory.Load(file));
+                    if (file.ToLower().Contains(searchQuery.ToLower()))
+                    {
+                        Texture2D loadedTexture = TextureFactory.Load(file);
+                        foundFiles.Add(file, loadedTexture);
+                    }
                 }
                 else
-                    foundFiles.Add(file, TextureFactory.Load(file));
+                {
+                    Texture2D loadedTexture = TextureFactory.Load(file);
+                    foundFiles.Add(file, loadedTexture);
+                }
             }
         }
     }

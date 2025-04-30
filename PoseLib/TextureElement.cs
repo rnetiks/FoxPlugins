@@ -2,8 +2,6 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using PoseLib.KKS;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using TFH = Autumn.TextureFormatHandler;
 namespace Autumn
@@ -98,8 +96,10 @@ namespace Autumn
                     return _texture.EncodeToPNG();
                 case ImageType.JPEG:
                     return _texture.EncodeToJPG();
+#if KKS
                 case ImageType.TGA:
                     return _texture.EncodeToTGA();
+#endif
                 case ImageType.EXR:
                     return _texture.EncodeToEXR();
                 default:
@@ -144,8 +144,10 @@ namespace Autumn
             {
                 if (!TFH.IsFormatSupported(tex.format)) return;
                 var handler = TFH.GetHandler(tex.format);
-                var data = tex.GetRawTextureData<byte>();
-                var pData = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
+                var data = tex.GetRawTextureData();
+                GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+                var ptr = handle.AddrOfPinnedObject();
+                var pData = (byte*)ptr.ToPointer();
 
                 for (int i = 0; i < tex.width * tex.height; i += 8)
                 {
@@ -158,6 +160,7 @@ namespace Autumn
                     handler.SetPixel(pData, i + 6, r, g, b, a);
                     handler.SetPixel(pData, i + 7, r, g, b, a);
                 }
+                handle.Free();
             });
         }
 
@@ -171,8 +174,10 @@ namespace Autumn
                 if (!TFH.IsFormatSupported(tex.format)) return;
 
                 var handler = TFH.GetHandler(tex.format);
-                var data = tex.GetRawTextureData<byte>();
-                var pData = (byte*)data.m_Buffer;
+                var data = tex.GetRawTextureData();
+                GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+                var ptr = handle.AddrOfPinnedObject();
+                var pData = (byte*)ptr.ToPointer();
 
                 float rad = angle * Mathf.Deg2Rad;
                 float dirX = Mathf.Cos(rad);
@@ -203,6 +208,7 @@ namespace Autumn
                         handler.SetPixel(pData, xIndex, r, g, b, a);
                     }
                 }
+                handle.Free();
             });
         }
 
@@ -570,21 +576,17 @@ namespace Autumn
 
                 Texture2D newTex = new Texture2D(newWidth, newHeight, tex.format, false);
 
-                var srcData = tex.GetRawTextureData<uint>();
-                var dstData = newTex.GetRawTextureData<uint>();
-                uint* srcPtr = (uint*)srcData.GetUnsafePtr();
-                uint* dstPtr = (uint*)dstData.GetUnsafePtr();
-
-
-                if (tex.format != TextureFormat.RGBA32 && tex.format != TextureFormat.ARGB32)
-                {
-                    throw new ArgumentException($"The provided texture format ({tex.format}) is not supported yet.");
-                }
+                var srcData = tex.GetRawTextureData();
+                var dstData = newTex.GetRawTextureData();
+                GCHandle handleSrc = GCHandle.Alloc(srcData, GCHandleType.Pinned);
+                GCHandle handleDst = GCHandle.Alloc(dstData, GCHandleType.Pinned);
+                var srcptr = handleSrc.AddrOfPinnedObject();
+                var dstptr = handleDst.AddrOfPinnedObject();
+                byte* srcPtr = (byte*)srcptr.ToPointer();
+                byte* dstPtr = (byte*)dstptr.ToPointer();
 
 
                 uint clearColor = 0;
-
-                UnsafeUtility.MemClear(dstPtr, newWidth * newHeight * sizeof(uint));
 
                 Vector2 center = new Vector2(width / 2f, height / 2f);
                 float cosAngle = Mathf.Cos(-radians);
@@ -612,6 +614,8 @@ namespace Autumn
                 }
 
                 newTex.Apply();
+                handleDst.Free();
+                handleSrc.Free();
                 _texture = newTex;
             });
         }
@@ -968,8 +972,10 @@ namespace Autumn
                 {
                     levels = Mathf.Max(2, levels);
                     var handler = TextureFormatHandler.GetHandler(tex.format);
-                    var srcData = tex.GetRawTextureData<byte>();
-                    var pData = (byte*)srcData.GetUnsafePtr();
+                    var srcData = tex.GetRawTextureData();
+                    GCHandle handle = GCHandle.Alloc(srcData, GCHandleType.Pinned);
+                    var ptr = handle.AddrOfPinnedObject();
+                    var pData = (byte*)ptr.ToPointer();
 
                     float scaleFactor = 255f / (levels - 1);
                     for (int x = 0; x < tex.width * tex.height; x += 4)
@@ -998,6 +1004,7 @@ namespace Autumn
                         b = (byte)(Mathf.Round(b / scaleFactor) * scaleFactor);
                         handler.SetPixel(pData, x + 3, r, g, b, a);
                     }
+                    handle.Free();
                 }
                 else
                 {

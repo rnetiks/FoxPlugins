@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Unity.Collections.LowLevel.Unsafe;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Autumn
@@ -43,6 +43,12 @@ namespace Autumn
             return new TextureElement(data);
         }
 
+        /// <summary>
+        /// Loads a TextureElement from the specified file path.
+        /// </summary>
+        /// <param name="filepath">The file path of the texture to load.</param>
+        /// <returns>A TextureElement instance representing the loaded texture.</returns>
+        /// <exception cref="FileNotFoundException">Thrown if the specified file does not exist.</exception>
         public static TextureElement Load(string filepath)
         {
             if (!File.Exists(filepath))
@@ -77,19 +83,33 @@ namespace Autumn
         /// <summary>
         /// Creates a new TextureElement with a checkerboard pattern.
         /// </summary>
-        public static TextureElement Checkerboard(int width, int height, Color color1, Color color2, int tileSize = 8)
+        public static unsafe TextureElement Checkerboard(int width, int height, Color32 color1, Color32 color2,
+            int tileSize = 8)
         {
             var element = Create(width, height);
             return element.AddOperation(tex =>
             {
-                for (int x = 0; x < width; x++)
+                if (!TextureFormatHandler.IsFormatSupported(tex.format)) return;
+                var handler = TextureFormatHandler.GetHandler(tex.format);
+                var rawTextureData = tex.GetRawTextureData();
+                GCHandle handle = GCHandle.Alloc(rawTextureData, GCHandleType.Pinned);
+                var ptr = handle.AddrOfPinnedObject();
+                var pData = (byte*)ptr.ToPointer();
+                for (int i = 0; i < width * height; i++)
                 {
-                    for (int y = 0; y < height; y++)
+                    var row = i / width;
+                    var col = i % width;
+                    bool isColor = (col / tileSize + row / tileSize) % 2 == 0;
+                    if (isColor)
                     {
-                        bool isColor1 = ((x / tileSize) + (y / tileSize)) % 2 == 0;
-                        tex.SetPixel(x, y, isColor1 ? color1 : color2);
+                        handler.SetPixel(pData, i, color1.r, color1.g, color1.b, color1.a);
+                    }
+                    else
+                    {
+                        handler.SetPixel(pData, i, color2.r, color2.g, color2.b, color2.a);
                     }
                 }
+                handle.Free();
             });
         }
 
@@ -149,22 +169,26 @@ namespace Autumn
                 filterMode = source.filterMode,
                 wrapMode = source.wrapMode
             };
-            
-            var getHandler = TextureFormatHandler.GetHandler(source.format);
-            var setHandler = TextureFormatHandler.GetHandler(result.format);
-            var getTextureData = source.GetRawTextureData<byte>();
-            var setTextureData = result.GetRawTextureData<byte>();
-            var pGet = (byte*)getTextureData.GetUnsafePtr();
-            var pSet = (byte*)setTextureData.GetUnsafePtr();
+
+            var handler = TextureFormatHandler.GetHandler(source.format);
+            var getTextureData = source.GetRawTextureData();
+            var setTextureData = result.GetRawTextureData();
+            GCHandle setHandle = GCHandle.Alloc(setTextureData, GCHandleType.Pinned);
+            GCHandle getHandle = GCHandle.Alloc(getTextureData, GCHandleType.Pinned);
+            var setPtr = setHandle.AddrOfPinnedObject();
+            var getPtr = getHandle.AddrOfPinnedObject();
+            var pSet = (byte*)setPtr.ToPointer();
+            var pGet = (byte*)getPtr.ToPointer();
 
             for (int idx = 0; idx < result.width * result.height; idx++)
             {
-                getHandler.GetPixel(pGet, idx, out byte r, out byte g, out byte b, out byte a);
-                setHandler.SetPixel(pSet, idx, r, g, b, a);
+                handler.GetPixel(pGet, idx, out byte r, out byte g, out byte b, out byte a);
+                handler.SetPixel(pSet, idx, r, g, b, a);
             }
-            
-            result.Apply();
 
+            result.Apply();
+            setHandle.Free();
+            getHandle.Free();
             return result;
         }
 
