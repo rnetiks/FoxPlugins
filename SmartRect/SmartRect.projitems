@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<PropertyGroup>
-		<MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
-		<HasSharedItems>true</HasSharedItems>
-		<SharedGUID>{BF5D1737-CF4F-494C-A8D6-4BFA7107A89D}</SharedGUID>
-	</PropertyGroup>
-	<PropertyGroup Label="Configuration">
-		<Import_RootNamespace>SmartRect</Import_RootNamespace>
-	</PropertyGroup>
-	<ItemGroup>        <Compile Include="$(MSBuildThisFileDirectory)Bezier.cs" />
-<Compile Include="$(MSBuildThisFileDirectory)SmartRect.cs" />
-</ItemGroup>
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{BF5D1737-CF4F-494C-A8D6-4BFA7107A89D}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>SmartRect</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)SmartRect.cs"/>
+    </ItemGroup>
 </Project>

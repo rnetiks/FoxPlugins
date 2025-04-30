@@ -11,23 +11,21 @@ namespace SmartRectV0
         // Default offset values
         public static float DefaultOffsetX => 20;
         public static float DefaultOffsetY => 5f;
-
+        
+        // Default values for this instance
         public readonly float DefaultHeight;
         public readonly float DefaultWidth;
         public readonly float DefaultX;
         public readonly float DefaultY;
-
+        
+        // Core rect and offset properties
         private Rect _source;
         private readonly float _offsetX;
         private readonly float _offsetY;
         private float _moveX;
         private float _moveY;
-
-        private Rect _animateFrom;
-        private Rect _animateTo;
-        private float _animationDuration;
-        private float _elapsedTime;
-
+        
+        // Property getters and setters
         public float Height
         {
             get => _source.height;
@@ -63,10 +61,13 @@ namespace SmartRectV0
         public float TotalWidth => Width + _offsetX;
         public float TotalHeight => Height + _offsetY;
 
+        // Accessor for internal rectangle
+        public Rect Rect => _source;
+
         /// <summary>
         /// Initializes a new instance of the SmartRect class using a specified rectangle.
         /// </summary>
-        /// <param name="src">The default <seealso cref="Rect"/> to use.</param>
+        /// <param name="src">The default <see cref="Rect"/> to use.</param>
         public SmartRect(Rect src) : this(src, DefaultOffsetX, DefaultOffsetY)
         {
         }
@@ -74,7 +75,7 @@ namespace SmartRectV0
         /// <summary>
         /// Initializes a new instance of the SmartRect class using a specified rectangle and offsets.
         /// </summary>
-        /// <param name="src">The default <seealso cref="Rect"/> to use.</param>
+        /// <param name="src">The default <see cref="Rect"/> to use.</param>
         /// <param name="offX">The offset in pixels towards the X coordinate.</param>
         /// <param name="offY">The offset in pixels towards the Y coordinate.</param>
         public SmartRect(Rect src, float offX, float offY)
@@ -114,6 +115,15 @@ namespace SmartRectV0
         public SmartRect(float x, float y, float width, float height, float offX, float offY) 
             : this(new Rect(x, y, width, height), offX, offY)
         {
+        }
+
+        /// <summary>
+        /// Creates a new animation controller for this SmartRect.
+        /// </summary>
+        /// <returns>A new animation controller for this SmartRect.</returns>
+        public SmartRectAnimator CreateAnimator()
+        {
+            return new SmartRectAnimator(this);
         }
 
         /// <summary>
@@ -232,7 +242,7 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Moves the <seealso cref="SmartRect"/> by it's own height.
+        /// Moves the <see cref="SmartRect"/> by it's own height.
         /// </summary>
         public SmartRect MoveY()
         {
@@ -241,10 +251,10 @@ namespace SmartRectV0
         }
 
         /// <summary>
-        /// Moves the <seealso cref="SmartRect"/> by a specified offset.
+        /// Moves the <see cref="SmartRect"/> by a specified offset.
         /// </summary>
-        /// <param name="offset">The amount to move the <seealso cref="SmartRect"/> by.</param>
-        /// <param name="considerHeight">If true will also move the <seealso cref="SmartRect"/> by its own height, else only by <paramref name="offset"/></param>
+        /// <param name="offset">The amount to move the <see cref="SmartRect"/> by.</param>
+        /// <param name="considerHeight">If true will also move the <see cref="SmartRect"/> by its own height, else only by <paramref name="offset"/></param>
         public SmartRect MoveY(float offset, bool considerHeight = false)
         {
             _source.y += offset;
@@ -296,87 +306,6 @@ namespace SmartRectV0
         public SmartRect HeightToEnd(float y)
         {
             _source.height = y - _source.y;
-            return this;
-        }
-
-        /// <summary>
-        /// Updates the animation of the rectangle using a Bézier curve.
-        /// </summary>
-        /// <param name="bezier">The <see cref="BezierTemplate"/> to use for the animation curve.</param>
-        /// <returns>
-        /// A boolean indicating whether the animation is still in progress.
-        /// Returns <c>true</c> if the animation is ongoing, <c>false</c> if the animation has completed.
-        /// </returns>
-        public bool UpdateAnimationIndependent(BezierTemplate bezier)
-        {
-            if (_animationDuration == 0)
-                return false;
-
-            var xDiff = _animateTo.x - _source.x;
-            var yDiff = _animateTo.y - _source.y;
-            var widthDiff = _animateTo.width - _source.width;
-            var heightDiff = _animateTo.height - _source.height;
-
-            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && 
-                Math.Abs(widthDiff) <= 0.01f && Math.Abs(heightDiff) <= 0.01f)
-            {
-                _source = _animateTo;
-                _animationDuration = 0;
-                _elapsedTime = 0;
-                return false;
-            }
-
-            // Expecting to be called 50 times per second
-            var progress = Mathf.Clamp01(_elapsedTime / _animationDuration);
-            var f = Beziers.Vector3(bezier, progress).y;
-
-            _source.x = Mathf.Ceil(f * (_animateTo.x - _animateFrom.x) + _animateFrom.x);
-            _source.y = Mathf.Ceil(f * (_animateTo.y - _animateFrom.y) + _animateFrom.y);
-            _source.width = Mathf.Ceil(f * (_animateTo.width - _animateFrom.width) + _animateFrom.width);
-            _source.height = Mathf.Ceil(f * (_animateTo.height - _animateFrom.height) + _animateFrom.height);
-
-            _elapsedTime += Time.deltaTime;
-
-            var updateAnimation = progress < 1f;
-            if (!updateAnimation)
-            {
-                _source = _animateTo;
-                _elapsedTime = 0;
-                _animationDuration = 0;
-            }
-
-            return updateAnimation;
-        }
-
-        /// <summary>
-        /// Sets the starting and target rectangles, along with the duration for an animation.
-        /// </summary>
-        /// <param name="from">The starting <see cref="Rect"/> of the animation.</param>
-        /// <param name="to">The target <see cref="Rect"/> to animate to.</param>
-        /// <param name="duration">The duration of the animation in seconds.</param>
-        /// <returns>The current instance of <see cref="SmartRect"/> to allow method chaining.</returns>
-        public SmartRect SetAnimation(Rect from, Rect to, float duration)
-        {
-            _elapsedTime = 0f;
-            _animateFrom = from;
-            _animateTo = to;
-            _source = from;
-            _animationDuration = duration;
-            return this;
-        }
-
-        /// <summary>
-        /// Sets the target rectangle and duration for an animation.
-        /// </summary>
-        /// <param name="to">The target <see cref="Rect"/> to animate to.</param>
-        /// <param name="duration">The duration of the animation in seconds.</param>
-        /// <returns>The current instance of <see cref="SmartRect"/> to allow method chaining.</returns>
-        public SmartRect SetAnimateTo(Rect to, float duration)
-        {
-            _elapsedTime = 0f;
-            _animateFrom = _source;
-            _animateTo = to;
-            _animationDuration = duration;
             return this;
         }
 
@@ -471,6 +400,15 @@ namespace SmartRectV0
         }
 
         /// <summary>
+        /// Updates the internal rectangle with a new one.
+        /// </summary>
+        /// <param name="rect">The new rectangle to use.</param>
+        internal void UpdateRect(Rect rect)
+        {
+            _source = rect;
+        }
+
+        /// <summary>
         /// Defines an implicit conversion from a <see cref="SmartRect"/> instance to a UnityEngine.Rect instance.
         /// </summary>
         /// <param name="r">The <see cref="SmartRect"/> instance to convert.</param>
@@ -479,5 +417,249 @@ namespace SmartRectV0
         {
             return r._source;
         }
+    }
+
+    /// <summary>
+    /// Provides animation capabilities for SmartRect objects.
+    /// </summary>
+    public class SmartRectAnimator
+    {
+        private readonly SmartRect _target;
+        private Rect _animateFrom;
+        private Rect _animateTo;
+        private float _animationDuration;
+        private float _elapsedTime;
+        
+        /// <summary>
+        /// Gets whether the animator is currently animating.
+        /// </summary>
+        public bool IsAnimating => _animationDuration > 0;
+
+        /// <summary>
+        /// Initializes a new instance of the SmartRectAnimator class.
+        /// </summary>
+        /// <param name="target">The SmartRect to animate.</param>
+        public SmartRectAnimator(SmartRect target)
+        {
+            _target = target;
+        }
+
+        /// <summary>
+        /// Sets the starting and target rectangles, along with the duration for an animation.
+        /// </summary>
+        /// <param name="from">The starting <see cref="Rect"/> of the animation.</param>
+        /// <param name="to">The target <see cref="Rect"/> to animate to.</param>
+        /// <param name="duration">The duration of the animation in seconds.</param>
+        /// <returns>The current instance to allow method chaining.</returns>
+        public SmartRectAnimator SetAnimation(Rect from, Rect to, float duration)
+        {
+            _elapsedTime = 0f;
+            _animateFrom = from;
+            _animateTo = to;
+            _target.UpdateRect(from);
+            _animationDuration = duration;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the target rectangle and duration for an animation, using the current rectangle as the starting point.
+        /// </summary>
+        /// <param name="to">The target <see cref="Rect"/> to animate to.</param>
+        /// <param name="duration">The duration of the animation in seconds.</param>
+        /// <returns>The current instance to allow method chaining.</returns>
+        public SmartRectAnimator AnimateTo(Rect to, float duration)
+        {
+            _elapsedTime = 0f;
+            _animateFrom = _target.Rect;
+            _animateTo = to;
+            _animationDuration = duration;
+            return this;
+        }
+
+        /// <summary>
+        /// Updates the animation using a Bézier curve.
+        /// </summary>
+        /// <param name="bezier">The <see cref="BezierTemplate"/> to use for the animation curve.</param>
+        /// <returns>
+        /// A boolean indicating whether the animation is still in progress.
+        /// Returns <c>true</c> if the animation is ongoing, <c>false</c> if the animation has completed.
+        /// </returns>
+        public bool Update(BezierTemplate bezier)
+        {
+            if (_animationDuration <= 0)
+                return false;
+
+            var currentRect = _target.Rect;
+            var xDiff = _animateTo.x - currentRect.x;
+            var yDiff = _animateTo.y - currentRect.y;
+            var widthDiff = _animateTo.width - currentRect.width;
+            var heightDiff = _animateTo.height - currentRect.height;
+
+            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && 
+                Math.Abs(widthDiff) <= 0.01f && Math.Abs(heightDiff) <= 0.01f)
+            {
+                _target.UpdateRect(_animateTo);
+                _animationDuration = 0;
+                _elapsedTime = 0;
+                return false;
+            }
+
+            // Expecting to be called 50 times per second
+            var progress = Mathf.Clamp01(_elapsedTime / _animationDuration);
+            var f = Beziers.Vector3(bezier, progress).y;
+
+            var newRect = new Rect
+            {
+                x = Mathf.Ceil(f * (_animateTo.x - _animateFrom.x) + _animateFrom.x),
+                y = Mathf.Ceil(f * (_animateTo.y - _animateFrom.y) + _animateFrom.y),
+                width = Mathf.Ceil(f * (_animateTo.width - _animateFrom.width) + _animateFrom.width),
+                height = Mathf.Ceil(f * (_animateTo.height - _animateFrom.height) + _animateFrom.height)
+            };
+
+            _target.UpdateRect(newRect);
+            _elapsedTime += Time.deltaTime;
+
+            var updateAnimation = progress < 1f;
+            if (!updateAnimation)
+            {
+                _target.UpdateRect(_animateTo);
+                _elapsedTime = 0;
+                _animationDuration = 0;
+            }
+
+            return updateAnimation;
+        }
+    }
+
+    /// <summary>
+    /// Represents a cubic Bezier curve template with start, end, and two control points.
+    /// </summary>
+    public readonly struct BezierTemplate
+    {
+        /// <summary>
+        /// The starting point of the Bezier curve.
+        /// </summary>
+        public readonly Vector3 Start;
+        
+        /// <summary>
+        /// The ending point of the Bezier curve.
+        /// </summary>
+        public readonly Vector3 End;
+        
+        /// <summary>
+        /// The first control point that influences the curve's shape.
+        /// </summary>
+        public readonly Vector3 Control1;
+        
+        /// <summary>
+        /// The second control point that influences the curve's shape.
+        /// </summary>
+        public readonly Vector3 Control2;
+
+        /// <summary>
+        /// Creates a new Bezier template with the specified points.
+        /// </summary>
+        /// <param name="start">The starting point.</param>
+        /// <param name="end">The ending point.</param>
+        /// <param name="control1">The first control point.</param>
+        /// <param name="control2">The second control point.</param>
+        public BezierTemplate(Vector3 start, Vector3 end, Vector3 control1, Vector3 control2)
+        {
+            Start = start;
+            End = end;
+            Control1 = control1;
+            Control2 = control2;
+        }
+    }
+
+    /// <summary>
+    /// Provides utility methods and predefined templates for Bezier curve calculations.
+    /// </summary>
+    public static class Beziers
+    {
+        /// <summary>
+        /// Calculates a point on a cubic Bezier curve at the specified normalized time.
+        /// </summary>
+        /// <param name="template">The Bezier curve template to use.</param>
+        /// <param name="t">Normalized time parameter (0.0 to 1.0).</param>
+        /// <returns>The interpolated point on the curve.</returns>
+        public static Vector3 Vector3(BezierTemplate template, float t)
+        {
+            return Vector3(template.Start, template.Control1, template.Control2, template.End, t);
+        }
+        
+        /// <summary>
+        /// Calculates a point on a cubic Bezier curve with the given control points at the specified normalized time.
+        /// </summary>
+        /// <param name="p0">The starting point.</param>
+        /// <param name="p1">The first control point.</param>
+        /// <param name="p2">The second control point.</param>
+        /// <param name="p3">The ending point.</param>
+        /// <param name="t">Normalized time parameter (0.0 to 1.0).</param>
+        /// <returns>The interpolated point on the curve.</returns>
+        private static Vector3 Vector3(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        {
+            t = Mathf.Clamp01(t);
+            float oneMinusT = 1f - t;
+            float oneMinusTSquared = oneMinusT * oneMinusT;
+            float oneMinusTCubed = oneMinusTSquared * oneMinusT;
+            float tSquared = t * t;
+            float tCubed = tSquared * t;
+            
+            return oneMinusTCubed * p0 + 
+                   3f * oneMinusTSquared * t * p1 + 
+                   3f * oneMinusT * tSquared * p2 + 
+                   tCubed * p3;
+        }
+
+        /// <summary>
+        /// A linear Bezier curve template with a constant rate of change.
+        /// </summary>
+        public static BezierTemplate LinearTemplate { get; } = new BezierTemplate(
+            Vector2.zero,
+            Vector2.one,
+            Vector2.zero,
+            Vector2.one
+        );
+
+        /// <summary>
+        /// A general-purpose ease curve with a slight initial acceleration.
+        /// </summary>
+        public static BezierTemplate EaseTemplate { get; } = new BezierTemplate(
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.25f, 0.1f),
+            new Vector2(0.25f, 1f)
+        );
+
+        /// <summary>
+        /// An ease-in curve that starts slow and accelerates.
+        /// </summary>
+        public static BezierTemplate EaseInTemplate { get; } = new BezierTemplate(
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.42f, 0f),
+            Vector2.one
+        );
+
+        /// <summary>
+        /// An ease-out curve that starts fast and decelerates.
+        /// </summary>
+        public static BezierTemplate EaseOutTemplate { get; } = new BezierTemplate(
+            Vector2.zero,
+            Vector2.one,
+            Vector2.zero,
+            new Vector2(0.58f, 1f)
+        );
+
+        /// <summary>
+        /// An ease-in-out curve that accelerates in the middle and decelerates at the end.
+        /// </summary>
+        public static BezierTemplate EaseInOutTemplate { get; } = new BezierTemplate(
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.42f, 0),
+            new Vector2(0.58f, 1)
+        );
     }
 }

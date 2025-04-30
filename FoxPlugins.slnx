@@ -35,11 +35,15 @@
     <Project Path="LHC.KKS\LHC.KKS.csproj" Type="Classic C#" />
   </Folder>
   <Folder Name="/PoseLib/">
-    <Project Path="PoseLib\PoseLib.shproj">
+    <Project Path="PoseLib.KK\PoseLib.KK.csproj" Type="Classic C#">
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="PoseLib\PoseLib.KKS\PoseLib.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="PoseLib\PoseLib.shproj">
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>

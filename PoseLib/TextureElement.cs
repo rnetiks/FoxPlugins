@@ -1,11 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using PoseLib.KKS;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using TFH = Autumn.TextureFormatHandler;
-
 namespace Autumn
 {
     /// <summary>
@@ -34,6 +34,7 @@ namespace Autumn
         public TextureElement(int width, int height, TextureFormat format = TextureFormat.RGBA32)
         {
             _texture = new Texture2D(width, height, format, false);
+            
         }
 
         /// <summary>
@@ -82,24 +83,53 @@ namespace Autumn
         {
             Apply();
 
+            File.WriteAllBytes(filepath, GetBytes(imageType));
+
+            return this;
+        }
+        
+        public byte[] GetBytes(ImageType imageType = ImageType.PNG)
+        {
+            Apply();
+
             switch (imageType)
             {
                 case ImageType.PNG:
-                    File.WriteAllBytes(filepath, _texture.EncodeToPNG());
-                    break;
+                    return _texture.EncodeToPNG();
                 case ImageType.JPEG:
-                    File.WriteAllBytes(filepath, _texture.EncodeToJPG());
-                    break;
+                    return _texture.EncodeToJPG();
                 case ImageType.TGA:
-                    File.WriteAllBytes(filepath, _texture.EncodeToTGA());
-                    break;
+                    return _texture.EncodeToTGA();
                 case ImageType.EXR:
-                    File.WriteAllBytes(filepath, _texture.EncodeToEXR());
-                    break;
+                    return _texture.EncodeToEXR();
                 default:
                     throw new ArgumentOutOfRangeException(nameof(imageType), imageType, null);
             }
+        }
+        
+        public Texture2D LoadScreen()
+        {
+            RenderTexture currentActiveRT = RenderTexture.active;
+        
+            RenderTexture renderTexture = RenderTexture.GetTemporary(Screen.width, Screen.height, 24);
+        
+            Camera.main.targetTexture = renderTexture;
+        
+            Camera.main.Render();
+        
+            RenderTexture.active = renderTexture;
+        
+            Texture2D screenshot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            screenshot.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0, false);
+            screenshot.Apply();
+        
+            Camera.main.targetTexture = null;
+            RenderTexture.active = currentActiveRT;
+        
+            RenderTexture.ReleaseTemporary(renderTexture);
 
+            _texture = screenshot;
+        
             return this;
         }
 
@@ -115,7 +145,6 @@ namespace Autumn
                 if (!TFH.IsFormatSupported(tex.format)) return;
                 var handler = TFH.GetHandler(tex.format);
                 var data = tex.GetRawTextureData<byte>();
-                // var pData = (byte*)data.m_Buffer;
                 var pData = (byte*)NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(data);
 
                 for (int i = 0; i < tex.width * tex.height; i += 8)
@@ -504,14 +533,7 @@ namespace Autumn
 
                 FilterMode originalFilterMode = tex.filterMode;
                 tex.filterMode = filterMode;
-
                 
-                Entry._logger.LogError($"Width: {newWidth}, Height: {newHeight}, Aspect: {aspect}");
-
-                float scaleX = (float)newWidth / tex.width;
-                float scaleY = (float)newHeight / tex.height;
-
-
                 for (int x = 0; x < newWidth; x++)
                 {
                     for (int y = 0; y < newHeight; y++)

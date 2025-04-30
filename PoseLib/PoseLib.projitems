@@ -10,6 +10,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="$(MSBuildThisFileDirectory)Entry.cs"/>
+    <Compile Include="$(MSBuildThisFileDirectory)FileHandler.cs" />
         <Compile Include="$(MSBuildThisFileDirectory)TextureFactory.cs"/>
         <Compile Include="$(MSBuildThisFileDirectory)TextureFormatHandler.cs"/>
         <Compile Include="$(MSBuildThisFileDirectory)TextureElement.cs"/>
