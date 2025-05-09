@@ -41,19 +41,12 @@ namespace Search.KKS
 			Callback?.Invoke();
 		}
 
-		public bool Equals(SearchCommand other)
-		{
-			return Name == other.Name && Description == other.Description && Equals(Callback, other.Callback);
-		}
-
 		public bool Equals(ISearchCommand other)
 		{
-			throw new NotImplementedException();
-		}
-
-		public override bool Equals(object obj)
-		{
-			return obj is SearchCommand other && Equals(other);
+			return other is SearchCommand searchCommand && 
+			       other.Name.Equals(Name) &&
+			       other.Description.Equals(Description) &&
+			       Callback == searchCommand.Callback;
 		}
 
 		public override int GetHashCode()

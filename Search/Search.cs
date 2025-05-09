@@ -90,7 +90,7 @@ namespace Search.KKS
 			_searchText = GUILayout.TextField(_searchText);
 			_scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
 
-			var collection = Instance.commands.Values;
+			var collection = commands.Values;
 
 			foreach (var command in collection.Where(
 						 command => command.Name.ToLower().Contains(_searchText.ToLower()))
