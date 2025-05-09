@@ -1,123 +1,165 @@
-using System.Collections.Generic;
-using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Search.KKS
 {
-    [BepInPlugin(GUID, "Search", "1.0.0")]
-    public partial class Search : BaseUnityPlugin
-    {
-        const string GUID = "org.fox.search";
-        private List<SearchCommand> callbacks;
-        private ConfigEntry<KeyboardShortcut> toggleUI;
-        private bool showUI;
-        public static Search Instance;
+	[BepInPlugin(GUID, "Search", "1.0.0")]
+	public partial class Search : BaseUnityPlugin
+	{
+		const string GUID = "org.fox.search";
+		//Todo Not thread safe
+		private Dictionary<object, ISearchCommand> commands;
+		private ConfigEntry<KeyboardShortcut> toggleUI;
 
-        private void Awake()
-        {
-            Instance = this;
-            toggleUI = Config.Bind("General", "Toggle UI", new KeyboardShortcut(KeyCode.None));
-            callbacks = new List<SearchCommand>();
-        }
+		private bool showUI;
 
+		public static Search Instance;
 
-        private Rect _windowRect;
-        private Vector2 _scrollPosition;
-        private string _searchText;
+		private void Awake()
+		{
+			Instance = this;
+			toggleUI = Config.Bind("General", "Toggle UI", new KeyboardShortcut(KeyCode.None));
+			commands = new Dictionary<object, ISearchCommand>();
+			BepinAwake();
+		}
 
-        private void Update()
-        {
-            var height = (float)(Screen.height * 0.3);
-            var width = (float)(Screen.width * 0.3);
-            var mousePos = Event.current.mousePosition;
-            if (showUI && !_windowRect.Contains(mousePos))
-            {
-                GUI.FocusControl(null);
-                GUI.UnfocusWindow();
-                showUI = false;
-                return;
-            }
+		private Rect _windowRect;
+		private Vector2 _scrollPosition;
+		private string _searchText;
+		private static int _tab;
 
-            if (toggleUI.Value.IsDown() && !showUI)
-            {
-                _searchText = string.Empty;
-                _windowRect = new Rect(mousePos.x - width / 2, mousePos.y - height / 2, width, height);
-                showUI = true;
-            }
-        }
+		private void Update()
+		{
+			var height = (float)(Screen.height * 0.3);
+			var width = (float)(Screen.width * 0.3);
 
-        private void OnGUI()
-        {
-            if (!showUI)
-                return;
+			if (Event.current?.mousePosition == null)
+			{
+				return;
+			}
 
-            if (_windowRect.Contains(Event.current.mousePosition))
-            {
-                Input.ResetInputAxes();
-            }
+			var mousePos = Event.current.mousePosition;
+			if (showUI && !_windowRect.Contains(mousePos))
+			{
+				GUI.FocusControl(null);
+				GUI.UnfocusWindow();
+				showUI = false;
+				return;
+			}
 
-            _windowRect = GUILayout.Window(54098, _windowRect, WindowFunc, "Search");
-        }
+			if (toggleUI.Value.IsDown() && !showUI)
+			{
+				_searchText = string.Empty;
+				_windowRect = new Rect(mousePos.x - width / 2, mousePos.y - height / 2, width, height);
+				showUI = true;
+			}
+		}
 
-        bool IsNullOrWhiteSpace(string value)
-        {
-            return string.IsNullOrEmpty(value) || value.All(char.IsWhiteSpace);
-        }
+		private void OnGUI()
+		{
+			if (!showUI)
+			{
+				return;
+			}
 
+			if (_windowRect.Contains(Event.current.mousePosition))
+			{
+				Input.ResetInputAxes();
+			}
 
-        private void WindowFunc(int id)
-        {
-            _searchText = GUILayout.TextField(_searchText);
-            _scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
-            foreach (var command in callbacks.Where(
-                         command => command.command.ToLower().Contains(_searchText.ToLower())))
-            {
-                GUILayout.BeginHorizontal();
+			_windowRect = GUILayout.Window(54098, _windowRect, WindowFunc, "Search");
+		}
 
-                var text = !IsNullOrWhiteSpace(command.description)
-                    ? $"{command.command}: {command.description}"
-                    : $"{command.command}";
+		bool IsNullOrWhiteSpace(string value)
+		{
+			return string.IsNullOrEmpty(value) || value.All(char.IsWhiteSpace);
+		}
 
-                if (GUILayout.Button(text, GUILayout.ExpandWidth(true)))
-                {
-                    command.callback();
-                    showUI = false;
-                    GUILayout.EndHorizontal();
-                    GUILayout.EndScrollView();
-                    return;
-                }
+		private void WindowFunc(int id)
+		{
+			_tab = GUILayout.Toolbar(_tab, new[]
+			{
+				"Commands",
+				"BepInEx",
+			});
 
-                GUILayout.EndHorizontal();
-            }
+			_searchText = GUILayout.TextField(_searchText);
+			_scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
 
-            GUILayout.EndScrollView();
-            GUI.DragWindow();
-        }
+			var collection = Instance.commands.Values;
 
-        [UsedImplicitly]
-        public bool AddCommand(SearchCommand action)
-        {
-            if (callbacks == null || action.callback == null || IsNullOrWhiteSpace(action.command))
-            {
-                return false;
-            }
+			foreach (var command in collection.Where(
+						 command => command.Name.ToLower().Contains(_searchText.ToLower()))
+						 .OrderBy(d => d.Name))
+			{
+				if (_tab == 0 && !(command is SearchCommand))
+				{
+					continue;
+				}
 
-            if (callbacks.Any(e => e.command == action.command))
-                return false;
+				if (command is BepInExCommand hotkeyInfo)
+				{
+					if (hotkeyInfo.FramesSinceHit > Application.targetFrameRate)
+					{
+						continue;
+					}
+				}
 
-            callbacks.Add(action);
-            return true;
-        }
+				GUILayout.BeginHorizontal();
 
-        [UsedImplicitly]
-        public bool RemoveCommand(SearchCommand action)
-        {
-            if (callbacks == null || action.callback == null)
-                return false;
-            return callbacks.Any(e => e.command == action.command) && callbacks.Remove(action);
-        }
-    }
+				var text = !IsNullOrWhiteSpace(command.Description)
+					? $"{command.Name}: {command.Description}"
+					: $"{command.Name}";
+
+				if (GUILayout.Button(text, GUILayout.ExpandWidth(true)))
+				{
+					command.Execute();
+					showUI = false;
+					GUILayout.EndHorizontal();
+					GUILayout.EndScrollView();
+					return;
+				}
+
+				GUILayout.EndHorizontal();
+			}
+
+			GUILayout.EndScrollView();
+			GUI.DragWindow();
+		}
+
+		[UsedImplicitly]
+		public bool AddCommand(ISearchCommand action)
+		{
+			if (commands == null)
+			{
+				return false;
+			}
+
+			var hash = action.GetHashCode();
+
+			if (commands.ContainsKey(hash))
+			{
+				return false;
+			}
+
+			commands[hash] = action;
+			return true;
+		}
+
+		[UsedImplicitly]
+		public bool RemoveCommand(ISearchCommand action)
+		{
+			if (commands == null)
+			{
+				return false;
+			}
+
+			var hash = action.GetHashCode();
+			return commands.Remove(hash);
+		}
+	}
 }
