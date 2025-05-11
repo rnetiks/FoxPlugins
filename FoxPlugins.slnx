@@ -22,10 +22,6 @@
     <Project Path="KoiUpdater.KKS\KoiUpdater.KKS.csproj" Type="Classic C#" />
     <Project Path="KoiUpdater.Shared\KoiUpdater.Shared.shproj" />
   </Folder>
-  <Folder Name="/LHC/">
-    <Project Path="LHC.Core\LHC.Core.shproj" />
-    <Project Path="LHC.KKS\LHC.KKS.csproj" Type="Classic C#" />
-  </Folder>
   <Folder Name="/PoseLib/">
     <Project Path="PoseLib.KK\PoseLib.KK.csproj" Type="Classic C#">
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
@@ -54,7 +50,6 @@
     <Project Path="SmartRect\SmartRect.KK\SmartRect.KK.csproj" Type="Classic C#" />
     <Project Path="SmartRect\SmartRect.shproj" />
   </Folder>
-  <Project Path="NonKoiTests\NonKoiTests.csproj" Type="Classic C#" />
   <Project Path="TexFac.Universal\TexFac.Universal.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
