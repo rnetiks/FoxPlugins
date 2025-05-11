@@ -1,10 +1,10 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
-using Unity.Collections.LowLevel.Unsafe;
+using System.IO;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace Autumn
+namespace TexFac.Universal
 {
     /// <summary>
     /// TextureElement represents a texture with its associated operations.
@@ -12,9 +12,14 @@ namespace Autumn
     /// </summary>
     public class TextureElement
     {
-        private Texture2D _texture;
+        internal Texture2D _texture;
         private bool _isDirty = false;
         private List<Action<Texture2D>> _pendingOperations = new List<Action<Texture2D>>();
+
+        public static implicit operator Texture2D(TextureElement r)
+        {
+            return r.GetTexture();
+        }
 
         public int Width => _texture.width;
         public int Height => _texture.height;
@@ -27,6 +32,7 @@ namespace Autumn
         public TextureElement(int width, int height, TextureFormat format = TextureFormat.RGBA32)
         {
             _texture = new Texture2D(width, height, format, false);
+            
         }
 
         /// <summary>
@@ -71,37 +77,59 @@ namespace Autumn
         /// <summary>
         /// Saves the texture to a file.
         /// </summary>
-        public TextureElement Save(string filepath)
+        public TextureElement Save(string filepath, ImageType imageType = ImageType.PNG)
         {
             Apply();
 
-            if (!Directory.Exists("AutumnTextures"))
-                Directory.CreateDirectory("AutumnTextures");
+            File.WriteAllBytes(filepath, GetBytes(imageType));
 
-            File.WriteAllBytes(Path.Combine("AutumnTextures", filepath), _texture.EncodeToPNG());
+            return this;
+        }
+        
+        public byte[] GetBytes(ImageType imageType = ImageType.PNG)
+        {
+            Apply();
+
+            switch (imageType)
+            {
+                case ImageType.PNG:
+                    return _texture.EncodeToPNG();
+                case ImageType.JPEG:
+                    return _texture.EncodeToJPG();
+                case ImageType.EXR:
+                    return _texture.EncodeToEXR();
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(imageType), imageType, null);
+            }
+        }
+        
+        public Texture2D LoadScreen()
+        {
+            RenderTexture currentActiveRT = RenderTexture.active;
+        
+            RenderTexture renderTexture = RenderTexture.GetTemporary(Screen.width, Screen.height, 24);
+        
+            Camera.main.targetTexture = renderTexture;
+        
+            Camera.main.Render();
+        
+            RenderTexture.active = renderTexture;
+        
+            Texture2D screenshot = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            screenshot.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0, false);
+            screenshot.Apply();
+        
+            Camera.main.targetTexture = null;
+            RenderTexture.active = currentActiveRT;
+        
+            RenderTexture.ReleaseTemporary(renderTexture);
+
+            _texture = screenshot;
+        
             return this;
         }
 
         #region Styling Properties
-
-        /// <summary>
-        /// Sets the color of all pixels in the texture.
-        /// </summary>
-        public TextureElement BackgroundColor(Color color)
-        {
-            return AddOperation(tex =>
-            {
-                int width = tex.width;
-                int height = tex.height;
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        tex.SetPixel(x, y, color);
-                    }
-                }
-            });
-        }
 
         /// <summary>
         /// Fast fill with a specific color.
@@ -110,48 +138,74 @@ namespace Autumn
         {
             return AddOperation(tex =>
             {
-                var data = tex.GetRawTextureData<Color32>();
-                var unsafePtr = data.GetUnsafePtr();
-                Color32* cr = (Color32*)unsafePtr;
+                if (!TextureFormatHandler.IsFormatSupported(tex.format)) return;
+                var handler = TextureFormatHandler.GetHandler(tex.format);
+                var data = tex.GetRawTextureData();
+                GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+                var ptr = handle.AddrOfPinnedObject();
+                var pData = (byte*)ptr.ToPointer();
 
-                if (tex.format == TextureFormat.RGBA32)
+                for (int i = 0; i < tex.width * tex.height; i += 8)
                 {
-                    for (int i = 0; i < data.Length; i++)
-                    {
-                        cr[i].r = r;
-                        cr[i].g = g;
-                        cr[i].b = b;
-                        cr[i].a = a;
-                    }
+                    handler.SetPixel(pData, i, r, g, b, a);
+                    handler.SetPixel(pData, i + 1, r, g, b, a);
+                    handler.SetPixel(pData, i + 2, r, g, b, a);
+                    handler.SetPixel(pData, i + 3, r, g, b, a);
+                    handler.SetPixel(pData, i + 4, r, g, b, a);
+                    handler.SetPixel(pData, i + 5, r, g, b, a);
+                    handler.SetPixel(pData, i + 6, r, g, b, a);
+                    handler.SetPixel(pData, i + 7, r, g, b, a);
                 }
-                else
-                {
-                    throw new ArgumentException("The provided texture format is not supported yet.");
-                }
+
+                handle.Free();
             });
         }
 
         /// <summary>
         /// Creates a gradient background.
         /// </summary>
-        public TextureElement BackgroundGradient(Color startColor, Color endColor, float angle = 0)
+        public unsafe TextureElement BackgroundGradient(Color startColor, Color endColor, float angle = 0)
         {
             return AddOperation(tex =>
             {
-                float r = angle * Mathf.Deg2Rad;
-                float dirX = Mathf.Cos(r);
-                float dirY = Mathf.Sin(r);
+                if (!TextureFormatHandler.IsFormatSupported(tex.format)) return;
 
-                for (int x = 0; x < tex.width; x++)
+                var handler = TextureFormatHandler.GetHandler(tex.format);
+                var data = tex.GetRawTextureData();
+                GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
+                var ptr = handle.AddrOfPinnedObject();
+                var pData = (byte*)ptr.ToPointer();
+
+                float rad = angle * Mathf.Deg2Rad;
+                float dirX = Mathf.Cos(rad);
+                float dirY = Mathf.Sin(rad);
+
+                int width = tex.width;
+                int height = tex.height;
+
+                float normFactor = 0.5f / Mathf.Sqrt(width * width + height * height);
+                float startR = startColor.r, startG = startColor.g, startB = startColor.b, startA = startColor.a;
+                float diffR = endColor.r - startR;
+                float diffG = endColor.g - startG;
+                float diffB = endColor.b - startB;
+                float diffA = endColor.a - startA;
+
+                for (int yIndex = 0; yIndex < height; yIndex++)
                 {
-                    for (int y = 0; y < tex.height; y++)
+                    float yContrib = dirY * yIndex;
+
+                    for (int xIndex = 0; xIndex < width; xIndex++)
                     {
-                        float t = (dirX * x + dirY * y) / Mathf.Sqrt(tex.width * tex.width + tex.height * tex.height);
-                        t = Mathf.Clamp01((t + 1) / 2);
-                        Color gradientColor = Color.Lerp(startColor, endColor, t);
-                        tex.SetPixel(x, y, gradientColor);
+                        float t = (dirX * xIndex + yContrib) * normFactor + 0.5f;
+                        t = t < 0 ? 0 : t > 1 ? 1 : t;
+                        byte r = (byte)(startR + diffR * t);
+                        byte g = (byte)(startG + diffG * t);
+                        byte b = (byte)(startB + diffB * t);
+                        byte a = (byte)(startA + diffA * t);
+                        handler.SetPixel(pData, xIndex, r, g, b, a);
                     }
                 }
+                handle.Free();
             });
         }
 
@@ -454,7 +508,7 @@ namespace Autumn
 
         public TextureElement Scale(float size, FilterMode filterMode = FilterMode.Bilinear)
         {
-            return AddOperation(tex => Scale((int)(tex.width * size), (int)(tex.height * size), filterMode));
+            return Scale((int)(Width * size), (int)(Height * size), filterMode);
         }
 
         /// <summary>
@@ -464,14 +518,25 @@ namespace Autumn
         {
             return AddOperation(tex =>
             {
+                if (newWidth == -1 && newHeight == -1)
+                    return;
+                
+                float aspect = tex.width / tex.height;
+                if (newWidth == -1)
+                {
+                    newWidth = (int)(newHeight * aspect);
+                }
+
+                if (newHeight == -1)
+                {
+                    newHeight = (int)(newWidth / aspect);
+                }
+                
                 Texture2D newTex = new Texture2D(newWidth, newHeight);
 
                 FilterMode originalFilterMode = tex.filterMode;
                 tex.filterMode = filterMode;
-
-                float scaleX = (float)newWidth / tex.width;
-                float scaleY = (float)newHeight / tex.height;
-
+                
                 for (int x = 0; x < newWidth; x++)
                 {
                     for (int y = 0; y < newHeight; y++)
@@ -487,6 +552,67 @@ namespace Autumn
                 tex.filterMode = originalFilterMode;
 
                 newTex.Apply();
+                _texture = newTex;
+            });
+        }
+
+        public unsafe TextureElement RotateUnsafe(float angle)
+        {
+            return AddOperation(tex =>
+            {
+                // Normalize angle
+                angle %= 360;
+                if (angle < 0) angle += 360;
+                float radians = angle * Mathf.Deg2Rad;
+
+                int width = tex.width;
+                int height = tex.height;
+                int newWidth = width;
+                int newHeight = height;
+
+
+                Texture2D newTex = new Texture2D(newWidth, newHeight, tex.format, false);
+
+                var srcData = tex.GetRawTextureData();
+                var dstData = newTex.GetRawTextureData();
+                GCHandle handleSrc = GCHandle.Alloc(srcData, GCHandleType.Pinned);
+                GCHandle handleDst = GCHandle.Alloc(dstData, GCHandleType.Pinned);
+                var srcptr = handleSrc.AddrOfPinnedObject();
+                var dstptr = handleDst.AddrOfPinnedObject();
+                byte* srcPtr = (byte*)srcptr.ToPointer();
+                byte* dstPtr = (byte*)dstptr.ToPointer();
+
+
+                uint clearColor = 0;
+
+                Vector2 center = new Vector2(width / 2f, height / 2f);
+                float cosAngle = Mathf.Cos(-radians);
+                float sinAngle = Mathf.Sin(-radians);
+
+                for (int y = 0; y < newHeight; y++)
+                {
+                    float yOffset = y - center.y;
+
+                    for (int x = 0; x < newWidth; x++)
+                    {
+                        float xOffset = x - center.x;
+
+                        float rotX = xOffset * cosAngle - yOffset * sinAngle;
+                        float rotY = xOffset * sinAngle + yOffset * cosAngle;
+
+                        int origX = Mathf.RoundToInt(rotX + center.x);
+                        int origY = Mathf.RoundToInt(rotY + center.y);
+
+                        if (origX >= 0 && origX < width && origY >= 0 && origY < height)
+                        {
+                            dstPtr[y * newWidth + x] = srcPtr[origY * width + origX];
+                        }
+                    }
+                }
+
+                newTex.Apply();
+                handleDst.Free();
+                handleSrc.Free();
                 _texture = newTex;
             });
         }
@@ -720,7 +846,7 @@ namespace Autumn
         /// <summary>
         /// Adds noise to the texture, like a film grain effect.
         /// </summary>
-        public TextureElement Noise(float intensity, bool monochrome = true)
+        public unsafe TextureElement Noise(float intensity, bool monochrome = true)
         {
             return AddOperation(tex =>
             {
@@ -831,6 +957,59 @@ namespace Autumn
                 }
             });
         }
+
+        /// <summary>
+        /// Reduces the number of colors.
+        /// </summary>
+        public unsafe TextureElement PosterizeUnsafe(int levels)
+        {
+            return AddOperation(tex =>
+            {
+                if (TextureFormatHandler.IsFormatSupported(tex.format))
+                {
+                    levels = Mathf.Max(2, levels);
+                    var handler = TextureFormatHandler.GetHandler(tex.format);
+                    var srcData = tex.GetRawTextureData();
+                    GCHandle handle = GCHandle.Alloc(srcData, GCHandleType.Pinned);
+                    var ptr = handle.AddrOfPinnedObject();
+                    var pData = (byte*)ptr.ToPointer();
+
+                    float scaleFactor = 255f / (levels - 1);
+                    for (int x = 0; x < tex.width * tex.height; x += 4)
+                    {
+                        handler.GetPixel(pData, x, out byte r, out byte g, out byte b, out byte a);
+                        r = (byte)(Mathf.Round(r / scaleFactor) * scaleFactor);
+                        g = (byte)(Mathf.Round(g / scaleFactor) * scaleFactor);
+                        b = (byte)(Mathf.Round(b / scaleFactor) * scaleFactor);
+                        handler.SetPixel(pData, x, r, g, b, a);
+
+                        handler.GetPixel(pData, x + 1, out r, out g, out b, out a);
+                        r = (byte)(Mathf.Round(r / scaleFactor) * scaleFactor);
+                        g = (byte)(Mathf.Round(g / scaleFactor) * scaleFactor);
+                        b = (byte)(Mathf.Round(b / scaleFactor) * scaleFactor);
+                        handler.SetPixel(pData, x + 1, r, g, b, a);
+
+                        handler.GetPixel(pData, x + 2, out r, out g, out b, out a);
+                        r = (byte)(Mathf.Round(r / scaleFactor) * scaleFactor);
+                        g = (byte)(Mathf.Round(g / scaleFactor) * scaleFactor);
+                        b = (byte)(Mathf.Round(b / scaleFactor) * scaleFactor);
+                        handler.SetPixel(pData, x + 2, r, g, b, a);
+
+                        handler.GetPixel(pData, x + 3, out r, out g, out b, out a);
+                        r = (byte)(Mathf.Round(r / scaleFactor) * scaleFactor);
+                        g = (byte)(Mathf.Round(g / scaleFactor) * scaleFactor);
+                        b = (byte)(Mathf.Round(b / scaleFactor) * scaleFactor);
+                        handler.SetPixel(pData, x + 3, r, g, b, a);
+                    }
+                    handle.Free();
+                }
+                else
+                {
+                    Posterize(levels);
+                }
+            });
+        }
+
 
         /// <summary>
         /// Applies a threshold filter, converting pixels to black or white based on their brightness.
@@ -1257,6 +1436,44 @@ namespace Autumn
 
                 newTex.Apply();
                 _texture = newTex;
+            });
+        }
+
+        public TextureElement Translate(Vector2 offset, bool expand = false)
+        {
+            int width = _texture.width;
+            int height = _texture.height;
+            if (expand)
+            {
+                width = (int)Mathf.Max(width, offset.x + width);
+                height = (int)Mathf.Max(height, offset.y + height);
+
+                Texture2D newTex = new Texture2D(width, height);
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        newTex.SetPixel(x, y, _texture.GetPixel((int)(x + offset.x), (int)(y + offset.y)));
+                    }
+                }
+
+                newTex.Apply();
+                _texture = newTex;
+                return this;
+            }
+
+            return AddOperation(tex =>
+            {
+                for (int x = 0; x < _texture.width; x++)
+                {
+                    for (int y = 0; y < _texture.height; y++)
+                    {
+                        if (x + offset.x > 0 && x + offset.x < width && y + offset.y > 0 && y + offset.y < height)
+                            _texture.SetPixel(x, y, _texture.GetPixel((int)(x + offset.x), (int)(y + offset.y)));
+                        else
+                            tex.SetPixel(x, y, Color.clear);
+                    }
+                }
             });
         }
 
@@ -1737,207 +1954,289 @@ namespace Autumn
     }
 
     /// <summary>
-    /// Factory class for creating and loading textures.
+    /// BorderType represents different styles or types of borders
+    /// that can be used for visual rendering or styling purposes.
     /// </summary>
-    public static class TextureFactory
-    {
-        private static string _combinedPath;
-
-        /// <summary>
-        /// Creates a new TextureElement with the specified dimensions.
-        /// </summary>
-        public static TextureElement Create(int width, int height, TextureFormat format = TextureFormat.RGBA32)
-        {
-            return new TextureElement(width, height, format);
-        }
-
-        /// <summary>
-        /// Wraps an existing Texture2D in a TextureElement.
-        /// </summary>
-        public static TextureElement From(Texture2D texture)
-        {
-            return new TextureElement(texture);
-        }
-
-        /// <summary>
-        /// Loads a texture from file or creates it with the provided callback if not found.
-        /// </summary>
-        public static TextureElement Load(string filepath, Func<string, Texture2D> onNotFound)
-        {
-            if (!Directory.Exists("AutumnTextures"))
-                Directory.CreateDirectory("AutumnTextures");
-
-            _combinedPath = Path.Combine("AutumnTextures", filepath);
-            if (!File.Exists(_combinedPath))
-            {
-                var texture2D = onNotFound(filepath);
-                return new TextureElement(texture2D);
-            }
-
-            var data = new Texture2D(1, 1);
-            data.LoadImage(File.ReadAllBytes(_combinedPath));
-            data.Apply();
-            return new TextureElement(data);
-        }
-
-        /// <summary>
-        /// Creates a new TextureElement with a vertical gradient.
-        /// </summary>
-        public static TextureElement Gradient(int width, int height, Color topColor, Color bottomColor)
-        {
-            var element = Create(width, height);
-            return element.BackgroundGradient(topColor, bottomColor, 90);
-        }
-
-        /// <summary>
-        /// Creates a new TextureElement with a solid color.
-        /// </summary>
-        public static TextureElement SolidColor(int width, int height, Color color)
-        {
-            var element = Create(width, height);
-            return element.BackgroundColor(color);
-        }
-
-        /// <summary>
-        /// Creates a new TextureElement with a checkerboard pattern.
-        /// </summary>
-        public static TextureElement Checkerboard(int width, int height, Color color1, Color color2, int tileSize = 8)
-        {
-            var element = Create(width, height);
-            return element.AddOperation(tex =>
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        bool isColor1 = ((x / tileSize) + (y / tileSize)) % 2 == 0;
-                        tex.SetPixel(x, y, isColor1 ? color1 : color2);
-                    }
-                }
-            });
-        }
-
-        /// <summary>
-        /// Creates a new TextureElement with a polka dot pattern.
-        /// </summary>
-        public static TextureElement PolkaDots(int width, int height, Color backgroundColor, Color dotColor,
-            int dotRadius = 5, int spacing = 20)
-        {
-            var element = Create(width, height);
-            return element.AddOperation(tex =>
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        tex.SetPixel(x, y, backgroundColor);
-                    }
-                }
-
-                for (int centerX = dotRadius + spacing / 2; centerX < width; centerX += spacing)
-                {
-                    for (int centerY = dotRadius + spacing / 2; centerY < height; centerY += spacing)
-                    {
-                        for (int x = centerX - dotRadius; x <= centerX + dotRadius; x++)
-                        {
-                            for (int y = centerY - dotRadius; y <= centerY + dotRadius; y++)
-                            {
-                                if (x >= 0 && x < width && y >= 0 && y < height)
-                                {
-                                    float dist = Vector2.Distance(new Vector2(centerX, centerY), new Vector2(x, y));
-                                    if (dist <= dotRadius)
-                                    {
-                                        tex.SetPixel(x, y, dotColor);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        /// <summary>
-        /// Creates a new TextureElement with a striped pattern.
-        /// </summary>
-        public static TextureElement Stripes(int width, int height, Color color1, Color color2, float angle = 45,
-            int stripeWidth = 10)
-        {
-            var element = Create(width, height);
-            return element.AddOperation(tex =>
-            {
-                float radians = angle * Mathf.Deg2Rad;
-                Vector2 direction = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)).normalized;
-
-                for (int x = 0; x < width; x++)
-                {
-                    for (int y = 0; y < height; y++)
-                    {
-                        float projection = x * direction.x + y * direction.y;
-                        bool isColor1 = (int)(projection / stripeWidth) % 2 == 0;
-                        tex.SetPixel(x, y, isColor1 ? color1 : color2);
-                    }
-                }
-            });
-        }
-    }
-
     [Flags]
     public enum BorderType
     {
+        /// <summary>
+        /// None represents the absence of a border. This value indicates that no border should be applied.
+        /// </summary>
         None = 0,
+
+        /// <summary>
+        /// TopLeft specifies a border type where the border is aligned to the top-left corner of the container.
+        /// It is often used to define positioning or alignment in layouts or visual elements.
+        /// </summary>
         TopLeft = 1,
+
+        /// <summary>
+        /// TopRight represents the top-right corner position or alignment in a given context.
+        /// Typically used to define layouts, positioning, or alignment logic.
+        /// </summary>
         TopRight = 2,
+
+        /// <summary>
+        /// BottomLeft represents the bottom-left corner or position in a coordinate system or layout.
+        /// It may be used to denote alignment or position in various graphical or positional contexts.
+        /// </summary>
         BottomLeft = 4,
+
+        /// <summary>
+        /// BottomRight represents the bottom-right corner of a bordered area or control.
+        /// This enum member can be used to specify or reference operations and styles
+        /// associated with the bottom-right border region.
+        /// </summary>
         BottomRight = 8,
+
+        /// <summary>
+        /// All denotes a border type that applies to all edges or sides.
+        /// This can be used to specify uniform behavior or styling across all edges.
+        /// </summary>
         All = 15
     }
 
+    /// <summary>
+    /// BlendMode represents various modes that determine how two graphical elements,
+    /// such as textures or colors, are combined or blended with each other.
+    /// </summary>
     public enum BlendMode
     {
+        /// <summary>
+        /// The Normal blend mode represents standard blending,
+        /// where the colors of the top layer are blended with the colors of the bottom layer
+        /// without any specialized effects or transformations.
+        /// </summary>
         Normal,
+
+        /// <summary>
+        /// Add represents an addition operation or functionality.
+        /// It is used to perform or manage addition-related processes or tasks.
+        /// </summary>
         Add,
+
+        /// <summary>
+        /// Subtract provides functionality to perform subtraction operations between numerical values.
+        /// This class can handle various data types when subtracting two numbers.
+        /// </summary>
         Subtract,
+
+        /// <summary>
+        /// Multiply is a blending mode that combines the colors of two layers
+        /// by multiplying their corresponding channel values. This results in a
+        /// darker image where white has no effect, and darker colors have more influence.
+        /// </summary>
         Multiply,
+
+        /// <summary>
+        /// Screen represents a display device or surface used to render visual content.
+        /// Provides functionality to manage and interact with the screen properties or behaviors.
+        /// </summary>
         Screen,
+
+        /// <summary>
+        /// Overlay blend mode is used to blend two layers by combining Multiply and Screen blend modes.
+        /// It applies the Multiply mode for darker areas and the Screen mode for lighter areas,
+        /// resulting in an effect that enhances contrast and preserves highlights/shadows.
+        /// </summary>
         Overlay
     }
 
+    /// <summary>
+    /// BackgroundRepeatMode specifies the repeat behavior of a background image.
+    /// It determines how the image is repeated horizontally and vertically within its container.
+    /// </summary>
     public enum BackgroundRepeatMode
     {
+        /// <summary>
+        /// Specifies that the background image should be repeated both vertically and horizontally
+        /// to cover the entire area.
+        /// </summary>
         Repeat,
+
+        /// <summary>
+        /// RepeatX specifies the horizontal repetition behavior for a texture or element.
+        /// It defines how the content will repeat along the X-axis.
+        /// </summary>
         RepeatX,
+
+        /// <summary>
+        /// Represents a background repeat mode where the background image is repeated
+        /// along the vertical (Y) axis only, without repeating horizontally (X axis).
+        /// </summary>
         RepeatY,
+
+        /// <summary>
+        /// NoRepeat is used to prevent duplication of data or processes.
+        /// It ensures unique operations or entries as intended within a given context.
+        /// </summary>
         NoRepeat
     }
 
+    /// <summary>
+    /// ClipShapeType defines the enumeration of various shapes available for creating clip masks.
+    /// It is used to specify the geometric configuration that can be applied to clipping operations within a graphical context.
+    /// </summary>
     public enum ClipShapeType
     {
+        /// <summary>
+        /// Circle defines a circular clip shape type that can be applied to UI components,
+        /// enabling the creation of circular clipped regions.
+        /// </summary>
         Circle,
+
+        /// <summary>
+        /// Ellipse represents a clipping shape used to define an oval or circular region.
+        /// This shape can be applied to restrict the rendering area to an elliptical boundary.
+        /// </summary>
         Ellipse,
+
+        /// <summary>
+        /// Polygon represents a closed geometric shape consisting of multiple straight lines connected in sequence.
+        /// Typically used to define multi-sided shapes for various operations or rendering contexts.
+        /// </summary>
         Polygon,
+
+        /// <summary>
+        /// Inset represents a type of clip shape that defines an inward offset or indentation from the edges.
+        /// Commonly used for creating clipped areas with adjusted boundaries within a given region.
+        /// </summary>
         Inset
     }
 
+    /// <summary>
+    /// BorderDrawMode defines the different modes for drawing borders around an element.
+    /// It specifies the style or method in which borders should be rendered to provide visual emphasis or distinction.
+    /// </summary>
     public enum BorderDrawMode
     {
+        /// <summary>
+        /// Inside specifies that the border should be drawn inside the boundaries of the element.
+        /// It ensures the border is contained fully within the element's dimensions.
+        /// </summary>
         Inside,
+
+        /// <summary>
+        /// Outside specifies that the border should be drawn on the outside of the element bounds,
+        /// extending outward from the element's defined edge.
+        /// </summary>
         Outside,
+
+        /// <summary>
+        /// Center specifies that the border should be drawn centered on the edge,
+        /// distributing the line width equally on both sides of the boundary.
+        /// </summary>
         Center
     }
 
+    /// <summary>
+    /// ImageType specifies the type of image, which can be used to
+    /// classify and identify the format or purpose of an image within a system.
+    /// </summary>
+    public enum ImageType
+    {
+        PNG,
+
+        /// <summary>
+        /// JPEG represents the JPEG image format, commonly used for photographs and web images.
+        /// It provides efficient compression with minimal loss of quality, suitable for various applications.
+        /// </summary>
+        JPEG,
+
+        /// <summary>
+        /// EXR represents an image format used primarily for high dynamic range (HDR) imaging.
+        /// It is a common choice for professional graphics and visual effects due to its ability
+        /// to store a high level of detail and wide color gamut.
+        /// </summary>
+        EXR,
+
+        /// <summary>
+        /// Represents the TGA (Truevision Graphics Adapter) image format.
+        /// This format is commonly used for storing raster graphic data with varying color depths.
+        /// </summary>
+        TGA
+    }
+
+    /// <summary>
+    /// MixBlendModeType defines the modes for blending colors or textures in rendering operations.
+    /// This enum is typically used to specify how different elements should visually combine on the screen.
+    /// </summary>
     public enum MixBlendModeType
     {
+        /// <summary>
+        /// Normal represents the standard blend mode where the upper layer is drawn
+        /// without blending with the layers beneath it.
+        /// This mode is commonly used for opaque content where no blending effects are desired.
+        /// </summary>
         Normal,
+
+        /// <summary>
+        /// Multiply represents a blend mode where the colors of the source and background
+        /// are multiplied together, resulting in a darker output. This mode is commonly used
+        /// to achieve shading effects in graphics processing.
+        /// </summary>
         Multiply,
+
+        /// <summary>
+        /// Screen is a blending mode where the colors of the layers are inverted,
+        /// multiplied, and then inverted again, resulting in a brighter composition.
+        /// It is typically used to lighten the underlying layers by blending them with the top layer.
+        /// </summary>
         Screen,
+
+        /// <summary>
+        /// Overlay represents a blend mode where the colors of the layered elements
+        /// are combined to produce a result based on their interaction. It preserves
+        /// the highlights and shadows of the base layer while blending with the top layer.
+        /// </summary>
         Overlay,
+
+        /// <summary>
+        /// Darken represents a blend mode that selects the darker color by comparing each pixel of the source and destination.
+        /// This mode is typically used to create shadows or reduce the brightness of images.
+        /// </summary>
         Darken,
+
+        /// <summary>
+        /// Lighten is a blend mode type where the output color is determined by
+        /// comparing the base and blend colors, and selecting the lighter of the two.
+        /// This mode emphasizes lighter areas in overlapping content.
+        /// </summary>
         Lighten,
+
+        /// <summary>
+        /// Represents a blending mode where the background color is brightened to reflect the foreground color.
+        /// This mode divides the foreground color by the inverted background color, resulting in a lighter visual effect.
+        /// Commonly used in graphic design and compositing to achieve vibrant and dynamic effects.
+        /// </summary>
         ColorDodge,
+
+        /// <summary>
+        /// ColorBurn specifies a blending mode where the colors of the blend layer darken
+        /// the base layer by increasing the contrast between them, resulting in a more intense effect.
+        /// This mode is often used for creating dramatic and high-contrast visuals.
+        /// </summary>
         ColorBurn,
+
+        /// <summary>
+        /// HardLight represents a blend mode where the result combines Multiply and Screen modes
+        /// depending on the values of the source and backdrop colors. It is used to emphasize
+        /// highlights and shadows, creating a vivid and vibrant appearance.
+        /// </summary>
         HardLight,
+
+        /// <summary>
+        /// Difference is a blend mode that subtracts the source color from the destination color
+        /// or vice versa to always yield a positive result. It's used to emphasize the differences
+        /// between two layers by producing a high-contrast effect.
+        /// </summary>
         Difference,
+
+        /// <summary>
+        /// Exclusion specifies a blend mode that creates an effect similar to the difference blend mode,
+        /// but with lower contrast. It is typically used for achieving softer blending effects between layers.
+        /// </summary>
         Exclusion
     }
 }

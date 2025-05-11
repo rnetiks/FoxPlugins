@@ -3,10 +3,6 @@
     <Platform Name="Any CPU" />
     <Platform Name="AnyCPU" />
   </Configurations>
-  <Folder Name="/Autumn/">
-    <Project Path="Autumn.KKS\Autumn.KKS.csproj" Type="Classic C#" />
-    <Project Path="Autumn.Shared\Autumn.Shared.shproj" />
-  </Folder>
   <Folder Name="/BoneShortcut/">
     <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#" />
     <Project Path="BoneShortcut\BoneShortcut.KK\BoneShortcut.KK.csproj" Type="Classic C#" />
@@ -21,10 +17,6 @@
     <Project Path="DBToggler.KKS\DBToggler.KKS.csproj" Type="Classic C#" />
     <Project Path="DBToggler\DBToggler.Core\DBToggler.Core.shproj" />
     <Project Path="DBToggler\DBToggler.KK\DBToggler.KK.csproj" Type="Classic C#" />
-  </Folder>
-  <Folder Name="/Guiverload/">
-    <Project Path="Guiverload.KKS\Guiverload.KKS.csproj" Type="Classic C#" />
-    <Project Path="Guiverload.Shared\Guiverload.Shared.shproj" />
   </Folder>
   <Folder Name="/KoiUpdater/">
     <Project Path="KoiUpdater.KKS\KoiUpdater.KKS.csproj" Type="Classic C#" />
@@ -63,4 +55,8 @@
     <Project Path="SmartRect\SmartRect.shproj" />
   </Folder>
   <Project Path="NonKoiTests\NonKoiTests.csproj" Type="Classic C#" />
+  <Project Path="TexFac.Universal\TexFac.Universal.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
 </Solution>
