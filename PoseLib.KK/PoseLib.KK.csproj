@@ -39,6 +39,10 @@
         <Project>{c91df2a5-b779-4d7a-9639-82ec78ddce23}</Project>
         <Name>SmartRect.KK</Name>
       </ProjectReference>
+      <ProjectReference Include="..\TexFac.Universal\TexFac.Universal.csproj">
+        <Project>{fcb22027-cbb9-423f-8a25-917a25a1ca49}</Project>
+        <Name>TexFac.Universal</Name>
+      </ProjectReference>
     </ItemGroup>
     <ItemGroup>
       <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">

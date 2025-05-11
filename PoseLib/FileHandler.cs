@@ -4,8 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using ActionGame.Chara;
-using Autumn;
 using Studio;
 using UnityEngine;
 

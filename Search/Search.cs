@@ -24,14 +24,13 @@ namespace Search.KKS
 			Instance = this;
 			toggleUI = Config.Bind("General", "Toggle UI", new KeyboardShortcut(KeyCode.None));
 			commands = new Dictionary<object, ISearchCommand>();
+			BepinAwake();
 		}
 
 		private Rect _windowRect;
 		private Vector2 _scrollPosition;
 		private string _searchText;
 		private static int _tab;
-
-		private bool _initializedBepinex;
 
 		private void Update()
 		{
@@ -54,11 +53,6 @@ namespace Search.KKS
 
 			if (toggleUI.Value.IsDown() && !showUI)
 			{
-				if (_initializedBepinex != true)
-				{
-					_initializedBepinex = true;
-					BepinAwake();
-				}
 				_searchText = string.Empty;
 				_windowRect = new Rect(mousePos.x - width / 2, mousePos.y - height / 2, width, height);
 				showUI = true;

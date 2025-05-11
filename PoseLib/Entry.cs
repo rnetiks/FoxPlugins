@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BepInEx;
-using Autumn;
 using BepInEx.Configuration;
 using SmartRectV0;
 using Studio;
+using TexFac.Universal;
 using UnityEngine;
 
 namespace PoseLib.KKS

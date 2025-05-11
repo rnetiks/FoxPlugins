@@ -112,6 +112,10 @@
         <Project>{84f705fc-d321-4b72-a487-992034c2b61c}</Project>
         <Name>SmartRect.KKS</Name>
       </ProjectReference>
+      <ProjectReference Include="..\..\TexFac.Universal\TexFac.Universal.csproj">
+        <Project>{fcb22027-cbb9-423f-8a25-917a25a1ca49}</Project>
+        <Name>TexFac.Universal</Name>
+      </ProjectReference>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <Import Project="..\..\packages\IllusionLibs.BepInEx.Harmony.2.9.0\build\IllusionLibs.BepInEx.Harmony.targets" Condition="Exists('..\..\packages\IllusionLibs.BepInEx.Harmony.2.9.0\build\IllusionLibs.BepInEx.Harmony.targets')" />
