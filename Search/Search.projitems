@@ -10,6 +10,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Search.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Search.Hooks.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Search.Window.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SearchCommand.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Search_Bepinex.cs" />
   </ItemGroup>

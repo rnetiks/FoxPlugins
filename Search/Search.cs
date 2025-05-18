@@ -79,58 +79,6 @@ namespace Search.KKS
 			return string.IsNullOrEmpty(value) || value.All(char.IsWhiteSpace);
 		}
 
-		private void WindowFunc(int id)
-		{
-			_tab = GUILayout.Toolbar(_tab, new[]
-			{
-				"Commands",
-				"BepInEx",
-			});
-
-			_searchText = GUILayout.TextField(_searchText);
-			_scrollPosition = GUILayout.BeginScrollView(_scrollPosition);
-
-			var collection = commands.Values;
-
-			foreach (var command in collection.Where(
-						 command => command.Name.ToLower().Contains(_searchText.ToLower()))
-						 .OrderBy(d => d.Name))
-			{
-				if (_tab == 0 && !(command is SearchCommand))
-				{
-					continue;
-				}
-
-				if (command is BepInExCommand hotkeyInfo)
-				{
-					if (hotkeyInfo.FramesSinceHit > Application.targetFrameRate)
-					{
-						continue;
-					}
-				}
-
-				GUILayout.BeginHorizontal();
-
-				var text = !IsNullOrWhiteSpace(command.Description)
-					? $"{command.Name}: {command.Description}"
-					: $"{command.Name}";
-
-				if (GUILayout.Button(text, GUILayout.ExpandWidth(true)))
-				{
-					command.Execute();
-					showUI = false;
-					GUILayout.EndHorizontal();
-					GUILayout.EndScrollView();
-					return;
-				}
-
-				GUILayout.EndHorizontal();
-			}
-
-			GUILayout.EndScrollView();
-			GUI.DragWindow();
-		}
-
 		[UsedImplicitly]
 		public bool AddCommand(ISearchCommand action)
 		{

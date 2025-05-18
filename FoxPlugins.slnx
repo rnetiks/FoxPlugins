@@ -46,9 +46,8 @@
     <Project Path="Search\Search.Universal\Search.Universal.csproj" Type="Classic C#" />
   </Folder>
   <Folder Name="/SmartRect/">
-    <Project Path="SmartRect\SmartRect.KKS\SmartRect.KKS.csproj" Type="Classic C#" />
-    <Project Path="SmartRect\SmartRect.KK\SmartRect.KK.csproj" Type="Classic C#" />
     <Project Path="SmartRect\SmartRect.shproj" />
+    <Project Path="SmartRect\SmartRect.Universal\SmartRect.Universal.csproj" Type="Classic C#" />
   </Folder>
   <Project Path="TexFac.Universal\TexFac.Universal.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
