@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SmartRectV0
@@ -11,20 +12,20 @@ namespace SmartRectV0
         // Default offset values
         public static float DefaultOffsetX => 20;
         public static float DefaultOffsetY => 5f;
-        
+
         // Default values for this instance
         public readonly float DefaultHeight;
         public readonly float DefaultWidth;
         public readonly float DefaultX;
         public readonly float DefaultY;
-        
+
         // Core rect and offset properties
         private Rect _source;
         private readonly float _offsetX;
         private readonly float _offsetY;
         private float _moveX;
         private float _moveY;
-        
+
         // Property getters and setters
         public float Height
         {
@@ -35,7 +36,7 @@ namespace SmartRectV0
                 _moveY = value + _offsetY;
             }
         }
-        
+
         public float Width
         {
             get => _source.width;
@@ -45,19 +46,19 @@ namespace SmartRectV0
                 _moveX = value + _offsetX;
             }
         }
-        
+
         public float X
         {
             get => _source.x;
             set => _source.x = value;
         }
-        
+
         public float Y
         {
             get => _source.y;
             set => _source.y = value;
         }
-        
+
         public float TotalWidth => Width + _offsetX;
         public float TotalHeight => Height + _offsetY;
 
@@ -98,7 +99,7 @@ namespace SmartRectV0
         /// <param name="y">The y-coordinate of the rectangle.</param>
         /// <param name="width">The width of the rectangle.</param>
         /// <param name="height">The height of the rectangle.</param>
-        public SmartRect(float x, float y, float width, float height) 
+        public SmartRect(float x, float y, float width, float height)
             : this(new Rect(x, y, width, height))
         {
         }
@@ -112,7 +113,7 @@ namespace SmartRectV0
         /// <param name="height">The height of the rectangle.</param>
         /// <param name="offX">The offset in pixels towards the X coordinate.</param>
         /// <param name="offY">The offset in pixels towards the Y coordinate.</param>
-        public SmartRect(float x, float y, float width, float height, float offX, float offY) 
+        public SmartRect(float x, float y, float width, float height, float offX, float offY)
             : this(new Rect(x, y, width, height), offX, offY)
         {
         }
@@ -238,6 +239,7 @@ namespace SmartRectV0
             {
                 _source.x += _source.width;
             }
+
             return this;
         }
 
@@ -262,6 +264,7 @@ namespace SmartRectV0
             {
                 _source.y += _source.height;
             }
+
             return this;
         }
 
@@ -324,15 +327,15 @@ namespace SmartRectV0
         /// </summary>
         /// <param name="col">The column index.</param>
         /// <returns>A new SmartRect positioned at the specified column.</returns>
-        public SmartRect Col(int col) => 
+        public SmartRect Col(int col) =>
             new SmartRect(_source.x + _moveX * col, _source.y, _source.width, _source.height);
-        
+
         /// <summary>
         /// Creates a new SmartRect representing a row at the specified index.
         /// </summary>
         /// <param name="row">The row index.</param>
         /// <returns>A new SmartRect positioned at the specified row.</returns>
-        public SmartRect Row(int row) => 
+        public SmartRect Row(int row) =>
             new SmartRect(_source.x, _source.y + _moveY * row, _source.width, _source.height);
 
         /// <summary>
@@ -372,6 +375,7 @@ namespace SmartRectV0
             {
                 _source.width = DefaultWidth;
             }
+
             return this;
         }
 
@@ -387,6 +391,7 @@ namespace SmartRectV0
             {
                 _source.height = DefaultHeight;
             }
+
             return this;
         }
 
@@ -429,7 +434,7 @@ namespace SmartRectV0
         private Rect _animateTo;
         private float _animationDuration;
         private float _elapsedTime;
-        
+
         /// <summary>
         /// Gets whether the animator is currently animating.
         /// </summary>
@@ -484,7 +489,7 @@ namespace SmartRectV0
         /// A boolean indicating whether the animation is still in progress.
         /// Returns <c>true</c> if the animation is ongoing, <c>false</c> if the animation has completed.
         /// </returns>
-        public bool Update(BezierTemplate bezier)
+        public bool Update(Beziers bezier)
         {
             if (_animationDuration <= 0)
                 return false;
@@ -495,7 +500,7 @@ namespace SmartRectV0
             var widthDiff = _animateTo.width - currentRect.width;
             var heightDiff = _animateTo.height - currentRect.height;
 
-            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f && 
+            if (Math.Abs(xDiff) <= 0.01f && Math.Abs(yDiff) <= 0.01f &&
                 Math.Abs(widthDiff) <= 0.01f && Math.Abs(heightDiff) <= 0.01f)
             {
                 _target.UpdateRect(_animateTo);
@@ -532,62 +537,49 @@ namespace SmartRectV0
     }
 
     /// <summary>
-    /// Represents a cubic Bezier curve template with start, end, and two control points.
+    /// Provides utility methods and predefined templates for Bezier curve calculations.
     /// </summary>
-    public readonly struct BezierTemplate
+    public class Beziers
     {
         /// <summary>
-        /// The starting point of the Bezier curve.
+        /// The starting point of the Bézier curve.
         /// </summary>
         public readonly Vector3 Start;
-        
+
         /// <summary>
-        /// The ending point of the Bezier curve.
+        /// The ending point of the Bézier curve.
         /// </summary>
         public readonly Vector3 End;
-        
+
         /// <summary>
         /// The first control point that influences the curve's shape.
         /// </summary>
         public readonly Vector3 Control1;
-        
+
         /// <summary>
         /// The second control point that influences the curve's shape.
         /// </summary>
         public readonly Vector3 Control2;
 
-        /// <summary>
-        /// Creates a new Bezier template with the specified points.
-        /// </summary>
-        /// <param name="start">The starting point.</param>
-        /// <param name="end">The ending point.</param>
-        /// <param name="control1">The first control point.</param>
-        /// <param name="control2">The second control point.</param>
-        public BezierTemplate(Vector3 start, Vector3 end, Vector3 control1, Vector3 control2)
+        public Beziers(Vector3 start, Vector3 control1, Vector3 control2, Vector3 end)
         {
             Start = start;
-            End = end;
             Control1 = control1;
             Control2 = control2;
+            End = end;
         }
-    }
 
-    /// <summary>
-    /// Provides utility methods and predefined templates for Bezier curve calculations.
-    /// </summary>
-    public static class Beziers
-    {
         /// <summary>
-        /// Calculates a point on a cubic Bezier curve at the specified normalized time.
+        /// Calculates a point on a cubic Bézier curve at the specified normalized time.
         /// </summary>
-        /// <param name="template">The Bezier curve template to use.</param>
+        /// <param name="template">The Bézier curve template to use.</param>
         /// <param name="t">Normalized time parameter (0.0 to 1.0).</param>
         /// <returns>The interpolated point on the curve.</returns>
-        public static Vector3 Vector3(BezierTemplate template, float t)
+        public static Vector3 Vector3(Beziers template, float t)
         {
             return Vector3(template.Start, template.Control1, template.Control2, template.End, t);
         }
-        
+
         /// <summary>
         /// Calculates a point on a cubic Bezier curve with the given control points at the specified normalized time.
         /// </summary>
@@ -597,7 +589,7 @@ namespace SmartRectV0
         /// <param name="p3">The ending point.</param>
         /// <param name="t">Normalized time parameter (0.0 to 1.0).</param>
         /// <returns>The interpolated point on the curve.</returns>
-        private static Vector3 Vector3(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        public static Vector3 Vector3(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
         {
             t = Mathf.Clamp01(t);
             float oneMinusT = 1f - t;
@@ -605,17 +597,34 @@ namespace SmartRectV0
             float oneMinusTCubed = oneMinusTSquared * oneMinusT;
             float tSquared = t * t;
             float tCubed = tSquared * t;
-            
-            return oneMinusTCubed * p0 + 
-                   3f * oneMinusTSquared * t * p1 + 
-                   3f * oneMinusT * tSquared * p2 + 
+
+            return oneMinusTCubed * p0 +
+                   3f * oneMinusTSquared * t * p1 +
+                   3f * oneMinusT * tSquared * p2 +
                    tCubed * p3;
         }
 
         /// <summary>
-        /// A linear Bezier curve template with a constant rate of change.
+        /// Converts the Bézier curve into a polygonal approximation with the specified number of segments.
         /// </summary>
-        public static BezierTemplate LinearTemplate { get; } = new BezierTemplate(
+        /// <param name="segments">The number of segments to divide the Bézier curve into.</param>
+        /// <returns>A list of <see cref="Vector3"/> points representing the polygonal approximation of the curve.</returns>
+        public IList<Vector3> ToPoly(int segments)
+        {
+            Vector3[] points = new Vector3[segments];
+            for (int i = 0; i < segments; i++)
+            {
+                float t = i / (float)segments;
+                points[i] = Vector3(Start, Control1, Control2, End, t);
+            }
+
+            return points;
+        }
+
+        /// <summary>
+        /// A linear Bézier curve template with a constant rate of change.
+        /// </summary>
+        public static Beziers LinearTemplate { get; } = new Beziers(
             Vector2.zero,
             Vector2.one,
             Vector2.zero,
@@ -625,7 +634,7 @@ namespace SmartRectV0
         /// <summary>
         /// A general-purpose ease curve with a slight initial acceleration.
         /// </summary>
-        public static BezierTemplate EaseTemplate { get; } = new BezierTemplate(
+        public static Beziers EaseTemplate { get; } = new Beziers(
             Vector2.zero,
             Vector2.one,
             new Vector2(0.25f, 0.1f),
@@ -635,7 +644,7 @@ namespace SmartRectV0
         /// <summary>
         /// An ease-in curve that starts slow and accelerates.
         /// </summary>
-        public static BezierTemplate EaseInTemplate { get; } = new BezierTemplate(
+        public static Beziers EaseInTemplate { get; } = new Beziers(
             Vector2.zero,
             Vector2.one,
             new Vector2(0.42f, 0f),
@@ -645,7 +654,7 @@ namespace SmartRectV0
         /// <summary>
         /// An ease-out curve that starts fast and decelerates.
         /// </summary>
-        public static BezierTemplate EaseOutTemplate { get; } = new BezierTemplate(
+        public static Beziers EaseOutTemplate { get; } = new Beziers(
             Vector2.zero,
             Vector2.one,
             Vector2.zero,
@@ -655,7 +664,7 @@ namespace SmartRectV0
         /// <summary>
         /// An ease-in-out curve that accelerates in the middle and decelerates at the end.
         /// </summary>
-        public static BezierTemplate EaseInOutTemplate { get; } = new BezierTemplate(
+        public static Beziers EaseInOutTemplate { get; } = new Beziers(
             Vector2.zero,
             Vector2.one,
             new Vector2(0.42f, 0),

@@ -8,8 +8,8 @@
         <ProjectGuid>{C91DF2A5-B779-4D7A-9639-82EC78DDCE23}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>SmartRect.KK</RootNamespace>
-        <AssemblyName>SmartRect.KK</AssemblyName>
+        <RootNamespace>SmartRect.Universal</RootNamespace>
+        <AssemblyName>SmartRect.Universal</AssemblyName>
         <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
     </PropertyGroup>
