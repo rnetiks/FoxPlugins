@@ -49,6 +49,10 @@
     <Project Path="SmartRect\SmartRect.shproj" />
     <Project Path="SmartRect\SmartRect.Universal\SmartRect.Universal.csproj" Type="Classic C#" />
   </Folder>
+  <Project Path="BoxSelect.KKS\BoxSelect.KKS.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
   <Project Path="TexFac.Universal\TexFac.Universal.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
