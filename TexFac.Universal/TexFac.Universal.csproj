@@ -33,6 +33,7 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <DocumentationFile>bin\Release\TexFac.Universal.xml</DocumentationFile>
     </PropertyGroup>
     <ItemGroup>
       <Reference Include="System" />
@@ -51,9 +52,14 @@
       <PackageReference Include="UnityEngine" Version="5.6.1" />
     </ItemGroup>
     <ItemGroup>
-      <Compile Include="TextureElement.cs" />
+      <Compile Include="CPUTextureElement.cs" />
+      <Compile Include="GPUTextureElement.cs" />
+      <Compile Include="ITextureElement.cs" />
       <Compile Include="TextureFactory.cs" />
       <Compile Include="TextureFormatHandler.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <ClCompile Include="shader.hlsl" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

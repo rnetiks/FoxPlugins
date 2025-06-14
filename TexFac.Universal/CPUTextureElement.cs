@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Collections;
 
 namespace TexFac.Universal
 {
@@ -10,13 +11,13 @@ namespace TexFac.Universal
     /// TextureElement represents a texture with its associated operations.
     /// You might wanna use a Structure View for this, to find the correct methods.
     /// </summary>
-    public class TextureElement
+    public class CPUTextureElement : ITextureElement
     {
         internal Texture2D _texture;
         private bool _isDirty = false;
         private List<Action<Texture2D>> _pendingOperations = new List<Action<Texture2D>>();
 
-        public static implicit operator Texture2D(TextureElement r)
+        public static implicit operator Texture2D(CPUTextureElement r)
         {
             return r.GetTexture();
         }
@@ -24,12 +25,12 @@ namespace TexFac.Universal
         public int Width => _texture.width;
         public int Height => _texture.height;
 
-        public TextureElement(Texture2D texture)
+        public CPUTextureElement(Texture2D texture)
         {
             _texture = texture;
         }
 
-        public TextureElement(int width, int height, TextureFormat format = TextureFormat.RGBA32)
+        public CPUTextureElement(int width, int height, TextureFormat format = TextureFormat.RGBA32)
         {
             _texture = new Texture2D(width, height, format, false);
             
@@ -38,7 +39,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies all pending operations to the texture.
         /// </summary>
-        public TextureElement Apply()
+        public ITextureElement Apply()
         {
             if (_isDirty)
             {
@@ -64,10 +65,18 @@ namespace TexFac.Universal
             return _texture;
         }
 
+        ITextureElement ITextureElement.BackgroundColor(byte r, byte g, byte b, byte a)
+        {
+            return BackgroundColor(r, g, b, a);
+        }
+        ITextureElement ITextureElement.AddOperation(Action<Texture2D> operation)
+        {
+            return AddOperation(operation);
+        }
         /// <summary>
         /// Adds an operation to the pending operations queue.
         /// </summary>
-        public TextureElement AddOperation(Action<Texture2D> operation)
+        public CPUTextureElement AddOperation(Action<Texture2D> operation)
         {
             _pendingOperations.Add(operation);
             _isDirty = true;
@@ -77,7 +86,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Saves the texture to a file.
         /// </summary>
-        public TextureElement Save(string filepath, ImageType imageType = ImageType.PNG)
+        public ITextureElement Save(string filepath, ImageType imageType = ImageType.PNG)
         {
             Apply();
 
@@ -131,10 +140,14 @@ namespace TexFac.Universal
 
         #region Styling Properties
 
+        public ITextureElement BackgroundGradient(Color32 color1, Color32 color2, float angle)
+        {
+            throw new NotImplementedException();
+        }
         /// <summary>
         /// Fast fill with a specific color.
         /// </summary>
-        public unsafe TextureElement BackgroundColor(byte r, byte g, byte b, byte a)
+        public unsafe ITextureElement BackgroundColor(byte r, byte g, byte b, byte a)
         {
             return AddOperation(tex =>
             {
@@ -144,8 +157,8 @@ namespace TexFac.Universal
                 GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
                 var ptr = handle.AddrOfPinnedObject();
                 var pData = (byte*)ptr.ToPointer();
-
-                for (int i = 0; i < tex.width * tex.height; i += 8)
+                int i;
+                for (i = 0; i < tex.width * tex.height - 8; i += 8)
                 {
                     handler.SetPixel(pData, i, r, g, b, a);
                     handler.SetPixel(pData, i + 1, r, g, b, a);
@@ -156,6 +169,11 @@ namespace TexFac.Universal
                     handler.SetPixel(pData, i + 6, r, g, b, a);
                     handler.SetPixel(pData, i + 7, r, g, b, a);
                 }
+                
+                for (; i < tex.width * tex.height; i++)
+                {
+                    handler.SetPixel(pData, i, r, g, b, a);
+                }
 
                 handle.Free();
             });
@@ -164,7 +182,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a gradient background.
         /// </summary>
-        public unsafe TextureElement BackgroundGradient(Color startColor, Color endColor, float angle = 0)
+        public unsafe ITextureElement BackgroundGradient(Color startColor, Color endColor, float angle = 0)
         {
             return AddOperation(tex =>
             {
@@ -212,7 +230,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a radial gradient background.
         /// </summary>
-        public TextureElement BackgroundRadialGradient(Color centerColor, Color outerColor, Vector2? center = null)
+        public ITextureElement BackgroundRadialGradient(Color centerColor, Color outerColor, Vector2? center = null)
         {
             return AddOperation(tex =>
             {
@@ -240,7 +258,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a repeating pattern background.
         /// </summary>
-        public TextureElement BackgroundPattern(Texture2D patternTexture,
+        public ITextureElement BackgroundPattern(Texture2D patternTexture,
             BackgroundRepeatMode repeatMode = BackgroundRepeatMode.Repeat)
         {
             return AddOperation(tex =>
@@ -293,7 +311,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Adds rounded corners to the texture.
         /// </summary>
-        public TextureElement BorderRadius(int radius, BorderType borderType = BorderType.All, int aliasDistance = 0)
+        public ITextureElement BorderRadius(int radius, BorderType borderType = BorderType.All, int aliasDistance = 0)
         {
             return AddOperation(tex =>
             {
@@ -322,7 +340,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Adds a border to the texture.
         /// </summary>
-        public TextureElement Border(int width, Color color, BorderDrawMode drawMode = BorderDrawMode.Outside)
+        public ITextureElement Border(int width, Color color, BorderDrawMode drawMode = BorderDrawMode.Outside)
         {
             return AddOperation(tex =>
             {
@@ -395,7 +413,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Sets the overall opacity of the texture.
         /// </summary>
-        public TextureElement Opacity(float value)
+        public ITextureElement Opacity(float value)
         {
             return AddOperation(tex =>
             {
@@ -415,7 +433,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies a box shadow to the texture.
         /// </summary>
-        public TextureElement BoxShadow(int offsetX, int offsetY, int blurRadius, Color shadowColor)
+        public ITextureElement BoxShadow(int offsetX, int offsetY, int blurRadius, Color shadowColor)
         {
             return AddOperation(tex =>
             {
@@ -506,7 +524,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Scale(float size, FilterMode filterMode = FilterMode.Bilinear)
+        public ITextureElement Scale(float size, FilterMode filterMode = FilterMode.Bilinear)
         {
             return Scale((int)(Width * size), (int)(Height * size), filterMode);
         }
@@ -514,7 +532,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Scales the texture to the specified dimensions.
         /// </summary>
-        public TextureElement Scale(int newWidth, int newHeight, FilterMode filterMode = FilterMode.Bilinear)
+        public ITextureElement Scale(int newWidth, int newHeight, FilterMode filterMode = FilterMode.Bilinear)
         {
             return AddOperation(tex =>
             {
@@ -556,7 +574,7 @@ namespace TexFac.Universal
             });
         }
 
-        public unsafe TextureElement RotateUnsafe(float angle)
+        public unsafe ITextureElement RotateUnsafe(float angle)
         {
             return AddOperation(tex =>
             {
@@ -620,7 +638,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Rotates the texture by the specified angle in degrees.
         /// </summary>
-        public TextureElement Rotate(float angle, bool resizeCanvas = true)
+        public ITextureElement Rotate(float angle, bool resizeCanvas = true)
         {
             return AddOperation(tex =>
             {
@@ -683,7 +701,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Clips the texture to a specific shape.
         /// </summary>
-        public TextureElement ClipPath(ClipShapeType shapeType, params float[] parameters)
+        public ITextureElement ClipPath(ClipShapeType shapeType, params float[] parameters)
         {
             return AddOperation(tex =>
             {
@@ -795,13 +813,12 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies a mask texture to this texture (black = transparent, white = opaque).
         /// </summary>
-        public TextureElement Mask(Texture2D maskTexture)
+        public ITextureElement Mask(Texture2D maskTexture)
         {
             return AddOperation(tex =>
             {
                 if (tex.width != maskTexture.width || tex.height != maskTexture.height)
                 {
-                    Debug.LogError("Mask texture dimensions must match the target texture dimensions");
                     return;
                 }
 
@@ -825,7 +842,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Adjusts the brightness of the texture.
         /// </summary>
-        public TextureElement Brightness(float value)
+        public ITextureElement Brightness(float value)
         {
             return AddOperation(tex =>
             {
@@ -846,7 +863,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Adds noise to the texture, like a film grain effect.
         /// </summary>
-        public unsafe TextureElement Noise(float intensity, bool monochrome = true)
+        public unsafe ITextureElement Noise(float intensity, bool monochrome = true)
         {
             return AddOperation(tex =>
             {
@@ -886,7 +903,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies a sharpen filter to the texture.
         /// </summary>
-        public TextureElement Sharpen(float intensity = 1.0f)
+        public ITextureElement Sharpen(float intensity = 1.0f)
         {
             return AddOperation(tex =>
             {
@@ -938,7 +955,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Reduces the number of colors.
         /// </summary>
-        public TextureElement Posterize(int levels)
+        public ITextureElement Posterize(int levels)
         {
             return AddOperation(tex =>
             {
@@ -961,7 +978,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Reduces the number of colors.
         /// </summary>
-        public unsafe TextureElement PosterizeUnsafe(int levels)
+        public unsafe ITextureElement PosterizeUnsafe(int levels)
         {
             return AddOperation(tex =>
             {
@@ -1014,7 +1031,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies a threshold filter, converting pixels to black or white based on their brightness.
         /// </summary>
-        public TextureElement Threshold(float threshold)
+        public ITextureElement Threshold(float threshold)
         {
             return AddOperation(tex =>
             {
@@ -1043,7 +1060,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies a Gaussian blur filter to the texture.
         /// </summary>
-        public TextureElement GaussianBlur(int radius, float sigma = 1.0f)
+        public ITextureElement GaussianBlur(int radius, float sigma = 1.0f)
         {
             return AddOperation(tex =>
             {
@@ -1117,7 +1134,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Contrast(float value)
+        public ITextureElement Contrast(float value)
         {
             return AddOperation(tex =>
             {
@@ -1137,7 +1154,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Saturation(float value)
+        public ITextureElement Saturation(float value)
         {
             return AddOperation(tex =>
             {
@@ -1159,7 +1176,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Hue(float value)
+        public ITextureElement Hue(float value)
         {
             return AddOperation(tex =>
             {
@@ -1199,7 +1216,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Grayscale()
+        public ITextureElement Grayscale()
         {
             return AddOperation(tex =>
             {
@@ -1216,7 +1233,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Invert()
+        public ITextureElement Invert()
         {
             return AddOperation(tex =>
             {
@@ -1233,7 +1250,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Sepia()
+        public ITextureElement Sepia()
         {
             return AddOperation(tex =>
             {
@@ -1252,7 +1269,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Blur(int radius)
+        public ITextureElement Blur(int radius)
         {
             return AddOperation(tex =>
             {
@@ -1291,7 +1308,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Pixelate(int pixelSize)
+        public ITextureElement Pixelate(int pixelSize)
         {
             return AddOperation(tex =>
             {
@@ -1336,7 +1353,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement EdgeDetection()
+        public ITextureElement EdgeDetection()
         {
             return AddOperation(tex =>
             {
@@ -1361,7 +1378,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Vignette(float strength)
+        public ITextureElement Vignette(float strength)
         {
             return AddOperation(tex =>
             {
@@ -1390,7 +1407,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement ColorTint(Color tintColor)
+        public ITextureElement ColorTint(Color tintColor)
         {
             return AddOperation(tex =>
             {
@@ -1415,7 +1432,7 @@ namespace TexFac.Universal
 
         #region Transformations
 
-        public TextureElement Crop(Rect rect)
+        public ITextureElement Crop(Rect rect)
         {
             return AddOperation(tex =>
             {
@@ -1439,7 +1456,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Translate(Vector2 offset, bool expand = false)
+        public ITextureElement Translate(Vector2 offset, bool expand = false)
         {
             int width = _texture.width;
             int height = _texture.height;
@@ -1477,7 +1494,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Wave(float amplitude, float frequency)
+        public ITextureElement Wave(float amplitude, float frequency)
         {
             return AddOperation(tex =>
             {
@@ -1500,7 +1517,7 @@ namespace TexFac.Universal
             });
         }
 
-        public TextureElement Swirl(float strength)
+        public ITextureElement Swirl(float strength)
         {
             return AddOperation(tex =>
             {
@@ -1537,7 +1554,7 @@ namespace TexFac.Universal
 
         #region Blend Operations
 
-        public TextureElement Blend(TextureElement other, BlendMode blendMode = BlendMode.Normal)
+        public ITextureElement Blend(ITextureElement other, BlendMode blendMode = BlendMode.Normal)
         {
             return AddOperation(tex =>
             {
@@ -1602,7 +1619,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies blend modes between textures.
         /// </summary>
-        public TextureElement MixBlendMode(Texture2D overlayTexture, MixBlendModeType blendMode)
+        public ITextureElement MixBlendMode(Texture2D overlayTexture, MixBlendModeType blendMode)
         {
             return AddOperation(tex =>
             {
@@ -1757,7 +1774,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Applies text or icon to a texture.
         /// </summary>
-        public TextureElement DrawText(string text, int fontSize, Color color,
+        public ITextureElement DrawText(string text, int fontSize, Color color,
             TextAnchor alignment = TextAnchor.MiddleCenter, Font font = null)
         {
             return AddOperation(tex =>
