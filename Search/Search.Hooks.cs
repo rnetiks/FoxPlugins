@@ -19,18 +19,18 @@ namespace Search.KKS
 			private static void HotkeyValueGetter(ConfigEntry<KeyboardShortcut> __instance,
 				ref KeyboardShortcut __result)
 			{
-				var hash = new BepInExCommand(__instance).GetHashCode();
-				if (!Instance.commands.TryGetValue(hash, out var info))
-				{
-					info = new BepInExCommand(__instance);
-					if (((BepInExCommand)info).Owner != null)
-						Instance.AddCommand(info);
-				}
-				else
+				var cmd = new BepInExCommand(__instance);
+				var hash = cmd.GetHashCode();
+				if (Instance.commands.TryGetValue(hash, out var info))
 				{
 					var command = (BepInExCommand)info;
 					command.FramesSinceHit++;
 					Instance.commands[hash] = command;
+				}
+				else
+				{
+					if (cmd.Owner != null)
+						Instance.AddCommand(cmd);
 				}
 			}
 
