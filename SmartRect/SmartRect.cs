@@ -608,7 +608,7 @@ namespace SmartRectV0
         /// Converts the Bézier curve into a polygonal approximation with the specified number of segments.
         /// </summary>
         /// <param name="segments">The number of segments to divide the Bézier curve into.</param>
-        /// <returns>A list of <see cref="Vector3"/> points representing the polygonal approximation of the curve.</returns>
+        /// <returns>A list of <see cref="UnityEngine.Vector3"/> points representing the polygonal approximation of the curve.</returns>
         public IList<Vector3> ToPoly(int segments)
         {
             Vector3[] points = new Vector3[segments];
@@ -619,6 +619,156 @@ namespace SmartRectV0
             }
 
             return points;
+        }
+
+        /// <summary>
+        /// Converts a polyline into a sequence of cubic Bézier curves that approximate the original shape.
+        /// </summary>
+        /// <param name="poly">The polyline to convert, represented as a list of Vector3 points. Must contain at least 3 points.</param>
+        /// <returns>A list of Bézier objects representing the cubic Bézier curve segments.</returns>
+        public static IList<Beziers> ToBezier(IList<Vector3> poly)
+        {
+            if (poly == null || poly.Count < 3)
+                throw new ArgumentException("Polyline must contain at least 3 points", nameof(poly));
+
+            List<Beziers> bezierCurves = new List<Beziers>();
+            Vector3[] controlPoints = CalculateControlPoints(poly);
+
+            for (int i = 0; i < poly.Count - 1; i++)
+            {
+                Vector3 p0 = poly[i];
+                Vector3 p3 = poly[i + 1];
+                Vector3 p1 = controlPoints[i * 2];
+                Vector3 p2 = controlPoints[i * 2 + 1];
+
+                bezierCurves.Add(new Beziers(p0, p1, p2, p3));
+            }
+
+            return bezierCurves;
+        }
+
+        /// <summary>
+        /// Calculates control points for a sequence of cubic Bézier curves that pass through all points in the polyline.
+        /// </summary>
+        /// <param name="points">The polyline points.</param>
+        /// <returns>An array of control points (two for each segment).</returns>
+        private static Vector3[] CalculateControlPoints(IList<Vector3> points)
+        {
+            int n = points.Count - 1;
+            Vector3[] result = new Vector3[n * 2];
+
+            if (n == 1)
+            {
+                Vector3 direction = (points[1] - points[0]) / 3f;
+                result[0] = points[0] + direction;
+                result[1] = points[1] - direction;
+                return result;
+            }
+
+            Vector3[] tangents = new Vector3[n + 1];
+
+            for (int i = 1; i < n; i++)
+            {
+                tangents[i] = (points[i + 1] - points[i - 1]).normalized;
+            }
+
+            tangents[0] = (points[1] - points[0]).normalized;
+            tangents[n] = (points[n] - points[n - 1]).normalized;
+
+            for (int i = 0; i < n; i++)
+            {
+                float segmentLength = UnityEngine.Vector3.Distance(points[i], points[i + 1]) / 3f;
+                result[i * 2] = points[i] + tangents[i] * segmentLength;
+                result[i * 2 + 1] = points[i + 1] - tangents[i + 1] * segmentLength;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Reduces a given polygon's number of vertices to the specified number of segments.
+        /// </summary>
+        /// <param name="poly">The input list of vertices representing the polygon.</param>
+        /// <param name="segments">The number of vertices to reduce the polygon to.</param>
+        /// <returns>A new list of vertices representing the reduced polygon.</returns>
+        public IList<Vector3> ReducePoly(IList<Vector3> poly, int segments)
+        {
+            if (poly.Count <= segments)
+                return poly;
+
+            Vector3[] result = new Vector3[segments];
+            float step = (poly.Count - 1) / (float)(segments - 1);
+
+            for (int i = 0; i < segments; i++)
+            {
+                float index = i * step;
+                int floor = Mathf.FloorToInt(index);
+                float t = index - floor;
+
+                if (floor >= poly.Count - 1)
+                {
+                    result[i] = poly[poly.Count - 1];
+                }
+                else
+                {
+                    result[i] = UnityEngine.Vector3.Lerp(poly[floor], poly[floor + 1], t);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Increases the number of points in the given polyline to match the specified number of segments, optionally smoothing the result.
+        /// </summary>
+        /// <param name="poly">The original polyline represented as a list of <see cref="UnityEngine.Vector3"/>.</param>
+        /// <param name="segments">The desired number of segments in the resulting polyline. Must be greater than or equal to the number of points in the original polyline.</param>
+        /// <param name="smooth">Determines whether smooth interpolation is applied to the new points in the polyline. Defaults to false.</param>
+        /// <returns>
+        /// A new polyline with the specified number of segments, represented as a list of <see cref="UnityEngine.Vector3"/>.
+        /// </returns>
+        public IList<Vector3> IncreasePoly(IList<Vector3> poly, int segments, bool smooth = false)
+        {
+            if (poly.Count >= segments)
+                return poly;
+
+            Vector3[] result = new Vector3[segments];
+            float step = (poly.Count - 1) / (float)(segments - 1);
+
+            for (int i = 0; i < segments; i++)
+            {
+                float index = i * step;
+                int floor = Mathf.FloorToInt(index);
+                float t = index - floor;
+
+                if (floor >= poly.Count - 1)
+                {
+                    result[i] = poly[poly.Count - 1];
+                }
+                else if (smooth && floor > 0 && floor < poly.Count - 2)
+                {
+                    Vector3 p0 = poly[floor - 1];
+                    Vector3 p1 = poly[floor];
+                    Vector3 p2 = poly[floor + 1];
+                    Vector3 p3 = poly[floor + 2];
+
+                    float tSquared = t * t;
+                    float tCubed = tSquared * t;
+
+                    float q1 = -tCubed + 2.0f * tSquared - t;
+                    float q2 = 3.0f * tCubed - 5.0f * tSquared + 2.0f;
+                    float q3 = -3.0f * tCubed + 4.0f * tSquared + t;
+                    float q4 = tCubed - tSquared;
+
+                    result[i] = 0.5f * (q1 * p0 + q2 * p1 + q3 * p2 + q4 * p3);
+                }
+                else
+                {
+                    result[i] = UnityEngine.Vector3.Lerp(poly[floor], poly[floor + 1], t);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
