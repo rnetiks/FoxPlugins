@@ -29,6 +29,14 @@ namespace DefaultNamespace
         private CompositorManager _compositorManager;
         private CompositorRenderer _renderer;
 
+        private void OnDestroy()
+        {
+            if (_camera != null)
+                _camera.enabled = true;
+            if (_cameraControl != null)
+                _cameraControl.enabled = true;
+        }
+
         enum WindowType
         {
             None,

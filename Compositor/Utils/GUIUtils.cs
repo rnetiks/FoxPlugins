@@ -65,8 +65,8 @@ namespace Compositor.KK
 
         public static void DrawBezierCurve(Vector2 start, Vector2 end, Color color, float width = 2f, int segments = 20)
         {
-            Vector2 startTangent = start + Vector2.right * 50;
-            Vector2 endTangent = end + Vector2.left * 50;
+            Vector2 startTangent = start + Vector2.right * 200;
+            Vector2 endTangent = end + Vector2.left * 200;
             for (var i = 0; i < segments; i++)
             {
                 float t1 = (float)i / segments;

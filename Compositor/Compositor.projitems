@@ -9,15 +9,14 @@
         <Import_RootNamespace>Compositor</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)CompositorManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)CompositorRenderer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)CompositorStyles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorStyles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\ICompositorNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\InputOutputNodes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GUIStyleBuilder.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GUIUtils.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ICompositorNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)InputOutputNodes.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)TextureCache.cs" />
-
-    </ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIStyleBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIUtils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\TextureCache.cs" />
+  </ItemGroup>
 </Project>

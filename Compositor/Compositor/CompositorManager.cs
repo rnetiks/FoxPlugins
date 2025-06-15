@@ -27,11 +27,18 @@ namespace Compositor.KK
         public void CreateDefaultNodes()
         {
             var inputNode = new InputNode();
-            inputNode.Position = new Vector2(200, 200);
-            AddNode(inputNode);
-
+            var tnode = new InputNode.TransformNode();
             var outputNode = new OutputNode();
-            outputNode.Position = new Vector2(800, 200);
+            
+            inputNode.Position = new Vector2(200, 200);
+            tnode.Position = new Vector2(400, 400);
+            outputNode.Position = new Vector2(800, 800);
+            
+            inputNode.ConnectTo(tnode, 0, 0);
+            tnode.ConnectTo(outputNode, 0, 0);
+            
+            AddNode(inputNode);
+            AddNode(tnode);
             AddNode(outputNode);
         }
 

@@ -185,7 +185,7 @@ namespace Compositor.KK
                         var connectionColor = GetConnectionColor(output.OutputType);
                         var pulseIntensity = Mathf.Sin(Time.time * 3f) * 0.1f + 0.9f;
                         connectionColor = Color.Lerp(connectionColor, GUIUtils.Colors.ConnectionHighlight, pulseIntensity * 0.3f);
-                        GUIUtils.DrawBezierCurve(startPos, endPos, connectionColor, 3f);
+                        GUIUtils.DrawBezierCurve(startPos, endPos, connectionColor, 3f, 1);
                         var midPoint = Vector2.Lerp(startPos, endPos, 0.5f);
                         var direction = (endPos - startPos).normalized;
                         var arrowStart = midPoint - direction * 5f;
