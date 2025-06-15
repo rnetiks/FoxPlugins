@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{10fdde72-41bb-44e8-8a69-a0784bfc574c}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>Compositor</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)CompositorManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CompositorRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CompositorStyles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GUIStyleBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GUIUtils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ICompositorNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)InputOutputNodes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextureCache.cs" />
+
+    </ItemGroup>
+</Project>
