@@ -79,7 +79,6 @@ namespace DefaultNamespace.Compositor
                 if (_nodeWindow == null)
                 {
                     _nodeWindow = GUIStyleBuilder.Create()
-                        .AsBox()
                         .WithNormalState(background: GUIUtils.GetColorTexture(GUIUtils.Colors.NodeBackground))
                         .WithBorder(1)
                         .WithPadding(0)
@@ -97,7 +96,7 @@ namespace DefaultNamespace.Compositor
                 {
                     _nodeWindowSelected = GUIStyleBuilder.Create()
                         .AsBox()
-                        .WithNormalState(background: GUIUtils.GetColorTexture(GUIUtils.Colors.NodeBackground))
+                        .WithNormalState(background: GUIUtils.GetColorTexture(GUIUtils.Colors.HeaderAccent))
                         .WithBorder(2)
                         .WithPadding(0)
                         .Build();
@@ -248,6 +247,12 @@ namespace DefaultNamespace.Compositor
             }
         }
 
+        /// <summary>
+        /// Draws a grid on the specified area with an adjustable zoom level and offset.
+        /// </summary>
+        /// <param name="area">The rectangular area where the grid will be drawn.</param>
+        /// <param name="zoom">The zoom level of the grid.</param>
+        /// <param name="offset">The offset of the grid in the area.</param>
         public static void DrawGrid(Rect area, float zoom, Vector2 offset)
         {
             float gridSize = 20f * zoom;
@@ -275,6 +280,13 @@ namespace DefaultNamespace.Compositor
             }
         }
 
+        /// <summary>
+        /// Draws a port representation on the UI.
+        /// </summary>
+        /// <param name="portRect">The rectangle specifying the location and size of the port.</param>
+        /// <param name="isConnected">Indicates whether the port is connected.</param>
+        /// <param name="isInput">Indicates whether the port is an input port.</param>
+        /// <param name="isHovered">Indicates whether the port is currently being hovered over by the cursor. Default is false.</param>
         public static void DrawPort(Rect portRect, bool isConnected, bool isInput, bool isHovered = false)
         {
             Color portColor;

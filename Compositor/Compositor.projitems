@@ -13,7 +13,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorStyles.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\ICompositorNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\InputOutputNodes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\FilterNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\InputNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\OutputNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\RGB2HSVNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\TransformNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIStyleBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIUtils.cs" />

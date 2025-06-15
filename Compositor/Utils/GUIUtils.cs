@@ -63,6 +63,14 @@ namespace Compositor.KK
             GUI.matrix = savedMatrix;
         }
 
+        /// <summary>
+        /// Draws a Bézier curve between two points with specified properties, such as color, width, and segment count.
+        /// </summary>
+        /// <param name="start">The starting point of the Bezier curve.</param>
+        /// <param name="end">The ending point of the Bezier curve.</param>
+        /// <param name="color">The color of the Bezier curve.</param>
+        /// <param name="width">The width of the curve's line. Default is 2f.</param>
+        /// <param name="segments">The number of interpolated segments used to draw the curve. Default is 20.</param>
         public static void DrawBezierCurve(Vector2 start, Vector2 end, Color color, float width = 2f, int segments = 20)
         {
             Vector2 startTangent = start + Vector2.right * 200;
@@ -94,11 +102,25 @@ namespace Compositor.KK
             return p;
         }
 
+        /// <summary>
+        /// Scales a rectangular area by a specified multiplier, applying an additional offset to its position.
+        /// </summary>
+        /// <param name="rect">The original rectangle to be scaled.</param>
+        /// <param name="scale">The scale factor to be applied to the rectangle.</param>
+        /// <param name="offset">The vector by which to offset the rectangle's position after scaling.</param>
+        /// <returns>A new rectangle that has been scaled and offset based on the provided parameters.</returns>
         public static Rect ScaleRect(Rect rect, float scale, Vector2 offset)
         {
             return new Rect((rect.x + offset.x) * scale, (rect.y + offset.y) * scale, rect.width * scale, rect.height * scale);
         }
 
+        /// <summary>
+        /// Scales a 2D vector by a specified scale factor and applies an offset to the result.
+        /// </summary>
+        /// <param name="vector2">The input 2D vector to be scaled and offset.</param>
+        /// <param name="scale">The factor by which to scale the vector.</param>
+        /// <param name="offset">The offset to apply to the vector after scaling.</param>
+        /// <returns>A new scaled and offset 2D vector.</returns>
         public static Vector2 ScaleVector2(Vector2 vector2, float scale, Vector2 offset)
         {
             return (vector2 + offset) * scale;

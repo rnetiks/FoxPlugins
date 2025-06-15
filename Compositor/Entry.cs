@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using alphaShot;
 using BepInEx;
 using BepInEx.Configuration;
@@ -29,6 +31,8 @@ namespace DefaultNamespace
         private CompositorManager _compositorManager;
         private CompositorRenderer _renderer;
 
+        public static List<Type> AvailableNodes = new List<Type>();
+
         private void OnDestroy()
         {
             if (_camera != null)
@@ -47,6 +51,11 @@ namespace DefaultNamespace
 
         private void Awake()
         {
+            foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if(!type.IsSubclassOf(typeof(BaseCompositorNode))) continue;
+                AvailableNodes.Add(type);
+            }
             Logger = base.Logger;
             InitializeConfig();
             InitializeComponents();
