@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DefaultNamespace;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Compositor.KK
@@ -147,7 +148,7 @@ namespace Compositor.KK
         /// It is used to enforce type safety when establishing connections between nodes,
         /// ensuring that only values of this type or derived from it can be assigned to the input.
         /// </remarks>
-        public Type AcceptedType { get; set; }
+        public Type[] AcceptedType { get; set; }
         /// <summary>
         /// Represents the current value of the node input.
         /// </summary>
@@ -202,6 +203,13 @@ namespace Compositor.KK
         /// connected node, and its local position in the UI.
         /// </summary>
         public NodeInput(string name, Type acceptedType, Vector2 localPosition)
+        {
+            Name = name;
+            AcceptedType = new [] { acceptedType };
+            LocalPosition = localPosition;
+        }
+
+        public NodeInput(string name, Type[] acceptedType, Vector2 localPosition)
         {
             Name = name;
             AcceptedType = acceptedType;
@@ -401,6 +409,13 @@ namespace Compositor.KK
         public bool IsSelected { get; set; }
 
         /// <summary>
+        /// Retrieves the value of an input node by its name if it exists within the node's input collection.
+        /// </summary>
+        /// <param name="name">The name of the input for which the value is being retrieved.</param>
+        /// <returns>The value associated with the specified input name if found, or null if no such input exists.</returns>
+        public NodeInput TryGetInput(string name) => _inputs.FirstOrDefault(input => input.Name == name);
+
+        /// <summary>
         /// Represents the collection of input ports for the node.
         /// </summary>
         /// <remarks>
@@ -461,7 +476,7 @@ namespace Compositor.KK
         /// Updates the state or internal logic of the node. This method is called during the compositor's update cycle
         /// and can be used to perform operations such as recalculating values, refreshing internal data, or handling other necessary changes.
         /// </summary>
-        public virtual void Update(){}
+        public virtual void Update() { }
         /// <summary>
         /// Renders the visual content of the node within the specified rectangular area.
         /// This method is responsible for drawing custom UI or content relevant to the node's function.
@@ -487,11 +502,11 @@ namespace Compositor.KK
         {
             if (outputIndex >= Outputs.Count || inputIndex >= other.Inputs.Count)
                 return false;
-            
+
             var output = Outputs[outputIndex];
             var input = other.Inputs[inputIndex];
 
-            return input.AcceptedType.IsAssignableFrom(output.OutputType);
+            return input.AcceptedType.Any(e => e.IsAssignableFrom(output.OutputType));
         }
 
         /// <summary>
@@ -504,7 +519,7 @@ namespace Compositor.KK
         {
             if (!CanConnectTo(other, outputIndex, inputIndex))
                 return;
-            
+
             var output = Outputs[outputIndex];
             var input = other.Inputs[inputIndex];
 
@@ -529,7 +544,7 @@ namespace Compositor.KK
         {
             if (outputIndex >= _outputs.Count)
                 return;
-            
+
             var output = _outputs[outputIndex];
             foreach (var connection in output.Connections)
             {
@@ -538,7 +553,7 @@ namespace Compositor.KK
                 input.ConnectedOutputIndex = -1;
                 input.Value = null;
             }
-            
+
             output.Connections.Clear();
         }
 
@@ -550,13 +565,13 @@ namespace Compositor.KK
         {
             if (inputIndex >= _inputs.Count)
                 return;
-            
+
             var input = _inputs[inputIndex];
             if (input.IsConnected)
             {
                 var connectedOutput = input.ConnectedNode.Outputs[input.ConnectedOutputIndex];
                 connectedOutput.Connections.RemoveAll(e => e.InputNode == this && e.InputIndex == inputIndex);
-                
+
                 input.ConnectedNode = null;
                 input.ConnectedOutputIndex = -1;
                 input.Value = null;

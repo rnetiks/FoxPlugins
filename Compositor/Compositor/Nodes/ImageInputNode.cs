@@ -5,13 +5,17 @@ using UnityEngine;
 
 namespace Compositor.KK
 {
-    public class InputNode : BaseCompositorNode
+    public class ImageInputNode : BaseCompositorNode
     {
         public override string Title => "Input";
+        public static string Group => "In/Out";
+        
         private Texture2D _currentTexture;
 
         protected override void InitializePorts()
         {
+            _outputs.Add(new NodeOutput("Format", typeof(TextureFormat), new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Scale", typeof(Vector2), new Vector2(Size.x, Size.y * 0.7f)));
             _outputs.Add(new NodeOutput("Texture", typeof(Texture2D), new Vector2(Size.x, Size.y * 0.8f)));
         }
 
@@ -46,11 +50,11 @@ namespace Compositor.KK
         public override void Process()
         {
             _currentTexture = TextureCache.GetLatestTexture();
-
-            if (_outputs.Count > 0)
-            {
-                _outputs[0].SetValue(_currentTexture);
-            }
+            Texture2D newTex = new Texture2D(_currentTexture.width, _currentTexture.height, _currentTexture.format, false);
+            Graphics.CopyTexture(_currentTexture, newTex);
+            _outputs[0].SetValue(newTex.format);
+            _outputs[1].SetValue(new Vector2(newTex.width, newTex.height));
+            _outputs[2].SetValue(newTex);
         }
     }
 }

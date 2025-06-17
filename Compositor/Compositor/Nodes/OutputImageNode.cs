@@ -1,13 +1,17 @@
 using System;
+using System.IO;
+using DefaultNamespace;
 using DefaultNamespace.Compositor;
 using TexFac.Universal;
 using UnityEngine;
 
 namespace Compositor.KK
 {
-    public class OutputNode : BaseCompositorNode
+    public class OutputImageNode : BaseCompositorNode
     {
         public override string Title => "Output";
+        public static string Group => "In/Out";
+        
         private Texture2D _displayTexture;
 
         protected override void InitializePorts()
@@ -58,11 +62,16 @@ namespace Compositor.KK
             if (_displayTexture != null)
             {
                 // TODO change CPUTextureElement with ITextureElement for choice between CPU and GPU
-                var element = new CPUTextureElement(_displayTexture);
+                // var element = new CPUTextureElement(_displayTexture);
                 var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
                 var filename = $"compositor_output_{timestamp}.png";
 
-                element.Save(filename);
+                File.WriteAllBytes(filename, _displayTexture.EncodeToJPG(100));
+                // element.Save(filename);
+                if (Entry._openAfterExport.Value)
+                {
+                    System.Diagnostics.Process.Start(filename);
+                }
             }
         }
     }

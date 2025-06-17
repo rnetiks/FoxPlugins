@@ -16,6 +16,10 @@ namespace Compositor.KK
         private ICompositorNode _selectedNode;
         private bool _isDragging;
         private Vector2 _dragOffset;
+        public bool _isConnecting;
+        public ICompositorNode _connectionStartNode;
+        public NodeOutput _connectionStartOutput;
+        public int _connectionStartIndex;
 
         /// <summary>
         /// Represents the current state of the compositor system, encompassing viewport offsets,
@@ -54,24 +58,40 @@ namespace Compositor.KK
         }
 
         /// <summary>
+        /// Adds a new compositor node of the specified type to the composition system.
+        /// The node's position is initialized based on the current mouse position,
+        /// constrained by screen boundaries, and subsequently registered to the compositor manager.
+        /// </summary>
+        /// <param name="nodeType">The type of the node to be added. Must be a subclass of BaseCompositorNode.</param>
+        private void AddNode(Type nodeType)
+        {
+            if (!nodeType.IsSubclassOf(typeof(BaseCompositorNode)))
+                return;
+            var node = (BaseCompositorNode) Activator.CreateInstance(nodeType);
+            node.Position = Vector2.Min(Event.current.mousePosition, new Vector2(Screen.width, Screen.height));
+            AddNode(node);
+        }
+
+        /// <summary>
         /// Creates and initializes the default nodes within the compositor workspace,
         /// setting up basic connections and positioning for an initial setup.
         /// This method is typically used to initialize a workspace with input and output nodes pre-connected.
         /// </summary>
         public void CreateDefaultNodes()
         {
-            var inputNode = new InputNode();
-            var outputNode = new OutputNode();
-            var rgb2hsv = new RGB2HSVNode();
+            var inputNode = new ImageInputNode();
+            var rotateNode = new FilterNode();
+            var outputNode = new OutputImageNode();
 
             inputNode.Position = new Vector2(200, 200);
+            rotateNode.Position = new Vector2(500, 300);
             outputNode.Position = new Vector2(800, 800);
-            rgb2hsv.Position = new Vector2(400, 400);
 
-            inputNode.ConnectTo(outputNode, 0, 0);
+            inputNode.ConnectTo(rotateNode, 2, 0);
+            rotateNode.ConnectTo(outputNode, 0, 0);
 
             AddNode(inputNode);
-            AddNode(rgb2hsv);
+            AddNode(rotateNode);
             AddNode(outputNode);
         }
 
@@ -127,8 +147,41 @@ namespace Compositor.KK
             {
                 node.Update();
             }
+        }
 
-            ProcessNodes();
+        private object GetPortAtCursor()
+        {
+            Vector2 mousePosition = Event.current.mousePosition;
+
+            foreach (var node in _nodes)
+            {
+                var nodeWorldPos = GUIUtils.ScaleVector2(node.Position, State.Zoom, new Vector2(State.OffsetX, State.OffsetY));
+                nodeWorldPos.y += 30;
+
+                foreach (var input in node.Inputs)
+                {
+                    var portWorldPos = nodeWorldPos + input.LocalPosition * State.Zoom;
+                    var rect = new Rect(portWorldPos.x - 6, portWorldPos.y - 6, 12, 12);
+                    if (rect.Contains(mousePosition)) return input;
+                }
+
+                foreach (var output in node.Outputs)
+                {
+                    var portWorldPos = nodeWorldPos + output.LocalPosition * State.Zoom;
+                    var rect = new Rect(portWorldPos.x - 6, portWorldPos.y - 6, 12, 12);
+                    if (rect.Contains(mousePosition)) return output;
+                }
+            }
+
+            return null;
+        }
+
+        public static bool IsSearchMenuVisible;
+        public static Vector2 SearchMenuPosition;
+
+        public void HideSearchMenu()
+        {
+            IsSearchMenuVisible = false;
         }
 
         /// <summary>
@@ -137,49 +190,157 @@ namespace Compositor.KK
         /// </summary>
         private void HandleInput()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (IsSearchMenuVisible)
+                return;
+            if (Entry._search.Value.IsDown())
             {
-                Vector2 mousePos = Input.mousePosition;
-                mousePos.y = Screen.height - mousePos.y;
+                SearchMenuPosition = Event.current.mousePosition;
+                SearchMenuPosition.x -= 150;
+                SearchMenuPosition.y -= 200;
+                IsSearchMenuVisible = true;
+                CompositorRenderer.searchText = string.Empty;
+            }
+            if (_selectedNode != null && (Input.GetKeyUp(KeyCode.Delete) || Input.GetKeyUp(KeyCode.X)))
+            {
+                RemoveNode(_selectedNode);
+                _selectedNode = null;
+            }
+            
 
-                var clickedNode = GetNodeAtPosition(mousePos);
-                if (clickedNode != null)
+            object port = GetPortAtCursor();
+
+            if (_isConnecting)
+            {
+                if (Input.GetMouseButtonUp(0))
                 {
-                    SelectNode(clickedNode);
-                    _isDragging = true;
-                    _dragOffset = mousePos - clickedNode.Position;
+                    if (port is NodeInput targetInput)
+                    {
+                        TryCompleteConnection(targetInput);
+                    }
+
+                    _isConnecting = false;
+                    _connectionStartNode = null;
+                    _connectionStartOutput = null;
                 }
-                else
-                {
-                    _isDragging = true;
-                    SelectNode(null);
-                }
+                return;
             }
 
-            if (_isDragging)
+            if (port != null && Input.GetMouseButtonDown(0))
             {
-                if (_selectedNode == null)
+                switch (port)
                 {
-                    State.OffsetX += Input.GetAxis("Mouse X") * 12f;
-                    State.OffsetY -= Input.GetAxis("Mouse Y") * 12f;
+                    case NodeOutput output:
+                        StartConnection(output);
+                        break;
+                    case NodeInput input:
+                        DisconnectInput(input);
+                        break;
                 }
-
-                if (_selectedNode != null)
+            }
+            
+            if (port == null)
+            {
+                if (Input.GetMouseButtonDown(0))
                 {
                     Vector2 mousePos = Input.mousePosition;
                     mousePos.y = Screen.height - mousePos.y;
-                    _selectedNode.Position = mousePos - _dragOffset;
-                }
-            }
 
-            if (Input.GetMouseButtonUp(0))
-            {
-                _isDragging = false;
+                    var clickedNode = GetNodeAtPosition(mousePos);
+                    if (clickedNode != null)
+                    {
+                        SelectNode(clickedNode);
+                        _isDragging = true;
+                        _dragOffset = mousePos - clickedNode.Position;
+                    }
+                    else
+                    {
+                        _isDragging = true;
+                        SelectNode(null);
+                    }
+                }
+
+                if (_isDragging)
+                {
+                    if (_selectedNode == null)
+                    {
+                        State.OffsetX += Input.GetAxis("Mouse X") * (12f / State.Zoom);
+                        State.OffsetY -= Input.GetAxis("Mouse Y") * (12f / State.Zoom);
+                    }
+
+                    if (_selectedNode != null)
+                    {
+                        Vector2 mousePos = Input.mousePosition;
+                        mousePos.y = Screen.height - mousePos.y;
+                        _selectedNode.Position = mousePos - _dragOffset;
+                    }
+                }
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    _isDragging = false;
+                }
             }
 
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             State.Zoom += scroll;
-            State.Zoom = Mathf.Clamp(State.Zoom, 0.3f, 4f);
+            State.Zoom = Mathf.Clamp(State.Zoom, 0.5f, 5f);
+        }
+
+        private void StartConnection(NodeOutput output)
+        {
+            _isConnecting = true;
+
+            foreach (var node in _nodes)
+            {
+                for (int i = 0; i < node.Outputs.Count; i++)
+                {
+                    if (node.Outputs[i] == output)
+                    {
+                        _connectionStartNode = node;
+                        _connectionStartOutput = output;
+                        _connectionStartIndex = i;
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void TryCompleteConnection(NodeInput input)
+        {
+            ICompositorNode targetNode = null;
+            int targetIndex = -1;
+            foreach (var node in _nodes)
+            {
+                for (var i = 0; i < node.Inputs.Count; i++)
+                {
+                    if (node.Inputs[i] == input)
+                    {
+                        targetNode = node;
+                        targetIndex = i;
+                        break;
+                    }
+                }
+                if (targetNode != null) break;
+            }
+
+            if (targetNode == null) return;
+
+            ConnectNodes(_connectionStartNode, _connectionStartIndex, targetNode, targetIndex);
+        }
+
+        private void DisconnectInput(NodeInput input)
+        {
+            foreach (var node in _nodes)
+            {
+                for (var i = 0; i < node.Inputs.Count; i++)
+                {
+                    if (node.Inputs[i] == input)
+                    {
+                        node.DisconnectInput(i);
+                        return;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -191,7 +352,7 @@ namespace Compositor.KK
         /// <returns>The <see cref="ICompositorNode"/> at the specified position if one exists, or null if no node is found.</returns>
         private ICompositorNode GetNodeAtPosition(Vector2 position)
         {
-            Vector2 transformedPos = (position - new Vector2(State.OffsetX, State.OffsetY)) / State.Zoom;
+            Vector2 transformedPos = (position / State.Zoom) - new Vector2(State.OffsetX, State.OffsetY);
 
             return _nodes.FirstOrDefault(node =>
             {
@@ -205,7 +366,7 @@ namespace Compositor.KK
         /// and invoking the processing logic for each node. Ensures that nodes are processed in a manner
         /// that respects their dependencies and prevents duplicate processing.
         /// </summary>
-        private void ProcessNodes()
+        internal void ProcessNodes()
         {
             var processedNodes = new HashSet<ICompositorNode>();
             var processingQueue = new Queue<ICompositorNode>();

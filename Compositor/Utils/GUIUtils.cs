@@ -71,10 +71,10 @@ namespace Compositor.KK
         /// <param name="color">The color of the Bezier curve.</param>
         /// <param name="width">The width of the curve's line. Default is 2f.</param>
         /// <param name="segments">The number of interpolated segments used to draw the curve. Default is 20.</param>
-        public static void DrawBezierCurve(Vector2 start, Vector2 end, Color color, float width = 2f, int segments = 20)
+        public static void DrawBezierCurve(Vector2 start, Vector2 end, Color color, float width = 2f, int segments = 20, float midpoint = 100)
         {
-            Vector2 startTangent = start + Vector2.right * 200;
-            Vector2 endTangent = end + Vector2.left * 200;
+            Vector2 startTangent = start + Vector2.right * Mathf.Abs(midpoint);
+            Vector2 endTangent = end + Vector2.left * Mathf.Abs(midpoint);
             for (var i = 0; i < segments; i++)
             {
                 float t1 = (float)i / segments;
@@ -149,7 +149,7 @@ namespace Compositor.KK
             public static readonly Color NodeInput = new Color(0.3f, 0.8f, 0.9f, 1f);
             public static readonly Color NodeOutput = new Color(0.9f, 0.6f, 0.3f, 1f);
             public static readonly Color PortConnected = new Color(0.2f, 0.8f, 0.4f, 1f);
-            public static readonly Color TextPrimary = new Color(0.9f, 0.9f, 0.9f, 1f);
+            public static readonly Color TextPrimary = new Color(1, 1, 1, 1f);
             public static readonly Color TextSecondary = new Color(0.7f, 0.7f, 0.7f, 1f);
             public static readonly Color TextAccent = new Color(0.6f, 0.8f, 1f, 1f);
             public static readonly Color TextSuccess = new Color(0.4f, 0.8f, 0.5f, 1f);

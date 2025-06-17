@@ -8,6 +8,8 @@ namespace Compositor.KK
     public class FilterNode : BaseCompositorNode
     {
         public override string Title => "Filter";
+        public static string Group => "Image";
+        
         private FilterType _selectedFilter = FilterType.None;
         private float _filterValue = 1.0f;
         private Texture2D _processedTexture;
@@ -32,8 +34,6 @@ namespace Compositor.KK
 
         public override void DrawContent(Rect contentRect)
         {
-            GUI.Label(new Rect(8, 5, 60, 16), "Filter:", CompositorStyles.NodeContent);
-
             var filterNames = System.Enum.GetNames(typeof(FilterType));
             var currentIndex = (int)_selectedFilter;
 

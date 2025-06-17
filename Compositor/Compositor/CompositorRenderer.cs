@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using DefaultNamespace;
 using DefaultNamespace.Compositor;
 using UIBuilder;
 using UnityEngine;
@@ -23,6 +27,7 @@ namespace Compositor.KK
         public CompositorRenderer(CompositorManager manager)
         {
             _manager = manager;
+            _scrollPosition = Vector2.zero;
         }
 
         /// <summary>
@@ -36,6 +41,284 @@ namespace Compositor.KK
             DrawNodes();
             DrawConnections();
             DrawStatusBar();
+            if (CompositorManager.IsSearchMenuVisible)
+                DrawSearchMenu();
+        }
+
+        public static string searchText = "";
+        private Vector2 _scrollPosition;
+        private string _searchText = "";
+        private string _currentGroup = null;
+        private Dictionary<string, List<Type>> _nodeGroups = new Dictionary<string, List<Type>>();
+
+        private void DrawSearchMenu()
+        {
+            var menuWidth = 320f;
+            var menuHeight = 450f;
+            var clientRect = new Rect(CompositorManager.SearchMenuPosition, new Vector2(menuWidth, menuHeight));
+            clientRect.x = Mathf.Clamp(clientRect.x, 10, Screen.width - menuWidth - 10);
+            clientRect.y = Mathf.Clamp(clientRect.y, 10, Screen.height - menuHeight - 10);
+
+            var currentMousePosition = Event.current.mousePosition;
+            if (Event.current.type == EventType.MouseDown && !clientRect.Contains(currentMousePosition) && GUI.GetNameOfFocusedControl() != "SearchField")
+            {
+                _manager.HideSearchMenu();
+                return;
+            }
+            if (_nodeGroups.Count == 0)
+                BuildNodeGroups();
+
+            GUI.Window(32908, clientRect, DrawSearchWindow, "", CompositorStyles.NodeWindow);
+            var titleRect = new Rect(clientRect.x, clientRect.y, clientRect.width, 25);
+            GUI.DrawTexture(titleRect, GUIUtils.GetColorTexture(GUIUtils.Colors.NodeHeader));
+
+            var titleText = "Add Node";
+            if (!string.IsNullOrEmpty(_currentGroup))
+                titleText = _currentGroup;
+
+            GUI.Label(titleRect, titleText, CompositorStyles.NodeTitle);
+        }
+
+        private void DrawSearchWindow(int windowId)
+        {
+            var clientRect = new Rect(0, 0, 320, 450);
+            if (!string.IsNullOrEmpty(_currentGroup) && string.IsNullOrEmpty(_searchText))
+            {
+                var backRect = new Rect(clientRect.x + 5, clientRect.y + 2, 50, 21);
+                if (GUI.Button(backRect, "Back", CompositorStyles.FilterButton))
+                {
+                    _currentGroup = null;
+                }
+            }
+            GUI.SetNextControlName("SearchField");
+            var searchRect = new Rect(5, 30, clientRect.width - 10, 22);
+            var newSearchText = GUI.TextField(searchRect, _searchText, CompositorStyles.NodeContent);
+
+            if (newSearchText != _searchText)
+            {
+                _searchText = newSearchText;
+                _currentGroup = null;
+            }
+
+            var contentRect = new Rect(5, 60, clientRect.width - 10, clientRect.height - 65);
+
+            if (string.IsNullOrEmpty(_searchText))
+            {
+                if (string.IsNullOrEmpty(_currentGroup))
+                {
+                    DrawGroups(contentRect);
+                }
+                else
+                {
+                    DrawGroupItems(contentRect, _currentGroup);
+                }
+            }
+            else
+            {
+                DrawSearchResults(contentRect);
+            }
+        }
+
+        private void BuildNodeGroups()
+        {
+            _nodeGroups.Clear();
+
+            foreach (var nodeType in Entry.AvailableNodes)
+            {
+                var group = GetNodeGroup(nodeType);
+
+                if (!_nodeGroups.ContainsKey(group))
+                    _nodeGroups[group] = new List<Type>();
+
+                _nodeGroups[group].Add(nodeType);
+            }
+            var sortedGroups = new Dictionary<string, List<Type>>();
+            foreach (var kvp in _nodeGroups.OrderBy(x => x.Key))
+            {
+                kvp.Value.Sort((a, b) => GetNodeDisplayName(a).CompareTo(GetNodeDisplayName(b)));
+                sortedGroups[kvp.Key] = kvp.Value;
+            }
+            _nodeGroups = sortedGroups;
+        }
+
+        private string GetNodeGroup(Type nodeType)
+        {
+            var groupProperty = nodeType.GetProperty("Group", BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            if (groupProperty != null && groupProperty.PropertyType == typeof(string))
+            {
+                return (string)groupProperty.GetValue(this, null) ?? "General";
+            }
+            
+            var groupField = nodeType.GetField("Group", BindingFlags.Public | BindingFlags.Static);
+            if (groupField != null && groupField.FieldType == typeof(string))
+            {
+                return (string)groupField.GetValue(null) ?? "General";
+            }
+
+            var typeName = "Undefined";
+
+            return typeName;
+        }
+
+        private void DrawGroups(Rect contentRect)
+        {
+            var itemHeight = 28f;
+            var totalHeight = _nodeGroups.Count * itemHeight;
+
+            _scrollPosition = GUI.BeginScrollView(contentRect, _scrollPosition, new Rect(0, 0, contentRect.width - 20, totalHeight));
+
+            int index = 0;
+            foreach (var group in _nodeGroups.Keys)
+            {
+                var itemRect = new Rect(0, index * itemHeight, contentRect.width - 20, itemHeight - 2);
+                var isHovered = itemRect.Contains(Event.current.mousePosition);
+
+                if (isHovered)
+                {
+                    GUI.DrawTexture(itemRect, GUIUtils.GetColorTexture(GUIUtils.Colors.ButtonSecondaryHover));
+                }
+                else
+                {
+                    GUI.DrawTexture(itemRect, GUIUtils.GetColorTexture(GUIUtils.Colors.ButtonSecondary));
+                }
+                var nodeCount = _nodeGroups[group].Count;
+                var labelText = $"{group} ({nodeCount})";
+
+                var labelStyle = GUIStyleBuilder.Create()
+                    .AsLabel()
+                    .WithNormalState(textColor: isHovered ? Color.white : GUIUtils.Colors.TextPrimary)
+                    .WithFontSize(12)
+                    .WithAlignment(TextAnchor.MiddleLeft)
+                    .WithPadding(10, 10, 6, 6);
+
+                if (GUI.Button(itemRect, "", GUIStyle.none))
+                {
+                    _currentGroup = group;
+                    _scrollPosition = Vector2.zero;
+                }
+
+                GUI.Label(itemRect, labelText, labelStyle);
+                var arrowRect = new Rect(itemRect.x + itemRect.width - 25, itemRect.y + 6, 16, 16);
+                GUI.Label(arrowRect, "►", GUIStyleBuilder.Create().AsLabel().WithNormalState(textColor: GUIUtils.Colors.TextSecondary).WithAlignment(TextAnchor.MiddleCenter));
+
+                index++;
+            }
+
+            GUI.EndScrollView();
+        }
+
+        private void DrawGroupItems(Rect contentRect, string groupName)
+        {
+            if (!_nodeGroups.ContainsKey(groupName)) return;
+
+            var nodes = _nodeGroups[groupName];
+            var itemHeight = 25f;
+            var totalHeight = nodes.Count * itemHeight;
+
+            _scrollPosition = GUI.BeginScrollView(contentRect, _scrollPosition, new Rect(0, 0, contentRect.width - 20, totalHeight));
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var nodeType = nodes[i];
+                var itemRect = new Rect(0, i * itemHeight, contentRect.width - 20, itemHeight - 1);
+
+                DrawNodeItem(itemRect, nodeType);
+            }
+
+            GUI.EndScrollView();
+        }
+
+        private void DrawSearchResults(Rect contentRect)
+        {
+            var matchingNodes = new List<Type>();
+            var searchLower = _searchText.ToLower();
+
+            foreach (var nodeType in Entry.AvailableNodes)
+            {
+                var nodeName = GetNodeDisplayName(nodeType);
+                if (nodeName.ToLower().Contains(searchLower))
+                {
+                    matchingNodes.Add(nodeType);
+                }
+            }
+            matchingNodes.Sort((a, b) =>
+            {
+                var nameA = GetNodeDisplayName(a).ToLower();
+                var nameB = GetNodeDisplayName(b).ToLower();
+
+                bool aExact = nameA == searchLower;
+                bool bExact = nameB == searchLower;
+                if (aExact != bExact) return bExact.CompareTo(aExact);
+
+                bool aStarts = nameA.StartsWith(searchLower);
+                bool bStarts = nameB.StartsWith(searchLower);
+                if (aStarts != bStarts) return bStarts.CompareTo(aStarts);
+
+                return nameA.CompareTo(nameB);
+            });
+
+            var itemHeight = 25f;
+            var totalHeight = matchingNodes.Count * itemHeight;
+
+            _scrollPosition = GUI.BeginScrollView(contentRect, _scrollPosition, new Rect(0, 0, contentRect.width - 20, totalHeight));
+
+            for (int i = 0; i < matchingNodes.Count; i++)
+            {
+                var nodeType = matchingNodes[i];
+                var itemRect = new Rect(0, i * itemHeight, contentRect.width - 20, itemHeight - 1);
+
+                DrawNodeItem(itemRect, nodeType);
+            }
+
+            GUI.EndScrollView();
+        }
+
+        private void DrawNodeItem(Rect itemRect, Type nodeType)
+        {
+            var isHovered = itemRect.Contains(Event.current.mousePosition);
+            if (isHovered)
+            {
+                GUI.DrawTexture(itemRect, GUIUtils.GetColorTexture(GUIUtils.Colors.ButtonPrimaryHover));
+            }
+            var nodeName = GetNodeDisplayName(nodeType);
+            var labelStyle = GUIStyleBuilder.Create()
+                .AsLabel()
+                .WithNormalState(textColor: isHovered ? Color.white : GUIUtils.Colors.TextPrimary)
+                .WithFontSize(11)
+                .WithAlignment(TextAnchor.MiddleLeft)
+                .WithPadding(8, 8, 4, 4);
+
+            if (GUI.Button(itemRect, "", GUIStyle.none))
+            {
+                CreateNodeAtCursor(nodeType);
+            }
+
+            GUI.Label(itemRect, nodeName, labelStyle);
+        }
+
+        private string GetNodeDisplayName(Type nodeType)
+        {
+            var name = nodeType.Name;
+            if (name.EndsWith("Node"))
+                name = name.Substring(0, name.Length - 4);
+            return name;
+        }
+
+        private void CreateNodeAtCursor(Type nodeType)
+        {
+            if (nodeType.IsSubclassOf(typeof(BaseCompositorNode)))
+            {
+                var node = (BaseCompositorNode)Activator.CreateInstance(nodeType);
+                var worldPos = (CompositorManager.SearchMenuPosition / _manager.State.Zoom) - new Vector2(_manager.State.OffsetX, _manager.State.OffsetY);
+                worldPos.y -= 30;
+
+                node.Position = worldPos;
+                _manager.AddNode(node);
+            }
+            _currentGroup = null;
+            searchText = "";
+            _scrollPosition = Vector2.zero;
+            _manager.HideSearchMenu();
         }
 
         /// <summary>
@@ -82,15 +365,9 @@ namespace Compositor.KK
 
             buttonX += buttonWidth + buttonSpacing;
 
-            if (GUI.Button(new Rect(buttonX, 4, buttonWidth + 20, buttonHeight), "Filter", CompositorStyles.HeaderButtonSecondary))
+            if (GUI.Button(new Rect(buttonX, 4, buttonWidth + 20, buttonHeight), "Render", CompositorStyles.HeaderButtonSecondary))
             {
-                AddFilterNode();
-            }
-            buttonX += buttonWidth + 20 + buttonSpacing;
-
-            if (GUI.Button(new Rect(buttonX, 4, buttonWidth + 20, buttonHeight), "Transform", CompositorStyles.HeaderButtonSecondary))
-            {
-                AddTransformNode();
+                _manager.ProcessNodes();
             }
 
             var statsText = $"Nodes: {_manager.Nodes.Count} | Textures: {TextureCache.Count} | Zoom: {_manager.State.Zoom:F1}x";
@@ -151,9 +428,9 @@ namespace Compositor.KK
         /// <param name="node">The node to be rendered. Responsible for providing size, content, input ports, and output ports information.</param>
         private void DrawNodeWindow(ICompositorNode node)
         {
-            var contentRect = new Rect(2, 22, node.Size.x - 4, node.Size.y - 24);
-
             var state = _manager.State;
+            var contentRect = new Rect(2, 22, node.Size.x * state.Zoom - 4, node.Size.y * state.Zoom - 24);
+
             GUI.DrawTexture(new Rect(0, 20, node.Size.x * state.Zoom, node.Size.y * state.Zoom - 20), GUIUtils.GetColorTexture(new Color(GUIUtils.Colors.NodeBackground.r, GUIUtils.Colors.NodeBackground.g, GUIUtils.Colors.NodeBackground.b, 0.8f)));
             node.DrawContent(contentRect);
 
@@ -198,17 +475,25 @@ namespace Compositor.KK
                     {
                         var startPos = GetPortWorldPosition(node, output.LocalPosition);
                         var endPos = GetPortWorldPosition(connection.InputNode, connection.InputNode.Inputs[connection.InputIndex].LocalPosition);
+                        var halfxdiff = (endPos - startPos) / 2;
                         var connectionColor = GetConnectionColor(output.OutputType);
                         var pulseIntensity = Mathf.Sin(Time.time * 3f) * 0.1f + 0.9f;
                         connectionColor = Color.Lerp(connectionColor, GUIUtils.Colors.ConnectionHighlight, pulseIntensity * 0.3f);
-                        GUIUtils.DrawBezierCurve(startPos, endPos, connectionColor, 3f, 1);
-                        var midPoint = Vector2.Lerp(startPos, endPos, 0.5f);
-                        var direction = (endPos - startPos).normalized;
-                        var arrowStart = midPoint - direction * 5f;
-                        var arrowEnd = midPoint + direction * 5f;
-                        GUIUtils.DrawLine(arrowStart, arrowEnd, connectionColor, 2f);
+                        GUIUtils.DrawBezierCurve(startPos, endPos, connectionColor, 3f, Entry._segments.Value, halfxdiff.x);
                     }
                 }
+            }
+
+            if (_manager._isConnecting && _manager._connectionStartOutput != null)
+            {
+                var startPos = GetPortWorldPosition(_manager._connectionStartNode, _manager._connectionStartOutput.LocalPosition);
+                var endPos = Event.current.mousePosition;
+                var halfxdiff = (endPos - startPos) / 2;
+
+                var dragColor = Color.Lerp(GUIUtils.Colors.ConnectionHighlight, Color.white, 0.3f);
+                dragColor.a = 0.8f;
+
+                GUIUtils.DrawBezierCurve(startPos, endPos, dragColor, 4f, Entry._segments.Value, halfxdiff.x);
             }
         }
 
@@ -245,7 +530,7 @@ namespace Compositor.KK
         /// <param name="node">The compositor node containing the port.</param>
         /// <param name="localPosition">The local position of the port within the node.</param>
         /// <returns>The world position of the port as a <see cref="Vector2"/>.</returns>
-        private Vector2 GetPortWorldPosition(ICompositorNode node, Vector2 localPosition)
+        public Vector2 GetPortWorldPosition(ICompositorNode node, Vector2 localPosition)
         {
             var state = _manager.State;
             var nodeWorldPos = GUIUtils.ScaleVector2(node.Position, state.Zoom, new Vector2(state.OffsetX, state.OffsetY));
@@ -293,21 +578,6 @@ namespace Compositor.KK
             var transformNode = new TransformNode();
             transformNode.Position = new Vector2(600 + Random.Range(-50, 50), 250 + Random.Range(-50, 50));
             _manager.AddNode(transformNode);
-        }
-
-        /// <summary>
-        /// Adds a new compositor node of the specified type to the composition system.
-        /// The node's position is initialized based on the current mouse position,
-        /// constrained by screen boundaries, and subsequently registered to the compositor manager.
-        /// </summary>
-        /// <param name="nodeType">The type of the node to be added. Must be a subclass of BaseCompositorNode.</param>
-        private void AddNode(Type nodeType)
-        {
-            if (!nodeType.IsSubclassOf(typeof(BaseCompositorNode)))
-                return;
-            var node = (BaseCompositorNode) Activator.CreateInstance(nodeType);
-            node.Position = Vector2.Min(Event.current.mousePosition, new Vector2(Screen.width, Screen.height));
-            _manager.AddNode(node);
         }
     }
 }

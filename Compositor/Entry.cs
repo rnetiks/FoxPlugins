@@ -9,6 +9,7 @@ using Compositor.KK;
 using HarmonyLib;
 using Screencap;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DefaultNamespace
 {
@@ -23,13 +24,16 @@ namespace DefaultNamespace
 
         private static ConfigEntry<int> _maxCacheSize;
         private ConfigEntry<KeyboardShortcut> _switchUI;
+        public static ConfigEntry<KeyboardShortcut> _search;
+        public static ConfigEntry<bool> _openAfterExport;
+        public static ConfigEntry<int> _segments;
         private Harmony _harmony;
         public static ManualLogSource Logger;
 
         private Camera _camera;
         private Studio.CameraControl _cameraControl;
         private CompositorManager _compositorManager;
-        private CompositorRenderer _renderer;
+        public static CompositorRenderer _renderer;
 
         public static List<Type> AvailableNodes = new List<Type>();
 
@@ -39,6 +43,7 @@ namespace DefaultNamespace
                 _camera.enabled = true;
             if (_cameraControl != null)
                 _cameraControl.enabled = true;
+            _harmony?.UnpatchSelf();
         }
 
         enum WindowType
@@ -47,7 +52,7 @@ namespace DefaultNamespace
             Compositor,
         }
         
-        private WindowType _windowType = WindowType.None;
+        private WindowType _windowType = WindowType.Compositor;
 
         private void Awake()
         {
@@ -66,7 +71,10 @@ namespace DefaultNamespace
         {
             _maxCacheSize = Config.Bind("Performance", "Max Cache Size", 4, "The maximum amount of textures to keep in the local memory cache. Changing this value will clear the cache.");
             _maxCacheSize.SettingChanged += (sender, args) => TextureCache.Clear();
+            _openAfterExport = Config.Bind("General", "Open Image after Render", false);
             _switchUI = Config.Bind("General", "Switch UI", new KeyboardShortcut(KeyCode.F4), "Bind to switch between the different UI's.");
+            _search = Config.Bind("General", "Open Search", new KeyboardShortcut(KeyCode.A, KeyCode.LeftShift));
+            _segments = Config.Bind("General", "Line Segments", 1, new ConfigDescription("Sets the amount of segments for lines", new AcceptableValueRange<int>(1, 30)));
         }
 
         private void InitializeComponents()
@@ -104,7 +112,6 @@ namespace DefaultNamespace
             Graphics.CopyTexture(__result, tmpTexture);
 
             TextureCache.AddTexture(tmpTexture, _maxCacheSize.Value);
-            Logger.LogDebug($"Texture added to cache {__result.format}({__result.width}x{__result.height})");
         }
     }
 }
