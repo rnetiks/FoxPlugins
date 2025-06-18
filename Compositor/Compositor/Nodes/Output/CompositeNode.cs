@@ -7,10 +7,10 @@ using UnityEngine;
 
 namespace Compositor.KK
 {
-    public class OutputImageNode : BaseCompositorNode
+    public class CompositeNode : BaseCompositorNode
     {
-        public override string Title => "Output";
-        public static string Group => "In/Out";
+        public override string Title => "Composite";
+        public static string Group => "Output";
         
         private Texture2D _displayTexture;
 

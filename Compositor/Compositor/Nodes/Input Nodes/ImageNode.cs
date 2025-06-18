@@ -1,14 +1,12 @@
-using System.ComponentModel;
 using DefaultNamespace.Compositor;
-using Unity.Linq;
 using UnityEngine;
 
 namespace Compositor.KK
 {
-    public class ImageInputNode : BaseCompositorNode
+    public class ImageNode : BaseCompositorNode
     {
         public override string Title => "Input";
-        public static string Group => "In/Out";
+        public static string Group => "Input";
         
         private Texture2D _currentTexture;
 

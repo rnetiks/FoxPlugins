@@ -79,19 +79,15 @@ namespace Compositor.KK
         /// </summary>
         public void CreateDefaultNodes()
         {
-            var inputNode = new ImageInputNode();
-            var rotateNode = new FilterNode();
-            var outputNode = new OutputImageNode();
+            var inputNode = new ImageNode();
+            var outputNode = new CompositeNode();
 
             inputNode.Position = new Vector2(200, 200);
-            rotateNode.Position = new Vector2(500, 300);
             outputNode.Position = new Vector2(800, 800);
 
-            inputNode.ConnectTo(rotateNode, 2, 0);
-            rotateNode.ConnectTo(outputNode, 0, 0);
+            inputNode.ConnectTo(outputNode, 2, 0);
 
             AddNode(inputNode);
-            AddNode(rotateNode);
             AddNode(outputNode);
         }
 

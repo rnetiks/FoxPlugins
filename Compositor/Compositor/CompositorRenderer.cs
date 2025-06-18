@@ -411,7 +411,6 @@ namespace Compositor.KK
                 GUI.DrawTexture(shadowRect, GUIUtils.GetColorTexture(new Color(0, 0, 0, 0.3f)));
 
                 GUI.Window(windowId, nodeRect, (id) => DrawNodeWindow(node), "", windowStyle);
-
                 var titleRect = new Rect(nodeRect.x, nodeRect.y, nodeRect.width, 20);
                 GUI.DrawTexture(titleRect, GUIUtils.GetColorTexture(GUIUtils.Colors.NodeHeader));
 
@@ -518,7 +517,7 @@ namespace Compositor.KK
 
             GUI.Label(new Rect(10, Screen.height - 22, 200, 20), $"Status: {processingText}", CompositorStyles.StatusLabel);
 
-            var perfText = $"FPS: {(1f / Time.deltaTime):F0} | Memory: {(System.GC.GetTotalMemory(false) / 1024f / 1024f):F1} MB";
+            var perfText = $"FPS: {(1f / Time.deltaTime):F0} | Memory: {(GC.GetTotalMemory(false) / 1024f / 1024f):F1} MB";
             var perfSize = GUI.skin.label.CalcSize(new GUIContent(perfText));
             GUI.Label(new Rect(Screen.width - perfSize.x - 10, Screen.height - 22, perfSize.x, 20), perfText, CompositorStyles.StatusLabel);
         }
@@ -550,34 +549,13 @@ namespace Compositor.KK
         {
             if (dataType == typeof(Texture2D))
                 return GUIUtils.Colors.Connection;
-            if (dataType == typeof(float))
+            if (dataType == typeof(float) || dataType == typeof(float[]))
                 return new Color(0.3f, 0.8f, 0.3f, 0.8f);
-            if (dataType == typeof(Color))
+            if (dataType == typeof(Color) || dataType == typeof(Color32))
                 return new Color(0.8f, 0.3f, 0.8f, 0.8f);
+            if (dataType == typeof(Vector2) || dataType == typeof(Vector3) || dataType == typeof(Vector4))
+                return new Color(.8f, .8f, 0, .8f);
             return GUIUtils.Colors.Connection;
-        }
-
-        /// <summary>
-        /// Adds a new filter node to the compositor system. The filter node is initialized with a random position
-        /// within the defined offset range and subsequently added to the node manager for rendering and processing.
-        /// </summary>
-        private void AddFilterNode()
-        {
-            var filterNode = new FilterNode();
-            filterNode.Position = new Vector2(400 + Random.Range(-50, 50), 250 + Random.Range(-50, 50));
-            _manager.AddNode(filterNode);
-        }
-
-        /// <summary>
-        /// Adds a new TransformNode instance to the compositor, initializing its position with randomized
-        /// offsets. The newly created node is then registered with the CompositorManager, making it
-        /// part of the compositor workflow.
-        /// </summary>
-        private void AddTransformNode()
-        {
-            var transformNode = new TransformNode();
-            transformNode.Position = new Vector2(600 + Random.Range(-50, 50), 250 + Random.Range(-50, 50));
-            _manager.AddNode(transformNode);
         }
     }
 }
