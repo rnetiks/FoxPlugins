@@ -51,14 +51,14 @@ namespace DefaultNamespace
             None,
             Compositor,
         }
-        
-        private WindowType _windowType = WindowType.Compositor;
+
+        private WindowType _windowType = WindowType.None;
 
         private void Awake()
         {
             foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
             {
-                if(!type.IsSubclassOf(typeof(BaseCompositorNode))) continue;
+                if (!type.IsSubclassOf(typeof(BaseCompositorNode))) continue;
                 AvailableNodes.Add(type);
             }
             Logger = base.Logger;
@@ -88,7 +88,7 @@ namespace DefaultNamespace
 
         private void Update()
         {
-            if(_switchUI.Value.IsDown())
+            if (_switchUI.Value.IsDown())
                 _windowType = (WindowType)(((int)_windowType + 1) % Enum.GetValues(typeof(WindowType)).Length);
             if (_windowType == WindowType.None) return;
             _compositorManager.Update();
@@ -107,7 +107,7 @@ namespace DefaultNamespace
         [HarmonyPostfix, HarmonyPatch(typeof(AlphaShot2), nameof(AlphaShot2.CaptureTex), typeof(int), typeof(int), typeof(int), typeof(AlphaMode))]
         private static void InterceptScreenshot(Texture2D __result)
         {
-            if(__result == null) return;
+            if (__result == null) return;
             var tmpTexture = new Texture2D(__result.width, __result.height, __result.format, false);
             Graphics.CopyTexture(__result, tmpTexture);
 

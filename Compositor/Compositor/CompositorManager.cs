@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Compositor.KK.Utilities;
 using DefaultNamespace;
 using UnityEngine;
 
@@ -79,15 +80,29 @@ namespace Compositor.KK
         /// </summary>
         public void CreateDefaultNodes()
         {
-            var inputNode = new ImageNode();
+            var inputNode1 = new CameraNode();
+            var inputNode2 = new CameraNode();
+
+            var alphaNode = new AlphaOverNode();
+            var convertNode = new ByteToImageNode();
             var outputNode = new CompositeNode();
 
-            inputNode.Position = new Vector2(200, 200);
-            outputNode.Position = new Vector2(800, 800);
+            inputNode1.Position = new Vector2(200, 200);
+            inputNode2.Position = new Vector2(200, 700);
+            alphaNode.Position = new Vector2(1000, 200);
+            convertNode.Position = new Vector2(1000, 400);
+            outputNode.Position = new Vector2(1500, 800);
 
-            inputNode.ConnectTo(outputNode, 2, 0);
+            ConnectNodes(inputNode1, 0, alphaNode, 0);
+            ConnectNodes(inputNode2, 0, alphaNode, 1);
+            ConnectNodes(alphaNode, 0, convertNode, 0);
+            ConnectNodes(convertNode, 0, outputNode, 0);
 
-            AddNode(inputNode);
+
+            AddNode(inputNode1);
+            AddNode(inputNode2);
+            AddNode(alphaNode);
+            AddNode(convertNode);
             AddNode(outputNode);
         }
 
@@ -201,7 +216,7 @@ namespace Compositor.KK
                 RemoveNode(_selectedNode);
                 _selectedNode = null;
             }
-            
+
 
             object port = GetPortAtCursor();
 
@@ -233,7 +248,7 @@ namespace Compositor.KK
                         break;
                 }
             }
-            
+
             if (port == null)
             {
                 if (Input.GetMouseButtonDown(0))
@@ -277,9 +292,12 @@ namespace Compositor.KK
                 }
             }
 
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            State.Zoom += scroll;
-            State.Zoom = Mathf.Clamp(State.Zoom, 0.5f, 5f);
+            if (GetNodeAtPosition(Event.current.mousePosition) == null)
+            {
+                float scroll = Input.GetAxis("Mouse ScrollWheel");
+                State.Zoom += scroll;
+                State.Zoom = Mathf.Clamp(State.Zoom, 0.5f, 5f);
+            }
         }
 
         private void StartConnection(NodeOutput output)

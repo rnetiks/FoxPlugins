@@ -50,6 +50,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\PosterizeNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\SoftenNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\SunBeamsNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\CameraNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\ImageNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\RenderLayersNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\RGB32Node.cs" />
@@ -83,6 +84,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Transform\TransformNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Transform\TranslateNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Transform\UndistortionNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Utilities\ByteToImageNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Utilities\LevelsNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Utilities\MapRangeNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Utilities\MapValueNode.cs" />
@@ -91,9 +93,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Utilities\SwitchNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Utilities\SwitchViewNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\CombineVectorNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\ImageSizeNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\NormalNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\SeparateVectorNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\VectorCurvesNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Dropdown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIStyleBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIUtils.cs" />

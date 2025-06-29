@@ -1,4 +1,3 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -57,6 +56,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Search.Universal", "Search\
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MakerReactiveCanvas", "MakerReactiveCanvas\MakerReactiveCanvas.shproj", "{99A95C3C-E8F7-4586-BC99-F2894AF240AC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakerReactiveCanvas.KK", "MakerReactiveCanvas\MakerReactiveCanvas.KK\MakerReactiveCanvas.KK.csproj", "{1143A462-2D3A-4755-BF2D-9D7CB8ED4178}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakerReactiveCanvas.KKS", "MakerReactiveCanvas\MakerReactiveCanvas.KKS\MakerReactiveCanvas.KKS.csproj", "{6F981DC2-E9BE-49E1-A8BE-738C37B5EE3C}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Compositor", "Compositor\Compositor.shproj", "{D6337011-821D-4D36-A786-F42166AD6A0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compositor.KKS", "Compositor/Compositor.KKS\Compositor.KKS.csproj", "{5E0872E1-DD09-4C98-BD8F-991C0A2AA283}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Compositor.KK", "Compositor/Compositor.KK\Compositor.KK.csproj", "{440E01A9-78B8-4BE6-AB21-D2E3FA6B6572}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BoneShortcut", "BoneShortcut", "{B18789D5-8784-4CAD-81A3-AA1B30267866}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ColliderSound", "ColliderSound", "{DA504B04-3AE8-446C-8FBD-FE4A3683B752}"
@@ -79,9 +88,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Search", "Search", "{C34E23
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MakerReactiveCanvas", "MakerReactiveCanvas", "{9C0D6771-DFA2-471F-895A-BE1A3F245ED6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakerReactiveCanvas.KK", "MakerReactiveCanvas\MakerReactiveCanvas.KK\MakerReactiveCanvas.KK.csproj", "{1143A462-2D3A-4755-BF2D-9D7CB8ED4178}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MakerReactiveCanvas.KKS", "MakerReactiveCanvas\MakerReactiveCanvas.KKS\MakerReactiveCanvas.KKS.csproj", "{6F981DC2-E9BE-49E1-A8BE-738C37B5EE3C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Compositor", "Compositor", "{3384A77B-899E-47CA-B458-EEA4A2470D4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -241,6 +248,18 @@ Global
 		{6F981DC2-E9BE-49E1-A8BE-738C37B5EE3C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6F981DC2-E9BE-49E1-A8BE-738C37B5EE3C}.Release|AnyCPU.ActiveCfg = Release|Any CPU
 		{6F981DC2-E9BE-49E1-A8BE-738C37B5EE3C}.Release|AnyCPU.Build.0 = Release|Any CPU
+		{D6337011-821D-4D36-A786-F42166AD6A0B}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{D6337011-821D-4D36-A786-F42166AD6A0B}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{D6337011-821D-4D36-A786-F42166AD6A0B}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{D6337011-821D-4D36-A786-F42166AD6A0B}.Release|AnyCPU.Build.0 = Release|AnyCPU
+		{5E0872E1-DD09-4C98-BD8F-991C0A2AA283}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{5E0872E1-DD09-4C98-BD8F-991C0A2AA283}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{5E0872E1-DD09-4C98-BD8F-991C0A2AA283}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{5E0872E1-DD09-4C98-BD8F-991C0A2AA283}.Release|AnyCPU.Build.0 = Release|AnyCPU
+		{440E01A9-78B8-4BE6-AB21-D2E3FA6B6572}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{440E01A9-78B8-4BE6-AB21-D2E3FA6B6572}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{440E01A9-78B8-4BE6-AB21-D2E3FA6B6572}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{440E01A9-78B8-4BE6-AB21-D2E3FA6B6572}.Release|AnyCPU.Build.0 = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -274,31 +293,11 @@ Global
 		{99A95C3C-E8F7-4586-BC99-F2894AF240AC} = {9C0D6771-DFA2-471F-895A-BE1A3F245ED6}
 		{1143A462-2D3A-4755-BF2D-9D7CB8ED4178} = {9C0D6771-DFA2-471F-895A-BE1A3F245ED6}
 		{6F981DC2-E9BE-49E1-A8BE-738C37B5EE3C} = {9C0D6771-DFA2-471F-895A-BE1A3F245ED6}
+		{D6337011-821D-4D36-A786-F42166AD6A0B} = {3384A77B-899E-47CA-B458-EEA4A2470D4D}
+		{5E0872E1-DD09-4C98-BD8F-991C0A2AA283} = {3384A77B-899E-47CA-B458-EEA4A2470D4D}
+		{440E01A9-78B8-4BE6-AB21-D2E3FA6B6572} = {3384A77B-899E-47CA-B458-EEA4A2470D4D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {0630D1C6-7E71-407C-BEFB-A78AAB4D1D87}
-	EndGlobalSection
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Search\Search.projitems*{07f67215-f230-4394-880b-f082442a5cf6}*SharedItemsImports = 13
-		Search\Search.projitems*{0ed637b4-4f40-467a-a211-e16282746f60}*SharedItemsImports = 4
-		LHC.Core\LHC.Core.projitems*{104379d4-ec00-4d0e-94b6-ff5c188dae61}*SharedItemsImports = 4
-		PrismaLib\PrismaLib.projitems*{2ac16d89-0c26-45b2-893b-dfd3214b37ee}*SharedItemsImports = 4
-		DBToggler\DBToggler.Core\DBToggler.Core.projitems*{3d1fe101-9804-474d-9542-71b1af72cc50}*SharedItemsImports = 13
-		KoiUpdater.Shared\KoiUpdater.Shared.projitems*{637025b0-9423-4c18-b6b5-5d68d4c2388f}*SharedItemsImports = 13
-		LHC.Core\LHC.Core.projitems*{637035b0-9423-4c18-b6b5-5d68d4c2388f}*SharedItemsImports = 13
-		Guiverload.Shared\Guiverload.Shared.projitems*{815a37ea-a4a8-441f-8f14-40f52f88d707}*SharedItemsImports = 4
-		BoneShortcut\BoneShortcut.projitems*{81d661f5-d115-4b69-ae5c-8bc335b619e4}*SharedItemsImports = 4
-		DBToggler\DBToggler.Core\DBToggler.Core.projitems*{9728d9b1-a9b8-4504-ba3a-87be419066dc}*SharedItemsImports = 4
-		SmartRect\SmartRect.projitems*{c91df2a5-b779-4d7a-9639-82ec78ddce23}*SharedItemsImports = 4
-		Autumn.Shared\Autumn.Shared.projitems*{d619a156-88fc-4bf5-93f0-5b7a6d9477a7}*SharedItemsImports = 13
-		BoneShortcut\BoneShortcut.projitems*{d65c2d46-7a79-42ac-97a8-b89f3029c4fa}*SharedItemsImports = 4
-		Autumn.Shared\Autumn.Shared.projitems*{dd94747b-f88c-4b07-a046-c134f2e31325}*SharedItemsImports = 4
-		PrismaLib\PrismaLib.projitems*{ea73dc3f-69f1-4c8a-9fea-bfc71c0dfc96}*SharedItemsImports = 13
-		DBToggler\DBToggler.Core\DBToggler.Core.projitems*{ea7b96be-3290-4497-baa9-b9b80c68c9a8}*SharedItemsImports = 4
-		ColliderSound\ColliderSound.projitems*{efd707e5-9ca2-4545-ac52-bf16fe92b443}*SharedItemsImports = 4
-		ColliderSound\ColliderSound.projitems*{f3b7dcce-2cb9-4e4f-b317-ccd7fbd0f0fc}*SharedItemsImports = 4
-		SmartRect\SmartRect.projitems*{f71ed830-1cc2-4e69-ab86-f846ebc72b86}*SharedItemsImports = 13
-		Guiverload.Shared\Guiverload.Shared.projitems*{fd7b1b84-275f-4543-9f50-369f9794db37}*SharedItemsImports = 13
-		PrismaLib\PrismaLib.projitems*{fe023b6c-d9d5-4dae-b765-439626e8918d}*SharedItemsImports = 4
+		SolutionGuid = {89C34F50-B7FB-4842-A546-5127C7A52B9E}
 	EndGlobalSection
 EndGlobal

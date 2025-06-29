@@ -462,6 +462,7 @@ namespace Compositor.KK
         protected BaseCompositorNode()
         {
             Id = _nextId++;
+            Initialize();
             InitializePorts();
         }
 
@@ -471,6 +472,17 @@ namespace Compositor.KK
         /// It is called during the node's construction to set up its port structure.
         /// </summary>
         protected abstract void InitializePorts();
+        
+        /// <summary>
+        /// Performs general node initialization. This method is called during node construction
+        /// and provides an override point for custom initialization logic beyond port setup.
+        /// </summary>
+        /// <remarks>
+        /// This method is called before <see cref="InitializePorts()"/> during node instantiation.
+        /// Override this method to perform additional setup such as setting default values,
+        /// initializing internal state, or configuring node-specific properties.
+        /// </remarks>
+        protected virtual void Initialize() { }
 
         /// <summary>
         /// Updates the state or internal logic of the node. This method is called during the compositor's update cycle
