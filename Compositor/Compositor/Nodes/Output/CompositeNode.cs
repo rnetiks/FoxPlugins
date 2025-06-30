@@ -51,7 +51,7 @@ namespace Compositor.KK
 
         public override void Process()
         {
-            if (_inputs.Count > 0)
+            if (_inputs[0].IsConnected)
             {
                 _displayTexture = _inputs[0].GetValue<Texture2D>();
             }
@@ -66,7 +66,7 @@ namespace Compositor.KK
                 var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
                 var filename = $"compositor_output_{timestamp}.png";
 
-                File.WriteAllBytes(filename, _displayTexture.EncodeToJPG(100));
+                File.WriteAllBytes(filename, _displayTexture.EncodeToPNG());
                 // element.Save(filename);
                 if (Entry._openAfterExport.Value)
                 {

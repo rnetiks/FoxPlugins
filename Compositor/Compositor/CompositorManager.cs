@@ -167,7 +167,6 @@ namespace Compositor.KK
             foreach (var node in _nodes)
             {
                 var nodeWorldPos = GUIUtils.ScaleVector2(node.Position, State.Zoom, new Vector2(State.OffsetX, State.OffsetY));
-                nodeWorldPos.y += 30;
 
                 foreach (var input in node.Inputs)
                 {

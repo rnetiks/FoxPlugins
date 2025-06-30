@@ -1,7 +1,11 @@
+using DefaultNamespace;
 using UnityEngine;
 
 namespace Compositor.KK
 {
+    /// <summary>
+    /// The Alpha Over node is used to layer an image on top of another with alpha blending.
+    /// </summary>
     public class AlphaOverNode : BaseCompositorNode
     {
         public override string Title { get; } = "Alpha Over";
@@ -54,6 +58,7 @@ namespace Compositor.KK
                     result[i + 3] = (byte)(outA * 255f);
                 }
         
+                Entry.Logger.LogDebug($"CameraNode: Send data with {result.Length} values");
                 _outputs[0].SetValue(result);
             }
         }

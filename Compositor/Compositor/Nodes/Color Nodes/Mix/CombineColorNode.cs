@@ -2,25 +2,57 @@ using UnityEngine;
 
 namespace Compositor.KK
 {
+    /// <summary>
+    /// The Combine Color Node combines an image from its composite color channels.
+    /// The node can combine multiple Color Models depending on the Mode property.
+    /// </summary>
     public class CombineColorNode : BaseCompositorNode
     {
         public override string Title { get; } = "Combine Color";
         public static string Group => "Color/Mix";
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Red", typeof(float), new Vector2(0, Size.y * 0.6f)));
-            _inputs.Add(new NodeInput("Green", typeof(float), new Vector2(0, Size.y * 0.7f)));
-            _inputs.Add(new NodeInput("Blue", typeof(float), new Vector2(0, Size.y * 0.8f)));
-            _inputs.Add(new NodeInput("Alpha", typeof(float), new Vector2(0, Size.y * 0.9f)));
-            _outputs.Add(new NodeOutput("Image", typeof(Texture2D), new Vector2(Size.x, Size.y * 0.6f)));
+            _inputs.Add(new NodeInput("Red", typeof(byte[]), new Vector2(0, Size.y * 0.6f)));
+            _inputs.Add(new NodeInput("Green", typeof(byte[]), new Vector2(0, Size.y * 0.7f)));
+            _inputs.Add(new NodeInput("Blue", typeof(byte[]), new Vector2(0, Size.y * 0.8f)));
+            _inputs.Add(new NodeInput("Alpha", typeof(byte[]), new Vector2(0, Size.y * 0.9f)));
+            _outputs.Add(new NodeOutput("Image", typeof(byte[]), new Vector2(Size.x, Size.y * 0.6f)));
         }
         public override void DrawContent(Rect contentRect)
         {
-            throw new System.NotImplementedException();
+
         }
+        /// <summary>
+        /// Processes the inputs of the CombineColorNode and combines them into a single output.
+        /// </summary>
+        /// <remarks>
+        /// The method reads the input channels (red, green, blue, and alpha) as byte arrays,
+        /// combines them to create an interleaved RGBA byte array, and sets the combined data
+        /// to the output. The length of the resulting output array is based on the largest input array.
+        /// For any missing data in a channel beyond its length, the default value of 0 is used.
+        /// The method only executes if the output has active connections.
+        /// </remarks>
         public override void Process()
         {
-            throw new System.NotImplementedException();
+            // Only execute if the node is outputting a value
+            if (_outputs[0].Connections.Count > 0)
+            {
+                var r = _inputs[0].GetValue<byte[]>();
+                var g = _inputs[1].GetValue<byte[]>();
+                var b = _inputs[2].GetValue<byte[]>();
+                var a = _inputs[3].GetValue<byte[]>();
+                var arrSize = Mathf.Max(r.Length, g.Length, b.Length, a.Length);
+
+                var result = new byte[arrSize];
+                for (var i = 0; i < arrSize; i += 4)
+                {
+                    result[i] = i < r.Length ? r[i] : (byte) 0;
+                    result[i + 1] = i < g.Length ? g[i + 1] : (byte) 0;
+                    result[i + 2] = i < b.Length ? b[i + 2] : (byte) 0;
+                    result[i + 3] = i < a.Length ? a[i + 3] : (byte) 0;
+                }
+                _outputs[0].SetValue(result);
+            }
         }
     }
 }

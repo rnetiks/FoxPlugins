@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using alphaShot;
 using BepInEx;
@@ -39,6 +40,7 @@ namespace DefaultNamespace
 
         private void OnDestroy()
         {
+            _bundle.Unload(false);
             if (_camera != null)
                 _camera.enabled = true;
             if (_cameraControl != null)
@@ -52,16 +54,25 @@ namespace DefaultNamespace
             Compositor,
         }
 
+        public static AssetBundle _bundle;
         private WindowType _windowType = WindowType.None;
 
         private void Awake()
         {
+            Logger = base.Logger;
+
+            byte[] readAllBytes = File.ReadAllBytes(Path.Combine("BepInEx/plugins/", "compositor1.unity3d"));
+            _bundle = AssetBundle.LoadFromMemory(readAllBytes);
+            Logger.LogDebug(_bundle);
+            foreach (string allAssetName in _bundle.GetAllAssetNames())
+            {
+                Logger.LogDebug(allAssetName);
+            }
             foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
             {
                 if (!type.IsSubclassOf(typeof(BaseCompositorNode))) continue;
                 AvailableNodes.Add(type);
             }
-            Logger = base.Logger;
             InitializeConfig();
             InitializeComponents();
             _harmony = Harmony.CreateAndPatchAll(GetType());
@@ -97,11 +108,13 @@ namespace DefaultNamespace
         private void OnGUI()
         {
             bool isCompositorActive = _windowType == WindowType.Compositor;
-            _camera.enabled = !isCompositorActive;
+            // _camera.enabled = !isCompositorActive;
             _cameraControl.enabled = !isCompositorActive;
 
             if (isCompositorActive)
+            {
                 _renderer.DrawCompositor();
+            }
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(AlphaShot2), nameof(AlphaShot2.CaptureTex), typeof(int), typeof(int), typeof(int), typeof(AlphaMode))]

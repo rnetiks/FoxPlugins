@@ -392,8 +392,6 @@ namespace Compositor.KK
                 var nodeRect = GUIUtils.ScaleRect(
                     new Rect(node.Position, node.Size), state.Zoom, new Vector2(state.OffsetX, state.OffsetY));
 
-                nodeRect.y += 30;
-
                 var mousePos = Event.current.mousePosition;
                 bool isHovered = nodeRect.Contains(mousePos);
                 _hoveredNode = isHovered ? node : _hoveredNode;
@@ -533,8 +531,6 @@ namespace Compositor.KK
         {
             var state = _manager.State;
             var nodeWorldPos = GUIUtils.ScaleVector2(node.Position, state.Zoom, new Vector2(state.OffsetX, state.OffsetY));
-
-            nodeWorldPos.y += 30;
 
             return nodeWorldPos + localPosition * state.Zoom;
         }

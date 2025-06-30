@@ -1,9 +1,14 @@
+using System;
 using System.Linq;
 using DefaultNamespace;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Compositor.KK
 {
+    /// <summary>
+    /// Represents a compositing node in the system that performs operations related to rendering from a camera.
+    /// </summary>
     public class CameraNode : BaseCompositorNode
     {
         public override string Title => "Camera";
@@ -53,6 +58,7 @@ namespace Compositor.KK
         protected override void InitializePorts()
         {
             _outputs.Add(new NodeOutput("Image", typeof(byte[]), new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Depth", typeof(byte[]), new Vector2(Size.x, Size.y * 0.7f)));
 
             // Initialize camera dropdown
             _cameraDropdown = new Dropdown();
@@ -142,8 +148,7 @@ namespace Compositor.KK
                 RenderTexture.active = _renderTexture;
                 GL.Clear(true, true, new Color(0, 0, 0, 0));
                 _camera.Render();
-
-                // Read pixels from render texture
+                
                 _texture2D.ReadPixels(new Rect(0, 0, renderWidth, renderHeight), 0, 0);
                 _texture2D.Apply();
                 RenderTexture.active = null;
@@ -158,20 +163,61 @@ namespace Compositor.KK
             }
         }
 
+
         public override void Process()
         {
             if (_camera == null) return;
             UpdateRender();
+            // if(_outputs[1].Connections.Count > 0)
+            //     Generate(Entry._bundle.LoadAsset<Shader>("assets/depth.shader"), "");
 
             if (_texture2D != null)
             {
                 byte[] imageData = _texture2D.GetRawTextureData();
                 if (_outputs.Count > 0)
                 {
-                    Entry.Logger.LogDebug($"Send data with {imageData.Length} values");
+                    Entry.Logger.LogDebug($"CameraNode: Send data with {imageData.Length} values");
                     _outputs[0].SetValue(imageData);
                 }
             }
+        }
+        private byte[] Generate(Shader shader, string tag)
+        {
+            if (_camera == null || _renderTexture == null || _texture2D == null)
+                return new byte[0];
+
+            var originalCullingMask = _camera.cullingMask;
+            var originalTarget = _camera.targetTexture;
+            var originalClearFlags = _camera.clearFlags;
+            var originalBackgroundColor = _camera.backgroundColor;
+
+            try
+            {
+                _camera.clearFlags = CameraClearFlags.SolidColor;
+                _camera.backgroundColor = new Color(0, 0, 0, 0);
+                if (selectedLayerIndex >= 0)
+                {
+                    _camera.cullingMask = layerMask;
+                }
+
+                _camera.targetTexture = _renderTexture;
+                RenderTexture.active = _renderTexture;
+                GL.Clear(true, true, new Color(0, 0, 0, 0));
+
+                _camera.RenderWithShader(shader, "");
+                _texture2D.ReadPixels(new Rect(0, 0, renderWidth, renderHeight), 0, 0);
+                _texture2D.Apply();
+                RenderTexture.active = null;
+            }
+            finally
+            {
+                _camera.cullingMask = originalCullingMask;
+                _camera.targetTexture = originalTarget;
+                _camera.clearFlags = originalClearFlags;
+                _camera.backgroundColor = originalBackgroundColor;
+            }
+
+            return new byte[0];
         }
 
         private void UpdateCameraList()
