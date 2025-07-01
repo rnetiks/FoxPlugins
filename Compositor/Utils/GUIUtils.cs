@@ -154,6 +154,28 @@ namespace Compositor.KK
             public static readonly Color TextAccent = new Color(0.6f, 0.8f, 1f, 1f);
             public static readonly Color TextSuccess = new Color(0.4f, 0.8f, 0.5f, 1f);
             public static readonly Color TextWarning = new Color(0.9f, 0.7f, 0.3f, 1f);
+
+            public static class SocketColors
+            {
+                public static readonly Color RGBA = new Color(1f, 0.8f, 0.2f, 1f);
+                public static readonly Color Alpha = new Color(0.7f, 0.7f, 0.7f, 1f);
+                public static readonly Color Vector = new Color(0.4f, 0.6f, 1f, 1f);
+
+                public static Color GetSocketColor(SocketType socketType)
+                {
+                    switch (socketType)
+                    {
+                        case SocketType.RGBA:
+                            return RGBA;
+                        case SocketType.A:
+                            return Alpha;
+                        case SocketType.Vector:
+                            return Vector;
+                        default:
+                            return Color.white;
+                    }
+                }
+            }
         }
     }
 }

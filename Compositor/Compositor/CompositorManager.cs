@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Compositor.KK.Compositor;
 using Compositor.KK.Utilities;
 using DefaultNamespace;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace Compositor.KK
         private ICompositorNode _selectedNode;
         private bool _isDragging;
         private Vector2 _dragOffset;
+        private LazyEvaluationManager _evaluationManager;
+        private MemoryMonitor _memoryMonitor;
         public bool _isConnecting;
         public ICompositorNode _connectionStartNode;
         public NodeOutput _connectionStartOutput;
@@ -56,6 +59,13 @@ namespace Compositor.KK
         public CompositorManager()
         {
             State = new CompositorState();
+            InitializeMemoryManagement();
+        }
+
+        private void InitializeMemoryManagement()
+        {
+            _evaluationManager = new LazyEvaluationManager();
+            _memoryMonitor = new MemoryMonitor();
         }
 
         /// <summary>
@@ -80,30 +90,6 @@ namespace Compositor.KK
         /// </summary>
         public void CreateDefaultNodes()
         {
-            var inputNode1 = new CameraNode();
-            var inputNode2 = new CameraNode();
-
-            var alphaNode = new AlphaOverNode();
-            var convertNode = new ByteToImageNode();
-            var outputNode = new CompositeNode();
-
-            inputNode1.Position = new Vector2(200, 200);
-            inputNode2.Position = new Vector2(200, 700);
-            alphaNode.Position = new Vector2(1000, 200);
-            convertNode.Position = new Vector2(1000, 400);
-            outputNode.Position = new Vector2(1500, 800);
-
-            ConnectNodes(inputNode1, 0, alphaNode, 0);
-            ConnectNodes(inputNode2, 0, alphaNode, 1);
-            ConnectNodes(alphaNode, 0, convertNode, 0);
-            ConnectNodes(convertNode, 0, outputNode, 0);
-
-
-            AddNode(inputNode1);
-            AddNode(inputNode2);
-            AddNode(alphaNode);
-            AddNode(convertNode);
-            AddNode(outputNode);
         }
 
         /// <summary>
@@ -113,7 +99,20 @@ namespace Compositor.KK
         /// <param name="node">The node to be added. This node must implement the ICompositorNode interface and will be added to the current node collection.</param>
         public void AddNode(ICompositorNode node)
         {
+            Entry.Logger.LogDebug($"Validity checks");
             _nodes.Add(node);
+
+            Entry.Logger.LogDebug($"{(_nodes == null ? "null" : "not null")}");
+            if (node is LazyCompositorNode lazyNode)
+            {
+                Entry.Logger.LogDebug($"{lazyNode}, {_evaluationManager}");
+                lazyNode.SetEvaluationManager(_evaluationManager);
+            }
+            else
+            {
+                Entry.Logger.LogDebug($"{_evaluationManager}, {node}");
+                _evaluationManager.RegisterNode(node);
+            }
         }
 
         /// <summary>
@@ -126,6 +125,7 @@ namespace Compositor.KK
             if (_selectedNode == node)
                 _selectedNode = null;
 
+            _evaluationManager.UnregisterNode(node);
             node.Dispose();
             _nodes.Remove(node);
         }
@@ -214,6 +214,14 @@ namespace Compositor.KK
             {
                 RemoveNode(_selectedNode);
                 _selectedNode = null;
+            }
+            
+            Event currentEvent = Event.current;
+            bool shouldHandleNodeInteraction = true;
+
+            if (currentEvent != null)
+            {
+                shouldHandleNodeInteraction = GUIUtility.hotControl == 0 && currentEvent.type != EventType.Used;
             }
 
 
@@ -381,12 +389,14 @@ namespace Compositor.KK
         /// </summary>
         internal void ProcessNodes()
         {
+            _evaluationManager.BeginEvaluation();
+            
             var processedNodes = new HashSet<ICompositorNode>();
             var processingQueue = new Queue<ICompositorNode>();
 
             foreach (var node in _nodes)
             {
-                if (ShouldProcessNode(node, processedNodes))
+                if (ShouldProcessNode(node, processedNodes) && _evaluationManager.ShouldEvaluateNode(node))
                 {
                     processingQueue.Enqueue(node);
                 }
@@ -398,20 +408,31 @@ namespace Compositor.KK
                 if (processedNodes.Contains(node))
                     continue;
 
-                node.Process();
-                processedNodes.Add(node);
-
-                foreach (var output in node.Outputs)
+                try
                 {
-                    foreach (var connection in output.Connections)
+                    node.Process();
+                    processedNodes.Add(node);
+
+                    foreach (var output in node.Outputs)
                     {
-                        if (ShouldProcessNode(connection.InputNode, processedNodes))
+                        foreach (var connection in output.Connections)
                         {
-                            processingQueue.Enqueue(connection.InputNode);
+                            if (ShouldProcessNode(connection.InputNode, processedNodes) && _evaluationManager.ShouldEvaluateNode(connection.InputNode))
+                            {
+                                processingQueue.Enqueue(connection.InputNode);
+                            }
                         }
                     }
                 }
+                catch(OutOfMemoryException)
+                {
+                    Entry.Logger.LogError("Out of memory during node processing. Stopping evaluation.");
+                    ArrayMemoryManager.ForceCleanup();
+                    break;
+                }
             }
+            
+            _memoryMonitor.CheckMemoryPressure();
         }
 
         /// <summary>

@@ -8,7 +8,7 @@ namespace Compositor.KK
         public static string Group => "Input";
         protected override void InitializePorts()
         {
-            _outputs.Add(new NodeOutput("RGBA", typeof(UnityEngine.Color), new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("RGBA", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));
         }
         public override void DrawContent(Rect contentRect)
         {

@@ -57,8 +57,8 @@ namespace Compositor.KK
 
         protected override void InitializePorts()
         {
-            _outputs.Add(new NodeOutput("Image", typeof(byte[]), new Vector2(Size.x, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Depth", typeof(byte[]), new Vector2(Size.x, Size.y * 0.7f)));
+            _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Depth", SocketType.A, new Vector2(Size.x, Size.y * 0.7f)));
 
             // Initialize camera dropdown
             _cameraDropdown = new Dropdown();
@@ -208,6 +208,7 @@ namespace Compositor.KK
                 _texture2D.ReadPixels(new Rect(0, 0, renderWidth, renderHeight), 0, 0);
                 _texture2D.Apply();
                 RenderTexture.active = null;
+                return _texture2D.GetRawTextureData();
             }
             finally
             {
@@ -216,8 +217,6 @@ namespace Compositor.KK
                 _camera.clearFlags = originalClearFlags;
                 _camera.backgroundColor = originalBackgroundColor;
             }
-
-            return new byte[0];
         }
 
         private void UpdateCameraList()

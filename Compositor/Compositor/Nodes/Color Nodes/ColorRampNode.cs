@@ -9,8 +9,8 @@ namespace Compositor.KK
         public static string Group => "Color";
         protected override void InitializePorts()
         {
-            _outputs.Add(new NodeOutput("Image", typeof(byte[]), new Vector2(Size.x, Size.y * 0.7f)));
-            _outputs.Add(new NodeOutput("Alpha", typeof(byte[]), new Vector2(Size.x, Size.y * 0.7f)));
+            _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.7f)));
+            _outputs.Add(new NodeOutput("Alpha", SocketType.A, new Vector2(Size.x, Size.y * 0.7f)));
         }
         public override void DrawContent(Rect contentRect)
         {

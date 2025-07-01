@@ -16,6 +16,7 @@ namespace Compositor.KK
     /// </summary>
     public class CompositorRenderer
     {
+        public static CompositorRenderer Instance { get; private set; }
         private CompositorManager _manager;
         private readonly int _headerWindowId = 1000;
         private readonly int _nodeWindowIdStart = 2000;
@@ -26,6 +27,7 @@ namespace Compositor.KK
 
         public CompositorRenderer(CompositorManager manager)
         {
+            Instance = this;
             _manager = manager;
             _scrollPosition = Vector2.zero;
         }
@@ -148,7 +150,7 @@ namespace Compositor.KK
             {
                 return (string)groupProperty.GetValue(this, null) ?? "General";
             }
-            
+
             var groupField = nodeType.GetField("Group", BindingFlags.Public | BindingFlags.Static);
             if (groupField != null && groupField.FieldType == typeof(string))
             {
@@ -437,7 +439,7 @@ namespace Compositor.KK
                 var portRect = new Rect(input.LocalPosition.x * state.Zoom - 6, input.LocalPosition.y * state.Zoom - 6, 12, 12);
 
                 bool isHovered = portRect.Contains(Event.current.mousePosition);
-                CompositorStyles.DrawPort(portRect, input.IsConnected, true, isHovered);
+                CompositorStyles.DrawPort(portRect, input.IsConnected, true, input.AcceptedType, isHovered);
                 var labelRect = new Rect(portRect.x + 18, portRect.y - 2, 100, 16);
                 GUI.Label(labelRect, input.Name, CompositorStyles.PortLabel);
             }
@@ -447,7 +449,7 @@ namespace Compositor.KK
                 var output = node.Outputs[i];
                 var portRect = new Rect(output.LocalPosition.x * state.Zoom - 6, output.LocalPosition.y * state.Zoom - 6, 12, 12);
                 bool isHovered = portRect.Contains(Event.current.mousePosition);
-                CompositorStyles.DrawPort(portRect, output.Connections.Count > 0, false, isHovered);
+                CompositorStyles.DrawPort(portRect, output.Connections.Count > 0, false, output.OutputType, isHovered);
                 var labelRect = new Rect(portRect.x - 85, portRect.y - 2, 80, 16);
                 var labelStyle = GUIStyleBuilder.CreateFrom(CompositorStyles.PortLabel).WithAlignment(TextAnchor.MiddleRight);
                 GUI.Label(labelRect, output.Name, labelStyle);
@@ -535,23 +537,22 @@ namespace Compositor.KK
             return nodeWorldPos + localPosition * state.Zoom;
         }
 
+        public Vector2 GetPortScaledPosition(Vector2 localPosition)
+        {
+            var state = _manager.State;
+            return localPosition * state.Zoom;
+        }
+
         /// <summary>
         /// Determines the color used for rendering the connection lines in the compositor graph,
         /// based on the type of data being transmitted through the connection.
         /// </summary>
         /// <param name="dataType">The type of the data being transmitted through the connection, such as Texture2D, float, or Color.</param>
         /// <returns>A Color instance representing the visual style of the connection based on the data type.</returns>
-        private Color GetConnectionColor(Type dataType)
+        private Color GetConnectionColor(SocketType socketType)
         {
-            if (dataType == typeof(Texture2D))
-                return GUIUtils.Colors.Connection;
-            if (dataType == typeof(float) || dataType == typeof(float[]))
-                return new Color(0.3f, 0.8f, 0.3f, 0.8f);
-            if (dataType == typeof(Color) || dataType == typeof(Color32))
-                return new Color(0.8f, 0.3f, 0.8f, 0.8f);
-            if (dataType == typeof(Vector2) || dataType == typeof(Vector3) || dataType == typeof(Vector4))
-                return new Color(.8f, .8f, 0, .8f);
-            return GUIUtils.Colors.Connection;
+            var baseColor = GUIUtils.Colors.SocketColors.GetSocketColor(socketType);
+            return Color.Lerp(baseColor, GUIUtils.Colors.Connection, 0.3f);
         }
     }
 }

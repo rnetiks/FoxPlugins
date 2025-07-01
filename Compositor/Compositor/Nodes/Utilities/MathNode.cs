@@ -20,9 +20,9 @@ namespace Compositor.KK.Utilities
         private mode _mode;
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("In", typeof(float), new Vector2(0, Size.y * 0.5f)));
-            _inputs.Add(new NodeInput("In", typeof(float), new Vector2(0, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Out", typeof(float), new Vector2(Size.x, Size.y * 0.5f)));
+            _inputs.Add(new NodeInput("In", SocketType.A, new Vector2(0, Size.y * 0.5f)));
+            _inputs.Add(new NodeInput("In", SocketType.A, new Vector2(0, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Out", SocketType.A, new Vector2(Size.x, Size.y * 0.5f)));
         }
         public override void DrawContent(Rect contentRect)
         {

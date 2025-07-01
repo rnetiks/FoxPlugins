@@ -287,21 +287,13 @@ namespace DefaultNamespace.Compositor
         /// <param name="isConnected">Indicates whether the port is connected.</param>
         /// <param name="isInput">Indicates whether the port is an input port.</param>
         /// <param name="isHovered">Indicates whether the port is currently being hovered over by the cursor. Default is false.</param>
-        public static void DrawPort(Rect portRect, bool isConnected, bool isInput, bool isHovered = false)
+        public static void DrawPort(Rect portRect, bool isConnected, bool isInput, SocketType socketType, bool isHovered = false)
         {
-            Color portColor;
+            Color portColor = GUIUtils.Colors.SocketColors.GetSocketColor(socketType);
             
             if (isConnected)
             {
-                portColor = GUIUtils.Colors.PortConnected;
-            }
-            else if (isInput)
-            {
-                portColor = GUIUtils.Colors.NodeInput;
-            }
-            else
-            {
-                portColor = GUIUtils.Colors.NodeOutput;
+                portColor = Color.Lerp(portColor, GUIUtils.Colors.PortConnected, 0.5f);
             }
 
             if (isHovered)

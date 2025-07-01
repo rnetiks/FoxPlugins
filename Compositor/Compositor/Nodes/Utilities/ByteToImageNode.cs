@@ -1,8 +1,10 @@
+using System;
 using DefaultNamespace;
 using UnityEngine;
 
 namespace Compositor.KK.Utilities
 {
+    [Obsolete]
     public class ByteToImageNode : BaseCompositorNode
     {
         public override string Title => "ByteArray to Image";
@@ -12,8 +14,8 @@ namespace Compositor.KK.Utilities
         }
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Input", typeof(byte[]), new Vector2(0, Size.y * 0.5f)));
-            _outputs.Add(new NodeOutput("Output", typeof(Texture2D), new Vector2(Size.x, Size.y * 0.5f)));
+            _inputs.Add(new NodeInput("Input", SocketType.RGBA, new Vector2(0, Size.y * 0.5f)));
+            _outputs.Add(new NodeOutput("Output", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.5f)));
         }
         public override void DrawContent(Rect contentRect)
         {

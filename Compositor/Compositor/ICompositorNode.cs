@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
+using ADV.Commands.Object;
+using Compositor.KK.Utils;
 using DefaultNamespace;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -125,6 +128,22 @@ namespace Compositor.KK
         void DisconnectInput(int inputIndex);
     }
 
+    public enum SocketType
+    {
+        /// <summary>
+        /// Most common type of socket, used for full RGBA color data
+        /// </summary>
+        RGBA,
+        /// <summary>
+        /// Used as the main component for a single value per pixel
+        /// </summary>
+        A,
+        /// <summary>
+        /// Single Value, XYZ data
+        /// </summary>
+        Vector,
+    }
+
     /// <summary>
     /// Represents an input within the compositing framework, providing details about the name,
     /// data type it accepts, current value, connection status, and its position in the visual graph.
@@ -148,7 +167,7 @@ namespace Compositor.KK
         /// It is used to enforce type safety when establishing connections between nodes,
         /// ensuring that only values of this type or derived from it can be assigned to the input.
         /// </remarks>
-        public Type[] AcceptedType { get; set; }
+        public SocketType AcceptedType { get; set; }
         /// <summary>
         /// Represents the current value of the node input.
         /// </summary>
@@ -202,14 +221,7 @@ namespace Compositor.KK
         /// This class includes details about the node input's name, supported type, current value,
         /// connected node, and its local position in the UI.
         /// </summary>
-        public NodeInput(string name, Type acceptedType, Vector2 localPosition)
-        {
-            Name = name;
-            AcceptedType = new [] { acceptedType };
-            LocalPosition = localPosition;
-        }
-
-        public NodeInput(string name, Type[] acceptedType, Vector2 localPosition)
+        public NodeInput(string name, SocketType acceptedType, Vector2 localPosition)
         {
             Name = name;
             AcceptedType = acceptedType;
@@ -260,7 +272,7 @@ namespace Compositor.KK
         /// It is utilized to ensure compatibility during connections between nodes by
         /// validating whether the receiving input port can accept the output's data type.
         /// </remarks>
-        public Type OutputType { get; set; }
+        public SocketType OutputType { get; set; }
         /// <summary>
         /// Represents the value of a node output in the compositor graph.
         /// </summary>
@@ -296,7 +308,7 @@ namespace Compositor.KK
         /// Stores metadata about the output such as its name, data type, and positional information
         /// on the node it belongs to, as well as its connections to other nodes.
         /// </summary>
-        public NodeOutput(string name, Type outputType, Vector2 localPosition)
+        public NodeOutput(string name, SocketType outputType, Vector2 localPosition)
         {
             Name = name;
             OutputType = outputType;
@@ -305,10 +317,10 @@ namespace Compositor.KK
         }
 
         /// <summary>
-        /// Sets the value of the output and propagates the value to all connected inputs of other nodes.
-        /// This method ensures that any changes to an output value are reflected in its connected nodes.
+        /// Sets the value of this output and propagates the updated value to all connected inputs of other nodes.
+        /// This ensures that all dependencies are updated to reflect the current state.
         /// </summary>
-        /// <param name="value">The new value to be assigned to this output and propagated to the connected inputs.</param>
+        /// <param name="value">The new value to assign to the output and propagate to connected nodes as necessary.</param>
         public void SetValue(object value)
         {
             Value = value;
@@ -317,7 +329,14 @@ namespace Compositor.KK
             {
                 if (connection.InputNode.Inputs.Count > connection.InputIndex)
                 {
-                    connection.InputNode.Inputs[connection.InputIndex].Value = value;
+                    var input = connection.InputNode.Inputs[connection.InputIndex];
+                    object convertedValue = value;
+                    if (OutputType != input.AcceptedType && value != null)
+                    {
+                        convertedValue = Converter.FastConvert(OutputType, input.AcceptedType, value);
+                    }
+                    
+                    connection.InputNode.Inputs[connection.InputIndex].Value = convertedValue;
                 }
             }
         }
@@ -472,7 +491,7 @@ namespace Compositor.KK
         /// It is called during the node's construction to set up its port structure.
         /// </summary>
         protected abstract void InitializePorts();
-        
+
         /// <summary>
         /// Performs general node initialization. This method is called during node construction
         /// and provides an override point for custom initialization logic beyond port setup.
@@ -518,7 +537,21 @@ namespace Compositor.KK
             var output = Outputs[outputIndex];
             var input = other.Inputs[inputIndex];
 
-            return input.AcceptedType.Any(e => e.IsAssignableFrom(output.OutputType));
+            if (output.OutputType == input.AcceptedType)
+                return true;
+            
+            return IsConversionAllowed(output.OutputType, input.AcceptedType);
+        }
+
+        private bool IsConversionAllowed(SocketType from, SocketType to)
+        {
+            if (from == SocketType.RGBA)
+                return true;
+            if (from == SocketType.A && (to == SocketType.RGBA || to == SocketType.Vector))
+                return true;
+            if (from == SocketType.Vector && (to == SocketType.RGBA || to == SocketType.A))
+                return true;
+            return false;
         }
 
         /// <summary>

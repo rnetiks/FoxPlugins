@@ -16,7 +16,7 @@ namespace Compositor.KK
 
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Texture", typeof(Texture2D), new Vector2(0, Size.y * 0.8f)));
+            _inputs.Add(new NodeInput("Texture", SocketType.RGBA, new Vector2(0, Size.y * 0.8f)));
         }
 
         public override void DrawContent(Rect contentRect)

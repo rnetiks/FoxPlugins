@@ -8,8 +8,8 @@ namespace Compositor.KK.Vector
         public static string Group => "Vector";
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Texture", typeof(Texture2D), new Vector2(0, Size.y * 0.5f)));
-            _outputs.Add(new NodeOutput("Size", typeof(Vector2), new Vector2(Size.x, Size.y * 0.5f)));
+            _inputs.Add(new NodeInput("Texture", SocketType.RGBA, new Vector2(0, Size.y * 0.5f)));
+            _outputs.Add(new NodeOutput("Size", SocketType.Vector, new Vector2(Size.x, Size.y * 0.5f)));
         }
         public override void DrawContent(Rect contentRect)
         {

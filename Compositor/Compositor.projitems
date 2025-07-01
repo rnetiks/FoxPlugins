@@ -9,6 +9,8 @@
         <Import_RootNamespace>Compositor</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Array.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\ArrayMemoryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorStyles.cs" />
@@ -99,6 +101,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\VectorCurvesNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Dropdown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LazyEvaluationManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Converter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIStyleBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\TextureCache.cs" />

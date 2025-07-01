@@ -8,8 +8,8 @@ namespace Compositor.KK
         public static string Group => "Input";
         protected override void InitializePorts()
         {
-            _outputs.Add(new NodeOutput("Image", typeof(Texture2D), new Vector2(Size.x, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Alpha", typeof(float[]), new Vector2(Size.x, Size.y * 0.7f)));
+            _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Alpha", SocketType.A, new Vector2(Size.x, Size.y * 0.7f)));
         }
         public override void DrawContent(Rect contentRect)
         {

@@ -12,11 +12,11 @@ namespace Compositor.KK
         public static string Group => "Color/Mix";
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Image", typeof(byte[]), new Vector2(0, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Red", typeof(byte[]), new Vector2(Size.x, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Green", typeof(byte[]), new Vector2(Size.x, Size.y * 0.7f)));
-            _outputs.Add(new NodeOutput("Blue", typeof(byte[]), new Vector2(Size.x, Size.y * 0.8f)));
-            _outputs.Add(new NodeOutput("Alpha", typeof(byte[]), new Vector2(Size.x, Size.y * 0.9f)));
+            _inputs.Add(new NodeInput("Image", SocketType.RGBA, new Vector2(0, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Red", SocketType.A, new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Green", SocketType.A, new Vector2(Size.x, Size.y * 0.7f)));
+            _outputs.Add(new NodeOutput("Blue", SocketType.A, new Vector2(Size.x, Size.y * 0.8f)));
+            _outputs.Add(new NodeOutput("Alpha", SocketType.A, new Vector2(Size.x, Size.y * 0.9f)));
         }
         public override void DrawContent(Rect contentRect)
         {

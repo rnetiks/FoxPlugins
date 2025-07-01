@@ -8,12 +8,12 @@ namespace Compositor.KK
         public static string Group => "Color/Adjust";
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Image", typeof(Texture2D), new Vector2(0, Size.y * 0.4f)));
-            _inputs.Add(new NodeInput("Hue", typeof(float), new Vector2(0, Size.y * 0.5f)));
-            _inputs.Add(new NodeInput("Saturation", typeof(float), new Vector2(0, Size.y * 0.6f)));
-            _inputs.Add(new NodeInput("Value", typeof(float), new Vector2(0, Size.y * 0.7f)));
-            _inputs.Add(new NodeInput("Factor", typeof(float), new Vector2(0, Size.y * 0.8f)));
-            _outputs.Add(new NodeOutput("Image", typeof(Texture2D), new Vector2(Size.x, Size.y * 0.4f)));
+            _inputs.Add(new NodeInput("Image", SocketType.RGBA, new Vector2(0, Size.y * 0.4f)));
+            _inputs.Add(new NodeInput("Hue", SocketType.A, new Vector2(0, Size.y * 0.5f)));
+            _inputs.Add(new NodeInput("Saturation", SocketType.A, new Vector2(0, Size.y * 0.6f)));
+            _inputs.Add(new NodeInput("Value", SocketType.A, new Vector2(0, Size.y * 0.7f)));
+            _inputs.Add(new NodeInput("Factor", SocketType.A, new Vector2(0, Size.y * 0.8f)));
+            _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.4f)));
         }
         public override void DrawContent(Rect contentRect)
         {
