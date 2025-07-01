@@ -390,15 +390,22 @@ namespace Compositor.KK
         internal void ProcessNodes()
         {
             _evaluationManager.BeginEvaluation();
-            
+
             var processedNodes = new HashSet<ICompositorNode>();
             var processingQueue = new Queue<ICompositorNode>();
 
             foreach (var node in _nodes)
             {
-                if (ShouldProcessNode(node, processedNodes) && _evaluationManager.ShouldEvaluateNode(node))
+                if (ShouldProcessNode(node, processedNodes))
                 {
-                    processingQueue.Enqueue(node);
+                    if (node is LazyCompositorNode)
+                    {
+                        if (_evaluationManager?.ShouldEvaluateNode(node) == true)
+                            processingQueue.Enqueue(node);
+
+                    }
+                    else
+                        processingQueue.Enqueue(node);
                 }
             }
 
@@ -417,21 +424,29 @@ namespace Compositor.KK
                     {
                         foreach (var connection in output.Connections)
                         {
-                            if (ShouldProcessNode(connection.InputNode, processedNodes) && _evaluationManager.ShouldEvaluateNode(connection.InputNode))
+                            if (ShouldProcessNode(connection.InputNode, processedNodes))
                             {
-                                processingQueue.Enqueue(connection.InputNode);
+                                if (connection.InputNode is LazyCompositorNode)
+                                {
+                                    if (_evaluationManager?.ShouldEvaluateNode(connection.InputNode) == true)
+                                    {
+                                        processingQueue.Enqueue(connection.InputNode);
+                                    }
+                                }
+                                else
+                                    processingQueue.Enqueue(connection.InputNode);
                             }
                         }
                     }
                 }
-                catch(OutOfMemoryException)
+                catch (OutOfMemoryException)
                 {
                     Entry.Logger.LogError("Out of memory during node processing. Stopping evaluation.");
                     ArrayMemoryManager.ForceCleanup();
                     break;
                 }
             }
-            
+
             _memoryMonitor.CheckMemoryPressure();
         }
 
