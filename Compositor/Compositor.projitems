@@ -34,6 +34,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\Mix\SeperateColorNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\Mix\ZCombineNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\RGB2BWNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\RGBANode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\SetAlphaNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\AntiAliasNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\Blur\BilateralBlurNode.cs" />

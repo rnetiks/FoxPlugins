@@ -57,17 +57,22 @@ namespace DefaultNamespace
         public static AssetBundle _bundle;
         private WindowType _windowType = WindowType.None;
 
+
+        /// <summary>
+        /// Creates a gradient texture based on the provided colors, positions, and dimensions.
+        /// </summary>
+        /// <param name="colors">An array of colors to be used in the gradient.</param>
+        /// <param name="positions">An array of positions corresponding to the colors, defining the gradient distribution.</param>
+        /// <param name="width">The width of the resulting gradient texture.</param>
+        /// <param name="height">The height of the resulting gradient texture.</param>
+        
         private void Awake()
         {
             Logger = base.Logger;
 
             byte[] readAllBytes = File.ReadAllBytes(Path.Combine("BepInEx/plugins/", "compositor1.unity3d"));
             _bundle = AssetBundle.LoadFromMemory(readAllBytes);
-            Logger.LogDebug(_bundle);
-            foreach (string allAssetName in _bundle.GetAllAssetNames())
-            {
-                Logger.LogDebug(allAssetName);
-            }
+            
             foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
             {
                 if (!type.IsSubclassOf(typeof(BaseCompositorNode))) continue;
@@ -76,6 +81,28 @@ namespace DefaultNamespace
             InitializeConfig();
             InitializeComponents();
             _harmony = Harmony.CreateAndPatchAll(GetType());
+        }
+
+        public static void WriteLog(string message)
+        {
+            _ignoreNewline = true;
+            Logger.LogDebug(message);
+            _ignoreNewline = false;
+        }
+        
+        private static bool _ignoreNewline;
+        
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(LogEventArgs), nameof(LogEventArgs.ToStringLine))]
+        public static bool LogEventPatch(LogEventArgs __instance, ref string __result)
+        {
+            if (_ignoreNewline)
+            {
+                __result = __instance.ToString();
+                return false;
+            }
+
+            return true;
         }
 
         private void InitializeConfig()

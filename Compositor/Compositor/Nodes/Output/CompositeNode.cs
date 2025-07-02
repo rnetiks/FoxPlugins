@@ -11,7 +11,7 @@ namespace Compositor.KK
     {
         public override string Title => "Composite";
         public static string Group => "Output";
-        
+
         private Texture2D _displayTexture;
 
         protected override void InitializePorts()
@@ -49,11 +49,26 @@ namespace Compositor.KK
             }
         }
 
-        public override void Process()
+        public unsafe override void Process()
         {
             if (_inputs[0].IsConnected)
             {
-                _displayTexture = _inputs[0].GetValue<Texture2D>();
+                var data = _inputs[0].GetValue<float[]>();
+
+                _displayTexture = new Texture2D(1920, 1080);
+
+                Color[] colors = new Color[_displayTexture.width * _displayTexture.height];
+                fixed (float* p = data)
+                {
+                    for (var i = 0; i < data.Length; i += 4)
+                    {
+                        var idx = i / 4;
+                        colors[idx] = new Color(p[i], p[i + 1], p[i + 2], p[i + 3]);
+                    }
+                }
+
+                _displayTexture.SetPixels(colors);
+                _displayTexture.Apply();
             }
         }
 

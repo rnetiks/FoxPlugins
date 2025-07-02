@@ -1,3 +1,4 @@
+using Compositor.KK.Compositor;
 using DefaultNamespace;
 using UnityEngine;
 
@@ -24,42 +25,38 @@ namespace Compositor.KK
         {
             if (_inputs[0].IsConnected && _inputs[1].IsConnected)
             {
-                var backgroundData = _inputs[0].GetValue<byte[]>();
-                var foregroundData = _inputs[1].GetValue<byte[]>();
-        
+                var backgroundData = _inputs[0].GetValue<float[]>();
+                var foregroundData = _inputs[1].GetValue<float[]>();
+
                 if (backgroundData == null || foregroundData == null) return;
-        
-                byte[] result = new byte[backgroundData.Length];
-        
+
+                ManagedArrayData result = new ManagedArrayData(backgroundData.Length);
+
                 for (int i = 0; i < backgroundData.Length; i += 4)
                 {
-                    // Background RGBA
-                    float bgR = backgroundData[i] / 255f;
-                    float bgG = backgroundData[i + 1] / 255f;
-                    float bgB = backgroundData[i + 2] / 255f;
-                    float bgA = backgroundData[i + 3] / 255f;
-            
-                    // Foreground RGBA
-                    float fgR = foregroundData[i] / 255f;
-                    float fgG = foregroundData[i + 1] / 255f;
-                    float fgB = foregroundData[i + 2] / 255f;
-                    float fgA = foregroundData[i + 3] / 255f;
-            
-                    // Alpha over blending
+                    float bgR = backgroundData[i];
+                    float bgG = backgroundData[i + 1];
+                    float bgB = backgroundData[i + 2];
+                    float bgA = backgroundData[i + 3];
+
+                    float fgR = foregroundData[i];
+                    float fgG = foregroundData[i + 1];
+                    float fgB = foregroundData[i + 2];
+                    float fgA = foregroundData[i + 3];
+
                     float outA = fgA + bgA * (1f - fgA);
                     float outR = (fgR * fgA + bgR * bgA * (1f - fgA)) / outA;
                     float outG = (fgG * fgA + bgG * bgA * (1f - fgA)) / outA;
                     float outB = (fgB * fgA + bgB * bgA * (1f - fgA)) / outA;
-            
-                    // Convert back to bytes
-                    result[i] = (byte)(outR * 255f);
-                    result[i + 1] = (byte)(outG * 255f);
-                    result[i + 2] = (byte)(outB * 255f);
-                    result[i + 3] = (byte)(outA * 255f);
+
+                    result.Data[i] = outR;
+                    result.Data[i + 1] = outG;
+                    result.Data[i + 2] = outB;
+                    result.Data[i + 3] = outA;
                 }
-        
-                Entry.Logger.LogDebug($"CameraNode: Send data with {result.Length} values");
-                _outputs[0].SetValue(result);
+
+                _outputs[0].SetValue(result.Data);
+                result.Dispose();
             }
         }
     }

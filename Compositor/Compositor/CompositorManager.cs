@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Compositor.KK.Compositor;
 using Compositor.KK.Utilities;
@@ -90,6 +91,16 @@ namespace Compositor.KK
         /// </summary>
         public void CreateDefaultNodes()
         {
+            var cam = new CameraNode();
+            var comp = new CompositeNode();
+            
+            cam.Position = new Vector2(100, 100);
+            comp.Position = new Vector2(500, 100);
+            
+            ConnectNodes(cam, 0, comp, 0);
+            
+            AddNode(cam);
+            AddNode(comp);
         }
 
         /// <summary>
@@ -99,18 +110,14 @@ namespace Compositor.KK
         /// <param name="node">The node to be added. This node must implement the ICompositorNode interface and will be added to the current node collection.</param>
         public void AddNode(ICompositorNode node)
         {
-            Entry.Logger.LogDebug($"Validity checks");
             _nodes.Add(node);
 
-            Entry.Logger.LogDebug($"{(_nodes == null ? "null" : "not null")}");
             if (node is LazyCompositorNode lazyNode)
             {
-                Entry.Logger.LogDebug($"{lazyNode}, {_evaluationManager}");
                 lazyNode.SetEvaluationManager(_evaluationManager);
             }
             else
             {
-                Entry.Logger.LogDebug($"{_evaluationManager}, {node}");
                 _evaluationManager.RegisterNode(node);
             }
         }
@@ -256,7 +263,7 @@ namespace Compositor.KK
                 }
             }
 
-            if (port == null)
+            if (port == null && shouldHandleNodeInteraction)
             {
                 if (Input.GetMouseButtonDown(0))
                 {

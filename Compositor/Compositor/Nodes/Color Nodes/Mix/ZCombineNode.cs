@@ -32,27 +32,46 @@ namespace Compositor.KK
             if (!_inputs[0].IsConnected)
             {
                 var spos = CompositorRenderer.Instance.GetPortScaledPosition(_inputs[0].LocalPosition);
-                image1Value = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), image1Value, 0, 255);
+                var tmp = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), image1Value, 0, 255);
+                if (tmp != image1Value)
+                {
+                    image1Value = tmp;
+                    NotifyOutputChanged();
+                }
             }
             if (!_inputs[1].IsConnected)
             {
                 var spos = CompositorRenderer.Instance.GetPortScaledPosition(_inputs[1].LocalPosition);
-                z1Value = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), z1Value, 0, 255);
+                var tmp = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), z1Value, 0, 255);
+                if (tmp != z1Value)
+                {
+                    z1Value = tmp;
+                    NotifyOutputChanged();
+                }
             }
             if (!_inputs[2].IsConnected)
             {
                 var spos = CompositorRenderer.Instance.GetPortScaledPosition(_inputs[2].LocalPosition);
-                image2Value = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), image2Value, 0, 255);
+                var tmp = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), image2Value, 0, 255);
+                if (tmp != image2Value)
+                {
+                    image2Value = tmp;
+                    NotifyOutputChanged();
+                }
             }
             if (!_inputs[3].IsConnected)
             {
                 var spos = CompositorRenderer.Instance.GetPortScaledPosition(_inputs[3].LocalPosition);
-                z2Value = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), z2Value, 0, 255);
+                var tmp = (byte)GUI.HorizontalSlider(new Rect(contentRect.x + 40, spos.y - offsetY, contentRect.width - 80, 20), z2Value, 0, 255);
+                if (tmp != z2Value)
+                {
+                    z2Value = tmp;
+                    NotifyOutputChanged();
+                }
             }
         }
         protected override void ProcessInternal()
         {
-
         }
     }
 }

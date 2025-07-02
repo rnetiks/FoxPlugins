@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using DefaultNamespace;
 using UnityEngine;
@@ -26,7 +27,6 @@ namespace Compositor.KK
         private Texture2D _texture2D;
         private RenderTexture _renderTexture;
 
-        // Configurable render resolution
         private int renderWidth = 1920;
         private int renderHeight = 1080;
 
@@ -60,15 +60,12 @@ namespace Compositor.KK
             _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));
             _outputs.Add(new NodeOutput("Depth", SocketType.A, new Vector2(Size.x, Size.y * 0.7f)));
 
-            // Initialize camera dropdown
             _cameraDropdown = new Dropdown();
             _cameraDropdown.OnSelectionChanged += OnCameraSelectionChanged;
 
-            // Initialize layer dropdown
             _cameraLayerDropdown = new Dropdown();
             _cameraLayerDropdown.OnSelectionChanged += OnLayerSelectionChanged;
 
-            // Setup layer names
             _layerNames = new string[32];
             for (int i = 0; i < 32; i++)
             {
@@ -128,7 +125,6 @@ namespace Compositor.KK
             if (_camera == null || _renderTexture == null || _texture2D == null)
                 return;
 
-            // Store original camera settings
             var originalCullingMask = _camera.cullingMask;
             var originalTarget = _camera.targetTexture;
             var originalClearFlags = _camera.clearFlags;
@@ -138,7 +134,7 @@ namespace Compositor.KK
             {
                 _camera.clearFlags = CameraClearFlags.SolidColor;
                 _camera.backgroundColor = new Color(0, 0, 0, 0);
-                // Apply selected layer mask if needed
+                
                 if (selectedLayerIndex >= 0)
                 {
                     _camera.cullingMask = layerMask;
@@ -155,11 +151,10 @@ namespace Compositor.KK
             }
             finally
             {
-                // Always restore camera settings
                 _camera.cullingMask = originalCullingMask;
                 _camera.targetTexture = originalTarget;
-                _camera.clearFlags = originalClearFlags;        // ADD THIS
-                _camera.backgroundColor = originalBackgroundColor; // ADD THIS
+                _camera.clearFlags = originalClearFlags;
+                _camera.backgroundColor = originalBackgroundColor;
             }
         }
 
@@ -168,19 +163,27 @@ namespace Compositor.KK
         {
             if (_camera == null) return;
             UpdateRender();
-            // if(_outputs[1].Connections.Count > 0)
-            //     Generate(Entry._bundle.LoadAsset<Shader>("assets/depth.shader"), "");
 
             if (_texture2D != null)
             {
-                byte[] imageData = _texture2D.GetRawTextureData();
                 if (_outputs.Count > 0)
                 {
-                    Entry.Logger.LogDebug($"CameraNode: Send data with {imageData.Length} values");
-                    _outputs[0].SetValue(imageData);
+                    var floats = _texture2D.GetPixels(0, 0, _texture2D.width, _texture2D.height);
+                    List<float> floatData = new List<float>();
+                    
+                    foreach (var color in floats)
+                    {
+                        floatData.Add(color.r);
+                        floatData.Add(color.g);
+                        floatData.Add(color.b);
+                        floatData.Add(color.a);
+                    }
+                        
+                    _outputs[0].SetValue(floatData.ToArray());
                 }
             }
         }
+        
         private byte[] Generate(Shader shader, string tag)
         {
             if (_camera == null || _renderTexture == null || _texture2D == null)
@@ -204,8 +207,9 @@ namespace Compositor.KK
                 RenderTexture.active = _renderTexture;
                 GL.Clear(true, true, new Color(0, 0, 0, 0));
 
+                
                 _camera.RenderWithShader(shader, "");
-                _texture2D.ReadPixels(new Rect(0, 0, renderWidth, renderHeight), 0, 0);
+                _texture2D.ReadPixels(new Rect(0, 0, renderWidth, renderHeight), 0, 0, false);
                 _texture2D.Apply();
                 RenderTexture.active = null;
                 return _texture2D.GetRawTextureData();
@@ -244,7 +248,6 @@ namespace Compositor.KK
 
         private bool IsOnSelectedLayer(GameObject obj) => obj.layer == selectedLayerIndex; // Fixed bug
 
-        // Public method to change render resolution
         public void SetRenderResolution(int width, int height)
         {
             if (width > 0 && height > 0)

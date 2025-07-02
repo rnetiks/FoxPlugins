@@ -333,10 +333,13 @@ namespace Compositor.KK
                     object convertedValue = value;
                     if (OutputType != input.AcceptedType && value != null)
                     {
-                        convertedValue = Converter.FastConvert(OutputType, input.AcceptedType, value);
+                        convertedValue = Converter.FastConvert(OutputType, input.AcceptedType, value as float[]);
                     }
                     
                     connection.InputNode.Inputs[connection.InputIndex].Value = convertedValue;
+
+                    if(connection.InputNode is LazyCompositorNode lazy)
+                        lazy.NotifyOutputChanged();
                 }
             }
         }
@@ -579,6 +582,9 @@ namespace Compositor.KK
             input.ConnectedNode = this;
             input.ConnectedOutputIndex = outputIndex;
             input.Value = output.Value;
+
+            if (other is LazyCompositorNode lazy)
+                lazy.NotifyOutputChanged();
         }
 
         /// <summary>
@@ -627,12 +633,12 @@ namespace Compositor.KK
         {
             for (int i = 0; i < _outputs.Count; i++)
             {
-                Disconnect(i);
+                this.Disconnect(i);
             }
 
             for (int i = 0; i < _inputs.Count; i++)
             {
-                DisconnectInput(i);
+                this.DisconnectInput(i);
             }
         }
     }

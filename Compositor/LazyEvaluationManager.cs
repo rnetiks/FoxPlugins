@@ -22,6 +22,8 @@ namespace DefaultNamespace
         
         public void UnregisterNode(ICompositorNode node)
         {
+            if (node == null)
+                return;
             _nodeStates.Remove(node);
             _dirtyNodes.Remove(node);
         }
@@ -159,13 +161,12 @@ namespace DefaultNamespace
             finally
             {
                 startTime.Stop();
-                Entry.Logger.LogDebug($"Processed {Title} in {startTime.ElapsedMilliseconds}ms");
             }
         }
-        
+
         protected abstract void ProcessInternal();
 
-        protected void NotifyOutputChanged()
+        internal protected void NotifyOutputChanged()
         {
             _evaluationManager?.MarkNodeDirty(this);
         }
@@ -173,7 +174,7 @@ namespace DefaultNamespace
         public override void Disconnect(int outputIndex)
         {
             _evaluationManager?.UnregisterNode(this);
-            base.Dispose();
+            // base.Dispose();
         }
     }
 
