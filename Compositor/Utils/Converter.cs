@@ -11,7 +11,7 @@ namespace Compositor.KK.Utils
 
             switch (from)
             {
-                case SocketType.RGBA when to == SocketType.A:
+                case SocketType.RGBA when to == SocketType.Alpha:
                 {
                     float[] result = new float[value.Length / 4];
                     fixed (float* pBytes = value)
@@ -26,7 +26,7 @@ namespace Compositor.KK.Utils
 
                     return result;
                 }
-                case SocketType.A when to == SocketType.RGBA:
+                case SocketType.Alpha when to == SocketType.RGBA:
                 {
                     float[] result = new float[value.Length * 4];
                     fixed (float* pBytes = value)
@@ -83,7 +83,7 @@ namespace Compositor.KK.Utils
 
                     return result;
                 }
-                case SocketType.A when to == SocketType.Vector:
+                case SocketType.Alpha when to == SocketType.Vector:
                 {
                     float[] result = new float[value.Length * 3];
                     fixed (float* pByte = value)
@@ -100,7 +100,7 @@ namespace Compositor.KK.Utils
 
                     return result;
                 }
-                case SocketType.Vector when to == SocketType.A:
+                case SocketType.Vector when to == SocketType.Alpha:
                 {
                     float[] result = new float[value.Length / 3];
                     fixed (float* pByte = value)

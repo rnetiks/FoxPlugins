@@ -137,11 +137,13 @@ namespace Compositor.KK
         /// <summary>
         /// Used as the main component for a single value per pixel
         /// </summary>
-        A,
+        Alpha,
         /// <summary>
         /// Single Value, XYZ data
         /// </summary>
         Vector,
+        UV,
+        Text
     }
 
     /// <summary>
@@ -228,6 +230,25 @@ namespace Compositor.KK
             LocalPosition = localPosition;
         }
 
+        public int PixelComponents
+        {
+            get
+            {
+                switch (AcceptedType)
+                {
+
+                    case SocketType.RGBA:
+                        return 4;
+                    case SocketType.Alpha:
+                        return 1;
+                    case SocketType.Vector:
+                        return 3;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
         /// <summary>
         /// Retrieves the value associated with the input, casting it to the specified type.
         /// If the input is connected to an output of another node, this method returns the value of that connection.
@@ -240,6 +261,11 @@ namespace Compositor.KK
             if (IsConnected && ConnectedNode.Outputs.Count > ConnectedOutputIndex)
             {
                 var output = ConnectedNode.Outputs[ConnectedOutputIndex];
+                if (output.OutputType != AcceptedType)
+                {
+                    var convertedValue = Converter.FastConvert(output.OutputType, AcceptedType, output.Value as float[]);
+                    return convertedValue as T;
+                }
                 return output.Value as T;
             }
 
@@ -315,6 +341,19 @@ namespace Compositor.KK
             LocalPosition = localPosition;
             Connections = new List<NodeConnection>();
         }
+        public PortPositioning PortMode { get; set; } = PortPositioning.Fixed;
+
+        /// <summary>
+        /// Specifies the positioning mode for ports in a compositing node framework.
+        /// Determines how ports are visually aligned or repositioned within the node's interface,
+        /// affecting their layout and interaction within the graphical editor.
+        /// </summary>
+        [Flags]
+        public enum PortPositioning
+        {
+            Fixed,
+            Reposition
+        }
 
         /// <summary>
         /// Sets the value of this output and propagates the updated value to all connected inputs of other nodes.
@@ -335,10 +374,10 @@ namespace Compositor.KK
                     {
                         convertedValue = Converter.FastConvert(OutputType, input.AcceptedType, value as float[]);
                     }
-                    
+
                     connection.InputNode.Inputs[connection.InputIndex].Value = convertedValue;
 
-                    if(connection.InputNode is LazyCompositorNode lazy)
+                    if (connection.InputNode is LazyCompositorNode lazy)
                         lazy.NotifyOutputChanged();
                 }
             }
@@ -420,6 +459,7 @@ namespace Compositor.KK
         /// This property is used to specify or retrieve the size of the node's visual representation,
         /// typically affecting layout and positioning of connected inputs and outputs.
         /// </remarks>
+        /// <value>Defaults to Vector2(200, 150)</value>
         public Vector2 Size { get; set; } = new Vector2(200, 150);
         /// <summary>
         /// Indicates whether the node is currently selected.
@@ -542,7 +582,7 @@ namespace Compositor.KK
 
             if (output.OutputType == input.AcceptedType)
                 return true;
-            
+
             return IsConversionAllowed(output.OutputType, input.AcceptedType);
         }
 
@@ -550,9 +590,9 @@ namespace Compositor.KK
         {
             if (from == SocketType.RGBA)
                 return true;
-            if (from == SocketType.A && (to == SocketType.RGBA || to == SocketType.Vector))
+            if (from == SocketType.Alpha && (to == SocketType.RGBA || to == SocketType.Vector))
                 return true;
-            if (from == SocketType.Vector && (to == SocketType.RGBA || to == SocketType.A))
+            if (from == SocketType.Vector && (to == SocketType.RGBA || to == SocketType.Alpha))
                 return true;
             return false;
         }

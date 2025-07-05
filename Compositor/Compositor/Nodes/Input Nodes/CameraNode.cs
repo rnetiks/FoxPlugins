@@ -17,10 +17,10 @@ namespace Compositor.KK
 
         private Camera _camera;
         private int selectedCameraIndex;
-        private int selectedLayerIndex;
+        private int selectedLayersIndex;
 
         private Dropdown _cameraDropdown;
-        private Dropdown _cameraLayerDropdown;
+        private MultiselectDropdown _cameraLayerDropdown;
         private Camera[] _availableCameras;
         private string[] _layerNames;
 
@@ -58,12 +58,12 @@ namespace Compositor.KK
         protected override void InitializePorts()
         {
             _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Depth", SocketType.A, new Vector2(Size.x, Size.y * 0.7f)));
+            _outputs.Add(new NodeOutput("Depth", SocketType.Alpha, new Vector2(Size.x, Size.y * 0.7f)));
 
             _cameraDropdown = new Dropdown();
             _cameraDropdown.OnSelectionChanged += OnCameraSelectionChanged;
 
-            _cameraLayerDropdown = new Dropdown();
+            _cameraLayerDropdown = new MultiselectDropdown();
             _cameraLayerDropdown.OnSelectionChanged += OnLayerSelectionChanged;
 
             _layerNames = new string[32];
@@ -81,8 +81,6 @@ namespace Compositor.KK
                 selectedCameraIndex = Mathf.Clamp(selectedCameraIndex, 0, _availableCameras.Length - 1);
                 _camera = _availableCameras[selectedCameraIndex];
             }
-
-            selectedLayerIndex = Mathf.Clamp(selectedLayerIndex, 0, 31);
         }
 
         private void OnCameraSelectionChanged(int index)
@@ -97,25 +95,27 @@ namespace Compositor.KK
             Entry.Logger.LogDebug($"New Camera: {_camera?.name}");
         }
 
-        private void OnLayerSelectionChanged(int index)
+        private void OnLayerSelectionChanged(int[] index)
         {
-            selectedLayerIndex = Mathf.Clamp(index, 0, 31);
-            layerMask = GetSelectedLayerMask();
+
+            selectedLayersIndex = LayersToMask(index);
+            layerMask = selectedLayersIndex;//GetSelectedLayerMask();
             UpdateRender();
         }
 
         public override void DrawContent(Rect contentRect)
         {
+            if (_texture2D != null)
+            {
+                GUI.DrawTexture(new Rect(contentRect.x, contentRect.y + 30, contentRect.width, contentRect.height), _texture2D);
+            }
+            
             if (_cameraDropdown != null)
                 _cameraDropdown.Draw();
 
             if (_cameraLayerDropdown != null)
                 _cameraLayerDropdown.Draw();
 
-            if (_texture2D != null && !_cameraDropdown.IsExpanded && !_cameraLayerDropdown.IsExpanded)
-            {
-                GUI.DrawTexture(new Rect(contentRect.x, contentRect.y + 30, contentRect.width, contentRect.height), _texture2D);
-            }
         }
 
         private int layerMask = ~0;
@@ -135,7 +135,7 @@ namespace Compositor.KK
                 _camera.clearFlags = CameraClearFlags.SolidColor;
                 _camera.backgroundColor = new Color(0, 0, 0, 0);
                 
-                if (selectedLayerIndex >= 0)
+                if (selectedLayersIndex >= 0)
                 {
                     _camera.cullingMask = layerMask;
                 }
@@ -198,7 +198,7 @@ namespace Compositor.KK
             {
                 _camera.clearFlags = CameraClearFlags.SolidColor;
                 _camera.backgroundColor = new Color(0, 0, 0, 0);
-                if (selectedLayerIndex >= 0)
+                if (selectedLayersIndex >= 0)
                 {
                     _camera.cullingMask = layerMask;
                 }
@@ -223,6 +223,8 @@ namespace Compositor.KK
             }
         }
 
+        public int LayersToMask(int[] layers) => layers.Aggregate(0, (current, layer) => current | 1 << layer);
+
         private void UpdateCameraList()
         {
             _availableCameras = Object.FindObjectsOfType<Camera>();
@@ -244,9 +246,9 @@ namespace Compositor.KK
             }
         }
 
-        private LayerMask GetSelectedLayerMask() => 1 << selectedLayerIndex;
+        private LayerMask GetSelectedLayerMask() => 1 << selectedLayersIndex;
 
-        private bool IsOnSelectedLayer(GameObject obj) => obj.layer == selectedLayerIndex; // Fixed bug
+        private bool IsOnSelectedLayer(GameObject obj) => obj.layer == selectedLayersIndex; // Fixed bug
 
         public void SetRenderResolution(int width, int height)
         {

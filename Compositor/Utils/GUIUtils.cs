@@ -167,7 +167,7 @@ namespace Compositor.KK
                     {
                         case SocketType.RGBA:
                             return RGBA;
-                        case SocketType.A:
+                        case SocketType.Alpha:
                             return Alpha;
                         case SocketType.Vector:
                             return Vector;

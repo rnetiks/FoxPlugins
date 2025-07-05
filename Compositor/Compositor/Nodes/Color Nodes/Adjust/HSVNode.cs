@@ -9,10 +9,10 @@ namespace Compositor.KK
         protected override void InitializePorts()
         {
             _inputs.Add(new NodeInput("Image", SocketType.RGBA, new Vector2(0, Size.y * 0.4f)));
-            _inputs.Add(new NodeInput("Hue", SocketType.A, new Vector2(0, Size.y * 0.5f)));
-            _inputs.Add(new NodeInput("Saturation", SocketType.A, new Vector2(0, Size.y * 0.6f)));
-            _inputs.Add(new NodeInput("Value", SocketType.A, new Vector2(0, Size.y * 0.7f)));
-            _inputs.Add(new NodeInput("Factor", SocketType.A, new Vector2(0, Size.y * 0.8f)));
+            _inputs.Add(new NodeInput("Hue", SocketType.Alpha, new Vector2(0, Size.y * 0.5f)));
+            _inputs.Add(new NodeInput("Saturation", SocketType.Alpha, new Vector2(0, Size.y * 0.6f)));
+            _inputs.Add(new NodeInput("Value", SocketType.Alpha, new Vector2(0, Size.y * 0.7f)));
+            _inputs.Add(new NodeInput("Factor", SocketType.Alpha, new Vector2(0, Size.y * 0.8f)));
             _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.4f)));
         }
         public override void DrawContent(Rect contentRect)

@@ -12,10 +12,10 @@ namespace Compositor.KK
         public static string Group => "Color/Mix";
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Red", SocketType.A, new Vector2(0, Size.y * 0.6f)));
-            _inputs.Add(new NodeInput("Green", SocketType.A, new Vector2(0, Size.y * 0.7f)));
-            _inputs.Add(new NodeInput("Blue", SocketType.A, new Vector2(0, Size.y * 0.8f)));
-            _inputs.Add(new NodeInput("Alpha", SocketType.A, new Vector2(0, Size.y * 0.9f)));
+            _inputs.Add(new NodeInput("Red", SocketType.Alpha, new Vector2(0, Size.y * 0.6f)));
+            _inputs.Add(new NodeInput("Green", SocketType.Alpha, new Vector2(0, Size.y * 0.7f)));
+            _inputs.Add(new NodeInput("Blue", SocketType.Alpha, new Vector2(0, Size.y * 0.8f)));
+            _inputs.Add(new NodeInput("Alpha", SocketType.Alpha, new Vector2(0, Size.y * 0.9f)));
             _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));
         }
         public override void DrawContent(Rect contentRect)
@@ -34,22 +34,21 @@ namespace Compositor.KK
         /// </remarks>
         public override void Process()
         {
-            // Only execute if the node is outputting a value
             if (_outputs[0].Connections.Count > 0)
             {
-                var r = _inputs[0].GetValue<byte[]>();
-                var g = _inputs[1].GetValue<byte[]>();
-                var b = _inputs[2].GetValue<byte[]>();
-                var a = _inputs[3].GetValue<byte[]>();
+                var r = _inputs[0].GetValue<float[]>();
+                var g = _inputs[1].GetValue<float[]>();
+                var b = _inputs[2].GetValue<float[]>();
+                var a = _inputs[3].GetValue<float[]>();
                 var arrSize = Mathf.Max(r.Length, g.Length, b.Length, a.Length);
 
-                var result = new byte[arrSize];
+                var result = new float[arrSize];
                 for (var i = 0; i < arrSize; i += 4)
                 {
-                    result[i] = i < r.Length ? r[i] : (byte) 0;
-                    result[i + 1] = i < g.Length ? g[i + 1] : (byte) 0;
-                    result[i + 2] = i < b.Length ? b[i + 2] : (byte) 0;
-                    result[i + 3] = i < a.Length ? a[i + 3] : (byte) 0;
+                    result[i] = i < r.Length ? r[i] : 0;
+                    result[i + 1] = i < g.Length ? g[i + 1] : 0;
+                    result[i + 2] = i < b.Length ? b[i + 2] : 0;
+                    result[i + 3] = i < a.Length ? a[i + 3] : 0;
                 }
                 _outputs[0].SetValue(result);
             }

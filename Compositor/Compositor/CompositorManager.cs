@@ -91,16 +91,73 @@ namespace Compositor.KK
         /// </summary>
         public void CreateDefaultNodes()
         {
-            var cam = new CameraNode();
-            var comp = new CompositeNode();
-            
-            cam.Position = new Vector2(100, 100);
-            comp.Position = new Vector2(500, 100);
-            
-            ConnectNodes(cam, 0, comp, 0);
-            
-            AddNode(cam);
-            AddNode(comp);
+            var node1 = new tmp3();
+            var node2 = new tmp1();
+            var node3 = new tmp2();
+
+            node1.Position = new Vector2(300, 500);
+            node2.Position = new Vector2(700, 500);
+            node3.Position = new Vector2(1100, 500);
+
+            AddNode(node1);
+            AddNode(node2);
+            AddNode(node3);
+        }
+
+        class tmp1 : BaseCompositorNode
+        {
+            public override string Title { get; }
+            private CompositorCurve _curve;
+            protected override void InitializePorts()
+            {
+                Size = new Vector2(200, 250);
+
+                _curve = new CompositorCurve();
+            }
+            public override void DrawContent(Rect contentRect)
+            {
+                _curve.Draw(new Rect(contentRect.x, contentRect.y, contentRect.width, contentRect.height - 30));
+                
+            }
+            public override void Process()
+            {
+            }
+        }
+
+        class tmp2 : BaseCompositorNode
+        {
+            public override string Title { get; }
+            private CompositorColorSelector _colorSelector;
+            protected override void InitializePorts()
+            {
+                Size = new Vector2(200, 250);
+                _colorSelector = new CompositorColorSelector();
+            }
+            public override void DrawContent(Rect contentRect)
+            {
+                _colorSelector.Draw(new Rect(contentRect.x, contentRect.y, contentRect.width, contentRect.height - 30));
+            }
+            public override void Process()
+            {
+            }
+        }
+
+        class tmp3 : BaseCompositorNode
+        {
+            public override string Title { get; }
+            private CompositorGradient _gradient;
+            protected override void InitializePorts()
+            {
+                Size = new Vector2(200, 250);
+                _gradient = new CompositorGradient();
+            }
+            public override void DrawContent(Rect contentRect)
+            {
+                _gradient.Draw(new Rect(contentRect.x + 5, contentRect.y, contentRect.width - 10, contentRect.height - 30));
+            }
+            public override void Process()
+            {
+            }
         }
 
         /// <summary>
@@ -184,7 +241,12 @@ namespace Compositor.KK
 
                 foreach (var output in node.Outputs)
                 {
-                    var portWorldPos = nodeWorldPos + output.LocalPosition * State.Zoom;
+                    Vector2 portWorldPos;
+                    if (output.PortMode == NodeOutput.PortPositioning.Fixed)
+                        portWorldPos = nodeWorldPos + output.LocalPosition * State.Zoom;
+                    else
+                        portWorldPos = nodeWorldPos + new Vector2(node.Size.x * State.Zoom - output.LocalPosition.x, output.LocalPosition.y * State.Zoom);
+
                     var rect = new Rect(portWorldPos.x - 6, portWorldPos.y - 6, 12, 12);
                     if (rect.Contains(mousePosition)) return output;
                 }
@@ -219,10 +281,11 @@ namespace Compositor.KK
             }
             if (_selectedNode != null && (Input.GetKeyUp(KeyCode.Delete) || Input.GetKeyUp(KeyCode.X)))
             {
+                _selectedNode.IsSelected = false;
                 RemoveNode(_selectedNode);
                 _selectedNode = null;
             }
-            
+
             Event currentEvent = Event.current;
             bool shouldHandleNodeInteraction = true;
 

@@ -8,7 +8,7 @@ namespace Compositor.KK
         public static string Group => "Input";
         protected override void InitializePorts()
         {
-            _outputs.Add(new NodeOutput("Value", SocketType.A, new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Value", SocketType.Alpha, new Vector2(Size.x, Size.y * 0.6f)));
         }
         public override void DrawContent(Rect contentRect)
         {

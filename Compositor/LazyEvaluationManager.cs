@@ -144,8 +144,6 @@ namespace DefaultNamespace
                     return;
             }
 
-            var startTime = System.Diagnostics.Stopwatch.StartNew();
-
             try
             {
                 ProcessInternal();
@@ -157,10 +155,6 @@ namespace DefaultNamespace
             catch (Exception e)
             {
                 Entry.Logger.LogError($"Error processing node {Title}: {e.Message}");
-            }
-            finally
-            {
-                startTime.Stop();
             }
         }
 
@@ -174,7 +168,6 @@ namespace DefaultNamespace
         public override void Disconnect(int outputIndex)
         {
             _evaluationManager?.UnregisterNode(this);
-            // base.Dispose();
         }
     }
 

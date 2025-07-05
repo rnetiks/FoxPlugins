@@ -34,7 +34,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\Mix\SeperateColorNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\Mix\ZCombineNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\RGB2BWNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\RGBANode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Color Nodes\SetAlphaNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\AntiAliasNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Filter\Blur\BilateralBlurNode.cs" />
@@ -56,7 +55,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\CameraNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\ImageNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\RenderLayersNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\RGB32Node.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\RGBNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Input Nodes\ValueNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Keying\ChannelKeyNode.cs" />
@@ -100,10 +98,16 @@
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\NormalNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\SeparateVectorNode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\Nodes\Vector\VectorCurvesNode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Dropdown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)LazyEvaluationManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\CompositorColorSelector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\CompositorCurve.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\CompositorGradient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\Dropdown.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\CompositorSlider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\MultiselectDropdown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Converter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Graph.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIStyleBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\TextureCache.cs" />

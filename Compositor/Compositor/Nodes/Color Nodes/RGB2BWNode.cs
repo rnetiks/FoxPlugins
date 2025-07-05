@@ -9,7 +9,7 @@ namespace Compositor.KK
         protected override void InitializePorts()
         {
             _inputs.Add(new NodeInput("Image", SocketType.RGBA, new Vector2(0, Size.y * 0.6f)));
-            _outputs.Add(new NodeOutput("Value", SocketType.A, new Vector2(Size.x, Size.y * 0.6f)));
+            _outputs.Add(new NodeOutput("Value", SocketType.Alpha, new Vector2(Size.x, Size.y * 0.6f)));
         }
         public override void DrawContent(Rect contentRect)
         {
@@ -18,6 +18,7 @@ namespace Compositor.KK
         public override void Process()
         {
             throw new System.NotImplementedException();
+            
         }
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using DefaultNamespace;
 using DefaultNamespace.Compositor;
-using TexFac.Universal;
 using UnityEngine;
 
 namespace Compositor.KK

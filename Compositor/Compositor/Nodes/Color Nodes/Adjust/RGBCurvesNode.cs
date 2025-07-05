@@ -8,7 +8,7 @@ namespace Compositor.KK
         public static string Group => "Color/Adjust";
         protected override void InitializePorts()
         {
-            _inputs.Add(new NodeInput("Factor", SocketType.A, new Vector2(0, Size.y * 0.6f)));
+            _inputs.Add(new NodeInput("Factor", SocketType.Alpha, new Vector2(0, Size.y * 0.6f)));
             _inputs.Add(new NodeInput("Image", SocketType.RGBA, new Vector2(0, Size.y * 0.7f)));
             _inputs.Add(new NodeInput("Black", SocketType.RGBA, new Vector2(0, Size.y * 0.8f)));
             _inputs.Add(new NodeInput("White", SocketType.RGBA, new Vector2(0, Size.y * 0.9f)));

@@ -1,16 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using alphaShot;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using Compositor.KK;
+using Compositor.KK.Utils;
 using HarmonyLib;
 using Screencap;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Random = UnityEngine.Random;
 
 namespace DefaultNamespace
 {
@@ -31,6 +34,9 @@ namespace DefaultNamespace
         private Harmony _harmony;
         public static ManualLogSource Logger;
 
+        public static int ImageWidth = 1920;
+        public static int ImageHeight = 1080;
+
         private Camera _camera;
         private Studio.CameraControl _cameraControl;
         private CompositorManager _compositorManager;
@@ -40,7 +46,6 @@ namespace DefaultNamespace
 
         private void OnDestroy()
         {
-            _bundle.Unload(false);
             if (_camera != null)
                 _camera.enabled = true;
             if (_cameraControl != null)
@@ -55,7 +60,7 @@ namespace DefaultNamespace
         }
 
         public static AssetBundle _bundle;
-        private WindowType _windowType = WindowType.None;
+        private WindowType _windowType = WindowType.Compositor;
 
 
         /// <summary>
@@ -65,44 +70,21 @@ namespace DefaultNamespace
         /// <param name="positions">An array of positions corresponding to the colors, defining the gradient distribution.</param>
         /// <param name="width">The width of the resulting gradient texture.</param>
         /// <param name="height">The height of the resulting gradient texture.</param>
-        
         private void Awake()
         {
             Logger = base.Logger;
 
-            byte[] readAllBytes = File.ReadAllBytes(Path.Combine("BepInEx/plugins/", "compositor1.unity3d"));
-            _bundle = AssetBundle.LoadFromMemory(readAllBytes);
-            
+            // byte[] readAllBytes = File.ReadAllBytes(Path.Combine("BepInEx/plugins/", "compositor1.unity3d"));
+            // _bundle = AssetBundle.LoadFromMemory(readAllBytes);
+
             foreach (var type in Assembly.GetExecutingAssembly().GetTypes())
             {
-                if (!type.IsSubclassOf(typeof(BaseCompositorNode))) continue;
+                if (!type.IsSubclassOf(typeof(BaseCompositorNode)) || type == typeof(LazyCompositorNode)) continue;
                 AvailableNodes.Add(type);
             }
             InitializeConfig();
             InitializeComponents();
             _harmony = Harmony.CreateAndPatchAll(GetType());
-        }
-
-        public static void WriteLog(string message)
-        {
-            _ignoreNewline = true;
-            Logger.LogDebug(message);
-            _ignoreNewline = false;
-        }
-        
-        private static bool _ignoreNewline;
-        
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(LogEventArgs), nameof(LogEventArgs.ToStringLine))]
-        public static bool LogEventPatch(LogEventArgs __instance, ref string __result)
-        {
-            if (_ignoreNewline)
-            {
-                __result = __instance.ToString();
-                return false;
-            }
-
-            return true;
         }
 
         private void InitializeConfig()
@@ -131,6 +113,8 @@ namespace DefaultNamespace
             if (_windowType == WindowType.None) return;
             _compositorManager.Update();
         }
+
+        private int i = 2;
 
         private void OnGUI()
         {

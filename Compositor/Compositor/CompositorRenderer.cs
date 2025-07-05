@@ -411,8 +411,8 @@ namespace Compositor.KK
                 GUI.DrawTexture(shadowRect, GUIUtils.GetColorTexture(new Color(0, 0, 0, 0.3f)));
 
                 GUI.Window(windowId, nodeRect, (id) => DrawNodeWindow(node), "", windowStyle);
-                var titleRect = new Rect(nodeRect.x, nodeRect.y, nodeRect.width, 20);
-                GUI.DrawTexture(titleRect, GUIUtils.GetColorTexture(GUIUtils.Colors.NodeHeader));
+                var titleRect = new Rect(nodeRect.x, nodeRect.y - 20, nodeRect.width, 20);
+                // GUI.DrawTexture(titleRect, GUIUtils.GetColorTexture(GUIUtils.Colors.NodeHeader));
 
                 var titleStyle = node.IsSelected ? GUIStyleBuilder.CreateFrom(CompositorStyles.NodeTitle).WithNormalState(textColor: GUIUtils.Colors.TextAccent) : CompositorStyles.NodeTitle;
                 GUI.Label(titleRect, node.Title, titleStyle);
@@ -447,7 +447,13 @@ namespace Compositor.KK
             for (var i = 0; i < node.Outputs.Count; i++)
             {
                 var output = node.Outputs[i];
-                var portRect = new Rect(output.LocalPosition.x * state.Zoom - 6, output.LocalPosition.y * state.Zoom - 6, 12, 12);
+                Rect portRect;
+
+                if (output.PortMode == NodeOutput.PortPositioning.Fixed)
+                    portRect = new Rect(output.LocalPosition.x * state.Zoom - 6, output.LocalPosition.y * state.Zoom - 6, 12, 12);
+                else
+                    portRect = new Rect(node.Size.x * state.Zoom - output.LocalPosition.x - 6, output.LocalPosition.y * state.Zoom - 6, 12, 12);
+
                 bool isHovered = portRect.Contains(Event.current.mousePosition);
                 CompositorStyles.DrawPort(portRect, output.Connections.Count > 0, false, output.OutputType, isHovered);
                 var labelRect = new Rect(portRect.x - 85, portRect.y - 2, 80, 16);
@@ -472,7 +478,11 @@ namespace Compositor.KK
 
                     foreach (var connection in output.Connections)
                     {
-                        var startPos = GetPortWorldPosition(node, output.LocalPosition);
+                        Vector2 startPos;
+                        if (output.PortMode == NodeOutput.PortPositioning.Fixed)
+                            startPos = GetPortWorldPosition(node, output.LocalPosition);
+                        else
+                            startPos = GetPortWorldPosition(node, new Vector2(node.Size.x - output.LocalPosition.x, output.LocalPosition.y));
                         var endPos = GetPortWorldPosition(connection.InputNode, connection.InputNode.Inputs[connection.InputIndex].LocalPosition);
                         var halfxdiff = (endPos - startPos) / 2;
                         var connectionColor = GetConnectionColor(output.OutputType);
@@ -485,7 +495,11 @@ namespace Compositor.KK
 
             if (_manager._isConnecting && _manager._connectionStartOutput != null)
             {
-                var startPos = GetPortWorldPosition(_manager._connectionStartNode, _manager._connectionStartOutput.LocalPosition);
+                Vector2 startPos;
+                if (_manager._connectionStartOutput.PortMode == NodeOutput.PortPositioning.Fixed)
+                    startPos = GetPortWorldPosition(_manager._connectionStartNode, _manager._connectionStartOutput.LocalPosition);
+                else
+                    startPos = GetPortWorldPosition(_manager._connectionStartNode, new Vector2(_manager._connectionStartNode.Size.x - _manager._connectionStartOutput.LocalPosition.x, _manager._connectionStartOutput.LocalPosition.y));
                 var endPos = Event.current.mousePosition;
                 var halfxdiff = (endPos - startPos) / 2;
 
