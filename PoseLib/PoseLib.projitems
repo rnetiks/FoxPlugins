@@ -9,7 +9,13 @@
         <Import_RootNamespace>PoseLib</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Constants.cs" />
         <Compile Include="$(MSBuildThisFileDirectory)Entry.cs"/>
-    <Compile Include="$(MSBuildThisFileDirectory)FileHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PoseData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PoseFileHandler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PoseLibraryManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)String.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextureManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIManager.cs" />
     </ItemGroup>
 </Project>
