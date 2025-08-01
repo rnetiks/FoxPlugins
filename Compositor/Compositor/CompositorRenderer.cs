@@ -323,14 +323,18 @@ namespace Compositor.KK
             _manager.HideSearchMenu();
         }
 
+        CurveDrawer _curveDrawer = new CurveDrawer();
+
         /// <summary>
         /// Renders the background of the compositor interface. Fills the entire screen area with the designated background color
         /// and displays a grid overlay scaled and offset based on the current zoom level and positional offset from the state.
         /// </summary>
         private void DrawBackground()
         {
-            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), GUIUtils.GetColorTexture(GUIUtils.Colors.Background));
+            var background = GUIUtils.Colors.Background;
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), GUIUtils.GetColorTexture(background));
             var gridArea = new Rect(0, 30, Screen.width, Screen.height - 60);
+            // _curveDrawer.DrawGrid(gridArea, 10, 10, new Color(background.r, background.g, background.b, 0.3f));
             CompositorStyles.DrawGrid(gridArea, _manager.State.Zoom, new Vector2(_manager.State.OffsetX, _manager.State.OffsetY));
         }
 
@@ -522,14 +526,6 @@ namespace Compositor.KK
         {
             var statusRect = new Rect(0, Screen.height - 25, Screen.width, 25);
             GUI.DrawTexture(statusRect, GUIUtils.GetColorTexture(GUIUtils.Colors.Header));
-
-            var processingText = "Ready";
-            if (_manager.Nodes.Count > 0)
-            {
-                processingText = TextureCache.HasTextures() ? "Processing" : "Waiting for Input";
-            }
-
-            GUI.Label(new Rect(10, Screen.height - 22, 200, 20), $"Status: {processingText}", CompositorStyles.StatusLabel);
 
             var perfText = $"FPS: {(1f / Time.deltaTime):F0} | Memory: {(GC.GetTotalMemory(false) / 1024f / 1024f):F1} MB";
             var perfSize = GUI.skin.label.CalcSize(new GUIContent(perfText));

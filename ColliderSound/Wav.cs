@@ -9,7 +9,7 @@ namespace ColliderSound.KK
         public int SampleCount;
         public int Frequency;
 
-        private const int I = 44;
+        private const int Offset = 44;
 
         public Wav(byte[] wav)
         {
@@ -21,11 +21,11 @@ namespace ColliderSound.KK
                 throw new Exception("Invalid WAV format");
             }
 
-            SampleCount = (wav.Length - I) / (2 * Channels);
+            SampleCount = (wav.Length - Offset) / (2 * Channels);
 
             LeftChannel = new float[SampleCount * Channels];
 
-            int index = I;
+            int index = Offset;
             for (int i = 0; i < SampleCount * Channels; i++)
             {
                 LeftChannel[i] = BitConverter.ToInt16(wav, index) / 32768f;

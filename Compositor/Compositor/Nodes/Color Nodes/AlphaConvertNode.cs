@@ -68,6 +68,7 @@ namespace Compositor.KK
                     }
                     
                     _outputs[0].SetValue(output);
+                    Dispose();
                     break;
                 }
                 default:

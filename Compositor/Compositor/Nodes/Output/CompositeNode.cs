@@ -23,7 +23,7 @@ namespace Compositor.KK
             if (_displayTexture != null)
             {
                 var aspect = (float)_displayTexture.width / _displayTexture.height;
-                var textureRect = new Rect(8, 5, contentRect.width - 16, (contentRect.width - 16) / aspect);
+                var textureRect = new Rect(8, 20, contentRect.width - 16, (contentRect.width - 16) / aspect);
 
                 if (textureRect.height > contentRect.height - 35)
                 {
@@ -36,7 +36,7 @@ namespace Compositor.KK
                 GUI.DrawTexture(borderRect, GUIUtils.GetColorTexture(GUIUtils.Colors.NodeBorder));
                 GUI.DrawTexture(textureRect, _displayTexture);
 
-                var buttonRect = new Rect(8, contentRect.height - 25, contentRect.width - 16, 20);
+                var buttonRect = new Rect(8, textureRect.height + 25 + textureRect.y, contentRect.width - 16, 20);
                 if (GUI.Button(buttonRect, "Export", CompositorStyles.ExportButton))
                 {
                     ExportTexture();

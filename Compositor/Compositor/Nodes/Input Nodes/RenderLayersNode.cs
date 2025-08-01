@@ -6,6 +6,7 @@ namespace Compositor.KK
     {
         public override string Title { get; } = "Render Layers";
         public static string Group => "Input";
+        private Mesh p;
         protected override void InitializePorts()
         {
             _outputs.Add(new NodeOutput("Image", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.6f)));

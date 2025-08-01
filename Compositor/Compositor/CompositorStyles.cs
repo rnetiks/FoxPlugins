@@ -258,7 +258,7 @@ namespace DefaultNamespace.Compositor
             float gridSize = 20f * zoom;
             float startX = area.x + (offset.x % gridSize);
             float startY = area.y + (offset.y % gridSize);
-
+            
             for (float x = startX; x < area.x + area.width; x += gridSize)
             {
                 GUIUtils.DrawLine(

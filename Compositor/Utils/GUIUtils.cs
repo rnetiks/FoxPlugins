@@ -129,7 +129,7 @@ namespace Compositor.KK
         public static class Colors
         {
             public static readonly Color Background = new Color(0.15f, 0.15f, 0.15f, 1f);
-            public static readonly Color BackgroundGrid = new Color(0.18f, 0.18f, 0.18f, 1f);
+            public static readonly Color BackgroundGrid = new Color(0.3f, 0.3f, 0.3f, 1f);
             public static readonly Color Header = new Color(0.12f, 0.12f, 0.12f, 1f);
             public static readonly Color HeaderAccent = new Color(0.2f, 0.25f, 0.3f, 1f);
             public static readonly Color NodeBackground = new Color(0.25f, 0.25f, 0.25f, 0.95f);

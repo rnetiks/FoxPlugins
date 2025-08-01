@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using Compositor.KK;
+using Compositor.KKS.Utils;
 using UnityEngine;
 
 namespace DefaultNamespace
@@ -243,18 +244,7 @@ namespace DefaultNamespace
             Vector2 v2 = new Vector2(0.1f, 0.9f);
             Vector2 v3 = new Vector2(0.9f, 0.9f);
 
-            return PointInTriangle(pos, v1, v2, v3);
-        }
-
-        // Yoinked from stack overflow
-        private bool PointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
-        {
-            float denom = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
-            float alpha = ((b.y - c.y) * (p.x - c.x) + (c.x - b.x) * (p.y - c.y)) / denom;
-            float beta = ((c.y - a.y) * (p.x - c.x) + (a.x - c.x) * (p.y - c.y)) / denom;
-            float gamma = 1 - alpha - beta;
-
-            return alpha >= 0 && beta >= 0 && gamma >= 0;
+            return Vector.IsPointInTriangle(pos, v1, v2, v3);
         }
 
         public class HSStruct

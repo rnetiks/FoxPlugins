@@ -125,7 +125,7 @@ namespace Compositor.KK.Compositor
         
         public float[] Data => _isDisposed ? null : _data;
         public int Length => _isDisposed ? 0 : _data.Length;
-        public bool IsValid => _isDisposed ? false : _data != null;
+        public bool IsValid => !_isDisposed && _data != null;
 
         public ManagedArrayData(int size)
         {

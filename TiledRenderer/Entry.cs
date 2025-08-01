@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -25,7 +26,7 @@ namespace TiledRenderer
         public string outputPath = "TiledRender";
         private bool _uiOpen;
         public bool saveIndividualTiles = true;
-        public bool renderAsync = true;
+        public bool renderAsync = false;
         public float delayBetweenTiles = 0.1f;
         private float progress = 0;
 
@@ -94,6 +95,7 @@ namespace TiledRenderer
 
         public void StartTileRendering()
         {
+            InitImageConversion();
             StartCoroutine(RenderTiledImage());
         }
 
@@ -138,28 +140,33 @@ namespace TiledRenderer
             {
                 Logger.LogDebug($"Saved to: {currentRenderFolder}");
                 string join = string.Join(" ", Directory.GetFiles(currentRenderFolder).Select(e => Path.GetFileName(e)));
-                Logger.LogDebug(join);
-                Logger.LogDebug($"> vips arrayjoin \"{join}\" output.png --across {tilesX}");
-                Process.Start(currentRenderFolder);
-                var p = Process.Start(new ProcessStartInfo()
+                try
                 {
-                    WorkingDirectory = currentRenderFolder,
-                    Arguments = $"arrayjoin \"{join}\" output.png --across {tilesX}",
-                    FileName = "vips",
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false
-                });
-                p.BeginErrorReadLine();
-                p.BeginOutputReadLine();
-                p.OutputDataReceived += (sender, args) => Logger.LogDebug(args.Data);
-                p.ErrorDataReceived += (sender, args) => Logger.LogError(args.Data);
-                p.WaitForExit();
+                    Process.Start(currentRenderFolder);
+                    var p = Process.Start(new ProcessStartInfo()
+                    {
+                        WorkingDirectory = currentRenderFolder,
+                        Arguments = $"arrayjoin \"{join}\" output.png --across {tilesX}",
+                        FileName = "vips",
+                        RedirectStandardError = true,
+                        RedirectStandardInput = true,
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false
+                    });
+                    p.BeginErrorReadLine();
+                    p.BeginOutputReadLine();
+                    p.OutputDataReceived += (sender, args) => Logger.LogDebug(args.Data);
+                    p.ErrorDataReceived += (sender, args) => Logger.LogError(args.Data);
+                    p.WaitForExit();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e);
+                }
             }
             Cleanup();
         }
-        
+
         private IEnumerator RenderTile(int tileX, int tileY)
         {
             Shader.SetGlobalTexture("_AlphaMask", Texture2D.whiteTexture);
@@ -186,8 +193,7 @@ namespace TiledRenderer
             RenderTexture temporary = RenderTexture.GetTemporary(tileWidth, tileHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Default, 1);
             Texture2D tileTexture = new Texture2D(tileWidth, tileHeight, textureFormat, false);
             var rect = renderCamera.rect;
-
-            yield return new WaitForEndOfFrame();
+            
             renderCamera.targetTexture = tileRenderTexture;
             renderCamera.rect = new Rect(0, 0, 1, 1);
             renderCamera.Render();
@@ -206,7 +212,7 @@ namespace TiledRenderer
             DestroyImmediate(tileTexture);
             RenderTexture.active = null;
         }
-        
+
         private Matrix4x4 CreateTileProjectionMatrix(float left, float right, float bottom, float top)
         {
             Matrix4x4 matrix = originalProjectionMatrix;
@@ -232,21 +238,110 @@ namespace TiledRenderer
                 float tileBottom = bottom * height * 0.5f;
                 float tileTop = top * height * 0.5f;
 
-                matrix = Matrix4x4.Frustum(tileLeft, tileRight, tileBottom, tileTop, near, far);
+                // matrix = Matrix4x4.Frustum(tileLeft, tileRight, tileBottom, tileTop, near, far);
+                matrix = CreateFrustumMatrix(tileLeft, tileRight, tileBottom, tileTop, near, far);
             }
             return matrix;
         }
+
+        /// <summary>
+        /// Fallback Frustum support for older unity versions
+        /// </summary>
+        public static Matrix4x4 CreateFrustumMatrix(float left, float right, float bottom, float top, float near, float far)
+        {
+            Matrix4x4 m = new Matrix4x4();
+
+            float x = (2.0f * near) / (right - left);
+            float y = (2.0f * near) / (top - bottom);
+            float a = (right + left) / (right - left);
+            float b = (top + bottom) / (top - bottom);
+            float c = -(far + near) / (far - near);
+            float d = -(2.0f * far * near) / (far - near);
+
+            m[0, 0] = x;
+            m[0, 1] = 0;
+            m[0, 2] = a;
+            m[0, 3] = 0;
+
+            m[1, 0] = 0;
+            m[1, 1] = y;
+            m[1, 2] = b;
+            m[1, 3] = 0;
+
+            m[2, 0] = 0;
+            m[2, 1] = 0;
+            m[2, 2] = c;
+            m[2, 3] = d;
+
+            m[3, 0] = 0;
+            m[3, 1] = 0;
+            m[3, 2] = -1;
+            m[3, 3] = 0;
+
+            return m;
+        }
         
+        private static MethodInfo _modernPNG, _modernJPG, _legacyPNG, _legacyJPG;
+        private static bool _initializedTextureAbstractions;
+        
+        private static void InitImageConversion()
+        {
+            try
+            {
+                var imageConversion = Type.GetType("UnityEngine.ImageConversion") ?? 
+                                      Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetType("UnityEngine.ImageConversion") != null)?.GetType("UnityEngine.ImageConversion");
+            
+                if (imageConversion != null)
+                {
+                    _modernPNG = imageConversion.GetMethod("EncodeToPNG", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Texture2D) }, null);
+                    _modernJPG = imageConversion.GetMethod("EncodeToJPG", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Texture2D) }, null);
+                }
+
+                _legacyPNG = typeof(Texture2D).GetMethod("EncodeToPNG", BindingFlags.Public | BindingFlags.Instance, null, new Type[0], null);
+                _legacyJPG = typeof(Texture2D).GetMethod("EncodeToJPG", BindingFlags.Public | BindingFlags.Instance, null, new Type[0], null);
+            }
+            catch { }
+        
+            _initializedTextureAbstractions = true;
+        }
+        
+        public static byte[] EncodeToPNG(Texture2D texture)
+        {
+            if (!_initializedTextureAbstractions) InitImageConversion();
+        
+            if (_modernPNG != null)
+                return (byte[])_modernPNG.Invoke(null, new object[] { texture });
+            if (_legacyPNG != null)
+                return (byte[])_legacyPNG.Invoke(texture, new object[0]);
+        
+            throw new NotSupportedException("PNG encoding not available");
+        }
+
+        public static byte[] EncodeToJPG(Texture2D texture)
+        {
+            if (!_initializedTextureAbstractions) InitImageConversion();
+        
+            if (_modernJPG != null)
+                return (byte[])_modernJPG.Invoke(null, new object[] { texture });
+            if (_legacyJPG != null)
+                return (byte[])_legacyJPG.Invoke(texture, new object[0]);
+        
+            throw new NotSupportedException("JPG encoding not available");
+        }
+
         private void SaveIndividualTile(Texture2D tileTexture, int tileX, int tileY)
         {
+            Logger.LogDebug($"{_modernPNG}, {_modernJPG}, {_legacyPNG}, {_legacyJPG}");
+            
             var maxTiles = tilesX * tilesY;
             string tileFileName = $"{(tilesY - tileY + 1):D3}_{(tileX + 1):D3}.png";
             string tilePath = Path.Combine(currentRenderFolder, tileFileName);
-            byte[] pngData = tileTexture.EncodeToPNG();
+            byte[] pngData = EncodeToPNG(tileTexture);
+
             File.WriteAllBytes(tilePath, pngData);
             Logger.LogDebug($"Saved tile: {tileFileName} (ID: {currentTileId}, Grid: {tileX + 1}, {tileY + 1})");
         }
-        
+
         private void Cleanup()
         {
             if (originalProjectionMatrix != default)
@@ -262,7 +357,7 @@ namespace TiledRenderer
             currentTileId = 0;
             currentRenderFolder = null;
         }
-        
+
         private void OnDestroy()
         {
             Cleanup();

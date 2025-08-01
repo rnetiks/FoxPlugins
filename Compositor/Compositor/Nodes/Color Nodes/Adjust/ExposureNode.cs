@@ -1,3 +1,4 @@
+using DefaultNamespace;
 using UnityEngine;
 
 namespace Compositor.KK
@@ -6,6 +7,15 @@ namespace Compositor.KK
     {
         public override string Title { get; } = "Exposure";
         public static string Group => "Color/Adjust";
+
+        private CompositorSlider _factorSlider;
+        private float _factor;
+
+        protected override void Initialize()
+        {
+            _factorSlider = new CompositorSlider(1, -1, 1, "Exposure");
+            _factorSlider.OnValueChanged += value => _factor = value;
+        }
         protected override void InitializePorts()
         {
             _inputs.Add(new NodeInput("Image", SocketType.RGBA, new Vector2(0, Size.y * 0.6f)));

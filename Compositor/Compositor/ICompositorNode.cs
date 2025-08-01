@@ -243,6 +243,8 @@ namespace Compositor.KK
                         return 1;
                     case SocketType.Vector:
                         return 3;
+                    case SocketType.UV:
+                    case SocketType.Text:
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

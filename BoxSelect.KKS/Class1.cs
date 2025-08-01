@@ -99,22 +99,50 @@ namespace BoxSelect.KKS
 				Vector3 objectPosition = guideObject.Value.transformTarget.position;
 				Vector3 viewportPosition = mainCamera.WorldToViewportPoint(objectPosition);
 
-				if (viewportPosition.z > 0 &&
-					viewportPosition.x >= viewportRect.x &&
-					viewportPosition.x <= viewportRect.x + viewportRect.width &&
-					viewportPosition.y >= viewportRect.y &&
-					viewportPosition.y <= viewportRect.y + viewportRect.height)
+				if (IsPointInRect(viewportPosition, viewportRect))
 				{
 					selectedObjects.Add(guideObject.Value);
 				}
 			}
 
+			RegisterSelectedObjects(guideObjectManager, selectedObjects);
+		}
+
+		private static bool IsPointInRect(Vector3 point, Rect boundingBox)
+		{
+			// z > 0 = in front, z < 0 = behind
+			return point.z > 0 &&
+				   point.x >= boundingBox.x &&
+				   point.x <= boundingBox.x + boundingBox.width &&
+				   point.y >= boundingBox.y &&
+				   point.y <= boundingBox.y + boundingBox.height;
+		}
+		
+		private bool IsPointInPolygon(Vector2 point, Vector2[] polygonPoints)
+		{
+			int j = polygonPoints.Length - 1;
+			bool inside = false;
+
+			for (int i = 0; i < polygonPoints.Length; j = i++)
+			{
+				if ((polygonPoints[i].y > point.y) != (polygonPoints[j].y > point.y) &&
+					point.x < (polygonPoints[j].x - polygonPoints[i].x) * (point.y - polygonPoints[i].y) /
+					(polygonPoints[j].y - polygonPoints[i].y) + polygonPoints[i].x)
+				{
+					inside = !inside;
+				}
+			}
+
+			return inside;
+		}
+
+		private static void RegisterSelectedObjects(GuideObjectManager guideObjectManager, HashSet<GuideObject> selectedObjects)
+		{
 			guideObjectManager.selectObject = null;
 
 			for (int i = 0; i < selectedObjects.Count; i++)
 			{
 				var selected = selectedObjects.ElementAt(i);
-				// guideObjectManager.hashSelectObject.Add(selected);
 				guideObjectManager.AddObject(selected);
 			}
 		}

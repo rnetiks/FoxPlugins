@@ -9,8 +9,6 @@
         <Import_RootNamespace>Compositor</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Compositor\Array.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Compositor\ArrayMemoryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Compositor\CompositorStyles.cs" />
@@ -106,10 +104,14 @@
     <Compile Include="$(MSBuildThisFileDirectory)UI\Dropdown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\CompositorSlider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\MultiselectDropdown.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Array.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\ArrayMemoryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Converter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Utils\Graph.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\CurveDrawer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Extensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIStyleBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\GUIUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\TextureCache.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Vector.cs" />
   </ItemGroup>
 </Project>

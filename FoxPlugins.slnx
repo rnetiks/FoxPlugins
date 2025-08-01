@@ -60,7 +60,19 @@
     <Project Path="SmartRect\SmartRect.shproj" />
     <Project Path="SmartRect\SmartRect.Universal\SmartRect.Universal.csproj" Type="Classic C#" />
   </Folder>
+  <Project Path="ASAKURA FXN-Q\ASAKURA FXN-Q.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
   <Project Path="BoxSelect.KKS\BoxSelect.KKS.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="HarmonyPatchInspector\HarmonyPatchInspector.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="Optim\Optim.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
@@ -69,6 +81,10 @@
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
   <Project Path="TexFac.Universal\TexFac.Universal.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="TiledRenderer\TiledRenderer.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>

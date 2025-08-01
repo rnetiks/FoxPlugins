@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Compositor.KK
@@ -7,6 +8,7 @@ namespace Compositor.KK
     public class CurveDrawer : IDisposable
     {
         private static Material _lineMaterial;
+
         private static Material LineMaterial
         {
             get
@@ -53,10 +55,6 @@ namespace Compositor.KK
         private List<Vector3> _vertexBuffer = new List<Vector3>();
         private List<Vector2> _tempPoints = new List<Vector2>();
 
-        public CurveDrawer()
-        {
-        }
-
         /// <summary>
         /// Draws an AnimationCurve within the specified rect
         /// </summary>
@@ -71,7 +69,7 @@ namespace Compositor.KK
             {
                 float t = (float)i / segments;
                 float value = curve.Evaluate(t);
-                Vector2 screenPoint = LocalToScreen(new Vector2(t, value), rect);
+                Vector2 screenPoint = LocalToScreenNormalized(new Vector2(t, value), rect);
                 _tempPoints.Add(screenPoint);
             }
 
@@ -79,16 +77,41 @@ namespace Compositor.KK
         }
 
         /// <summary>
-        /// Draws a curve from a list of normalized points (0-1 range)
+        /// Draws a curve composed of a list of points within the specified rectangle using the provided style.
         /// </summary>
+        /// <param name="points">A list of points defining the curve to be drawn.</param>
+        /// <param name="rect">The rectangle within which the curve should be drawn.</param>
+        /// <param name="style">The style used to render the curve, including color, line width, and other attributes.</param>
+        public void DrawCurve(List<Vector2> points, Rect rect, CurveStyle style)
+        {
+            if (points == null || points.Count < 2) return;
+            if (rect.width <= 0 || rect.height <= 0) return;
+            
+            _tempPoints.Clear();
+            foreach (var point in points)
+            {
+                Vector2 screenPoint = LocalToScreenNormalized(point, rect);
+                _tempPoints.Add(screenPoint);
+            }
+            
+            DrawPoints(_tempPoints, style);
+        }
+
+        /// <summary>
+        /// Draws a curve from a list of normalized points where each point's coordinates are within the 0-1 range, scaled to fit the specified rectangle.
+        /// </summary>
+        /// <param name="normalizedPoints">A list of 2D points with coordinates in the range [0,1]. Represents positions relative to the rectangle's bounds.</param>
+        /// <param name="rect">The rectangle within which the curve will be drawn.</param>
+        /// <param name="style">Defines the appearance of the curve, such as line width, color, mode, and anti-aliasing settings.</param>
         public void DrawNormalizedCurve(List<Vector2> normalizedPoints, Rect rect, CurveStyle style)
         {
             if (normalizedPoints == null || normalizedPoints.Count < 2) return;
+            if (rect.width <= 0 || rect.height <= 0) return;
 
             _tempPoints.Clear();
             foreach (var point in normalizedPoints)
             {
-                Vector2 screenPoint = LocalToScreen(point, rect);
+                Vector2 screenPoint = LocalToScreenNormalized(point, rect);
                 _tempPoints.Add(screenPoint);
             }
 
@@ -132,7 +155,7 @@ namespace Compositor.KK
                 {
                     float t = (float)i / segments;
                     float value = curveData.curve.Evaluate(t);
-                    Vector2 screenPoint = LocalToScreen(new Vector2(t, value), curveData.rect);
+                    Vector2 screenPoint = LocalToScreenNormalized(new Vector2(t, value), curveData.rect);
                     _tempPoints.Add(screenPoint);
                 }
 
@@ -300,11 +323,25 @@ namespace Compositor.KK
         /// <summary>
         /// Converts normalized coordinates (0-1) to screen space within the given rect
         /// </summary>
-        private Vector2 LocalToScreen(Vector2 normalizedPoint, Rect rect)
+        private Vector2 LocalToScreenNormalized(Vector2 normalizedPoint, Rect rect)
         {
             return new Vector2(
                 rect.x + normalizedPoint.x * rect.width,
                 rect.y + rect.height - normalizedPoint.y * rect.height
+            );
+        }
+
+        /// <summary>
+        /// Converts a local point within a rectangle's coordinate space to a screen-space point.
+        /// </summary>
+        /// <param name="localPoint">The local 2D point to be converted.</param>
+        /// <param name="rect">The rectangle defining the local coordinate space.</param>
+        /// <returns>The converted point in screen-space coordinates.</returns>
+        private Vector2 LocalToScreen(Vector2 localPoint, Rect rect)
+        {
+            return new Vector2(
+                rect.x + localPoint.x,
+                rect.y + rect.height - localPoint.y
             );
         }
 
@@ -325,7 +362,7 @@ namespace Compositor.KK
         public float GetCurveValueAtScreenX(AnimationCurve curve, float screenX, Rect rect)
         {
             if (curve == null) return 0f;
-            
+
             float normalizedX = (screenX - rect.x) / rect.width;
             normalizedX = Mathf.Clamp01(normalizedX);
             return curve.Evaluate(normalizedX);

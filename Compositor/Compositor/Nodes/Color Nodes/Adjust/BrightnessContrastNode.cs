@@ -5,8 +5,13 @@ using UnityEngine;
 namespace Compositor.KK
 {
     /// <summary>
-    /// 
+    /// Represents a compositor node for adjusting brightness and contrast in an image processing pipeline.
     /// </summary>
+    /// <remarks>
+    /// This class derives from <see cref="BaseCompositorNode"/> and provides functionality for altering
+    /// brightness and contrast attributes of an input image. It is part of the compositor framework
+    /// and categorized under the "Color/Adjust" group.
+    /// </remarks>
     public class BrightnessContrastNode : BaseCompositorNode
     {
         public override string Title { get; } = "Brightness/Contrast";
