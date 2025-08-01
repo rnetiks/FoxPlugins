@@ -14,8 +14,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)PoseData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PoseFileHandler.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PoseLibraryManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ScreenshotManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)String.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)TextureManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UITheme.cs" />
     </ItemGroup>
 </Project>

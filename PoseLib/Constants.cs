@@ -6,9 +6,8 @@ namespace PoseLib.KKS
     {
         public const string GUID = "org.fox.poselib";
         public const string NAME = "PoseLibrary";
-        public const string VERSION = "1.1.0";
-
-        public const string POSES_DIRECTORY = "Poses";
+        public const string VERSION = "1.2.1";
+        
         public const string TEXTURES_DIRECTORY = "Fox-Textures";
         public const string BACKGROUND_IMAGE_PATH = "./wb.png";
         
@@ -19,7 +18,7 @@ namespace PoseLib.KKS
         public const int MIN_PREVIEW_COLUMNS = 3;
         public const int MAX_PREVIEW_COLUMNS = 8;
         public const int DEFAULT_PREVIEW_COLUMNS = 5;
-        public const int MAX_POSES_PER_PAGE = 10;
+        public const int MAX_POSES_PER_PAGE = 8;
 
         public const float SEARCH_COOLDOWN_DURATION = 2f;
 

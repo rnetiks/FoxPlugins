@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using BepInEx.Logging;
 using Studio;
-using TexFac.Universal;
 using UnityEngine;
 
 namespace PoseLib.KKS
@@ -24,63 +23,49 @@ namespace PoseLib.KKS
             _logger = logger;
         }
 
-        public void SavePoseFile(string path, Dictionary<string, ChangeAmount> data, BaseTextureElement screenshot)
+        public void SavePoseFile(string path, OCIChar data, Texture2D screenshot)
         {
+            if (path.IsNullOrWhiteSpace())
+                path = Path.Combine("UserData/studio/pose", $"{DateTime.Now:yyyyMMddHHmmss}.png");
+            PauseCtrl.FileInfo poseInfo = new PauseCtrl.FileInfo(data);
             try
             {
-
-                
-                using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Write))
+                using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
-                    var imageBytes = screenshot.GetBytes();
-                    fs.Write(imageBytes, 0, imageBytes.Length);
-
-                    
-                    using (var headerWriter = new BinaryWriter(fs, Encoding.ASCII))
+                    using (BinaryWriter writer = new BinaryWriter(fs))
                     {
-                        headerWriter.Write(Encoding.ASCII.GetBytes(POSE_HEADER));
-                        headerWriter.Write(true); 
-
-                        
-
-                        using (var compression = new GZipStream(fs, CompressionMode.Compress))
-                        {
-                            using (var dataWriter = new BinaryWriter(compression))
-                            {
-                                dataWriter.Write(data.Count);
-                                foreach (var bone in data)
-                                {
-                                    dataWriter.Write(bone.Key);
-                                    WriteTransformData(dataWriter, bone.Value);
-                                }
-                            }
-                        }
+                        byte[] png = screenshot.EncodeToPNG();
+                        writer.Write(png);
+                        writer.Write(VANILLA_POSE_HEADER);
+                        writer.Write(101);
+                        writer.Write(data.oiCharInfo.sex);
+                        writer.Write(Path.GetFileNameWithoutExtension(path));
+                        poseInfo.Save(writer);
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                _logger.LogError($"Failed to save pose file {path}: {ex.Message}");
+                Console.WriteLine(e);
                 throw;
             }
         }
+
 
         public Dictionary<string, ChangeAmount> LoadPoseFile(string path)
         {
             try
             {
-
-                
                 using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     ValidatePngSignature(fs);
                     SkipToPoseData(fs);
-                    
+
                     using (var headerReader = new BinaryReader(fs, Encoding.ASCII))
                     {
                         ValidatePoseHeader(headerReader);
                         bool isCompressed = headerReader.ReadBoolean();
-                        
+
                         Stream readStream = isCompressed
                             ? (Stream)new GZipStream(fs, CompressionMode.Decompress)
                             : fs;
@@ -99,6 +84,35 @@ namespace PoseLib.KKS
             }
         }
 
+        public PoseMetadata LoadPoseMetadata(string path)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(path);
+                return new PoseMetadata
+                {
+                    FileName = Path.GetFileNameWithoutExtension(path),
+                    FilePath = path,
+                    Created = fileInfo.CreationTime,
+                    Modified = fileInfo.LastWriteTime,
+                    FileSize = fileInfo.Length,
+                    Tags = string.Empty, 
+                    Version = "1.0"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to load pose metadata from {path}: {ex.Message}");
+                return new PoseMetadata
+                {
+                    FileName = Path.GetFileNameWithoutExtension(path),
+                    FilePath = path,
+                    Created = DateTime.Now,
+                    Modified = DateTime.Now
+                };
+            }
+        }
+
         public bool LoadVanillaPoseFile(string path, params OCIChar[] characters)
         {
             try
@@ -108,7 +122,7 @@ namespace PoseLib.KKS
                     return LoadVanillaPngPose(path, characters);
                 if (extension == ".dat")
                     return LoadVanillaDatPose(path, characters);
-                
+
                 return false;
             }
             catch (Exception ex)
@@ -117,13 +131,12 @@ namespace PoseLib.KKS
                 return false;
             }
         }
-
+        
         private bool LoadVanillaPngPose(string path, OCIChar[] characters)
         {
             var poseInfo = new PauseCtrl.FileInfo();
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-
                 using (var reader = new BinaryReader(fs))
                 {
                     PngFile.SkipPng(reader);
@@ -131,8 +144,8 @@ namespace PoseLib.KKS
                         return false;
 
                     int version = reader.ReadInt32();
-                    reader.ReadInt32(); 
-                    reader.ReadString(); 
+                    reader.ReadInt32();
+                    reader.ReadString();
                     poseInfo.Load(reader, version);
 
                     foreach (var character in characters)
@@ -148,15 +161,14 @@ namespace PoseLib.KKS
             var poseInfo = new PauseCtrl.FileInfo();
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-
                 using (var reader = new BinaryReader(fs))
                 {
                     if (reader.ReadString() != VANILLA_POSE_HEADER)
                         return false;
 
                     int version = reader.ReadInt32();
-                    reader.ReadInt32(); 
-                    reader.ReadString(); 
+                    reader.ReadInt32();
+                    reader.ReadString();
                     poseInfo.Load(reader, version);
 
                     foreach (var character in characters)
@@ -169,17 +181,14 @@ namespace PoseLib.KKS
 
         private void WriteTransformData(BinaryWriter writer, ChangeAmount data)
         {
-            
             writer.Write(data.pos.x);
             writer.Write(data.pos.y);
             writer.Write(data.pos.z);
-            
-            
+
             writer.Write(data.rot.x);
             writer.Write(data.rot.y);
             writer.Write(data.rot.z);
-            
-            
+
             writer.Write(data.scale.x);
             writer.Write(data.scale.y);
             writer.Write(data.scale.z);
@@ -198,27 +207,27 @@ namespace PoseLib.KKS
         private void SkipToPoseData(FileStream fs)
         {
             bool foundEnd = false;
-            
+
             while (!foundEnd && fs.Position < fs.Length)
             {
                 var buffer = new byte[4];
                 fs.Read(buffer, 0, 4);
                 int chunkLength = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
-                
+
                 buffer = new byte[4];
                 fs.Read(buffer, 0, 4);
 
                 if (buffer.SequenceEqual(IEND_SIGNATURE))
                 {
-                    fs.Seek(4, SeekOrigin.Current); 
+                    fs.Seek(4, SeekOrigin.Current);
                     foundEnd = true;
                 }
                 else
                 {
-                    fs.Seek(chunkLength + 4, SeekOrigin.Current); 
+                    fs.Seek(chunkLength + 4, SeekOrigin.Current);
                 }
             }
-            
+
             if (!foundEnd)
             {
                 throw new InvalidDataException("Could not find the end of PNG data");
@@ -229,7 +238,7 @@ namespace PoseLib.KKS
         {
             var header = reader.ReadBytes(3);
             var headerStr = Encoding.ASCII.GetString(header);
-            
+
             if (headerStr != POSE_HEADER)
             {
                 throw new InvalidDataException($"Invalid pose header: expected '{POSE_HEADER}', got '{headerStr}'");
@@ -240,30 +249,43 @@ namespace PoseLib.KKS
         {
             var data = new Dictionary<string, ChangeAmount>();
             int count = reader.ReadInt32();
-            
+
             for (int i = 0; i < count; i++)
             {
                 string key = reader.ReadString();
                 var value = new ChangeAmount
                 {
                     pos = new Vector3(
-                        reader.ReadSingle(), 
-                        reader.ReadSingle(), 
+                        reader.ReadSingle(),
+                        reader.ReadSingle(),
                         reader.ReadSingle()),
                     rot = new Vector3(
-                        reader.ReadSingle(), 
-                        reader.ReadSingle(), 
+                        reader.ReadSingle(),
+                        reader.ReadSingle(),
                         reader.ReadSingle()),
                     scale = new Vector3(
-                        reader.ReadSingle(), 
-                        reader.ReadSingle(), 
+                        reader.ReadSingle(),
+                        reader.ReadSingle(),
                         reader.ReadSingle())
                 };
-                
+
                 data.Add(key, value);
             }
-            
+
             return data;
         }
+    }
+
+    public class PoseMetadata
+    {
+        public string FileName { get; set; }
+        public string FilePath { get; set; }
+        public string Tags { get; set; } = string.Empty;
+        public DateTime Created { get; set; }
+        public DateTime Modified { get; set; }
+        public long FileSize { get; set; }
+        public string Version { get; set; } = "1.0";
+        public string Author { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
     }
 }

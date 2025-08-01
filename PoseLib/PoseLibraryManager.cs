@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.AccessControl;
 using Studio;
-using TexFac.Universal;
 using UnityEngine;
 using BepInEx.Logging;
 
@@ -12,45 +13,92 @@ namespace PoseLib.KKS
     public class PoseLibraryManager : IDisposable
     {
         private readonly Dictionary<string, Texture2D> _loadedTextures;
-        private readonly TextureManager _textureManager;
         private readonly PoseFileHandler _fileHandler;
         private readonly ManualLogSource _logger;
+        private readonly Dictionary<string, List<PoseFileInfo>> _directoryCache;
+        private DateTime _lastCacheUpdate = DateTime.MinValue;
+        private const double CACHE_LIFETIME_SECONDS = 30; // Cache for 30 seconds
 
         public PoseLibraryManager(ManualLogSource logger)
         {
             _logger = logger;
             _loadedTextures = new Dictionary<string, Texture2D>();
-            _textureManager = new TextureManager();
             _fileHandler = new PoseFileHandler(logger);
-            EnsureDirectoriesExist();
+            _directoryCache = new Dictionary<string, List<PoseFileInfo>>();
         }
+
+        private List<PoseSearchResult> _lastResults;
+        private List<PoseFileInfo> _lastSortedFiles;
+        private bool needRevalidate = false;
 
         public List<PoseSearchResult> SearchPoses(SearchQuery query)
         {
-            var results = new List<PoseSearchResult>();
-
             try
             {
-                var customPoses = SearchCustomPoses(query);
-                results.AddRange(customPoses);
+                RefreshCacheIfNeeded();
+                var allFiles = GetAllPoseFiles();
 
-                var vanillaPoses = SearchVanillaPoses(query);
-                results.AddRange(vanillaPoses);
+                if (!QueryEqualsIgnorePage(query, _lastQuery) || needRevalidate)
+                {
+                    _logger.LogDebug("Had to revalidate");
+                    _lastFilteredFiles = FilterFiles(allFiles, query);
+                    _lastSortedFiles = SortFiles(_lastFilteredFiles, query.SortBy);
+                    _lastQuery = query;
+                    needRevalidate = false;
+                }
+
+                var pagedFiles = GetPagedResults(_lastSortedFiles, query.Page, query.ResultsPerPage);
+                return ConvertToSearchResults(pagedFiles);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error searching poses: {ex.Message}");
+                return new List<PoseSearchResult>();
             }
-
-            return results;
         }
 
-        public void SavePose(string fileName, string tags, Dictionary<string, ChangeAmount> poseData, BaseTextureElement screenshot)
+        private bool QueryEqualsIgnorePage(SearchQuery query1, SearchQuery query2)
+        {
+            if (query1 == null || query2 == null)
+                return query1 == query2;
+    
+            bool textEqual = query1.Text == query2.Text;
+            bool dirEqual = query1.Directory == query2.Directory;
+            bool sortEqual = query1.SortBy == query2.SortBy;
+    
+            return textEqual && dirEqual && sortEqual;
+        }
+
+        private List<PoseFileInfo> _lastFilteredFiles;
+        private SearchQuery _lastQuery;
+
+        public int GetTotalPoseCount(SearchQuery query)
         {
             try
             {
-                var fullPath = Path.Combine(Constants.POSES_DIRECTORY, $"{fileName}.png");
-                _fileHandler.SavePoseFile(fullPath, poseData, screenshot);
+                // RefreshCacheIfNeeded();
+
+                // var allFiles = GetAllPoseFiles();
+                // var filteredFiles = FilterFiles(allFiles, query);
+                var filteredFiles = _lastFilteredFiles;
+                return filteredFiles.Count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting pose count: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public void SavePose(string fileName, OCIChar character, Texture2D screenshot)
+        {
+            try
+            {
+                var fullPath = Path.Combine("UserData/studio/pose", $"{fileName}.png");
+
+                _fileHandler.SavePoseFile(fullPath, character, screenshot);
+
+                InvalidateCache();
             }
             catch (Exception ex)
             {
@@ -63,21 +111,7 @@ namespace PoseLib.KKS
         {
             try
             {
-                var directory = Path.GetDirectoryName(filePath);
-                var isVanillaPose = directory?.Contains("UserData") == true;
-
-                if (isVanillaPose)
-                {
-                    _fileHandler.LoadVanillaPoseFile(filePath, characters);
-                }
-                else
-                {
-                    var poseData = _fileHandler.LoadPoseFile(filePath);
-                    foreach (var character in characters)
-                    {
-                        ApplyFkDataToCharacter(character, poseData);
-                    }
-                }
+                _fileHandler.LoadVanillaPoseFile(filePath, characters);
             }
             catch (Exception ex)
             {
@@ -97,6 +131,7 @@ namespace PoseLib.KKS
                 }
 
                 File.Delete(filePath);
+                InvalidateCache();
             }
             catch (Exception ex)
             {
@@ -104,106 +139,159 @@ namespace PoseLib.KKS
                 throw;
             }
         }
-
-        public Dictionary<string, ChangeAmount> ExtractFkDataFromCharacter(OCIChar character)
+        
+        private void RefreshCacheIfNeeded()
         {
-            var bones = character.fkCtrl.listBones;
-            var dictionary = new Dictionary<string, ChangeAmount>();
-
-            foreach (var bone in bones)
+            var now = DateTime.Now;
+            if ((now - _lastCacheUpdate).TotalSeconds > CACHE_LIFETIME_SECONDS)
             {
-                dictionary.Add(bone.transform.name, bone.changeAmount);
+                RefreshCache();
+                _lastCacheUpdate = now;
             }
-
-            return dictionary;
         }
 
-        public Dictionary<string, ChangeAmount> ExtractIkDataFromCharacter(OCIChar character)
+        private void RefreshCache()
         {
-            var bones = character.ikCtrl.listIKInfo;
-            var dictionary = new Dictionary<string, ChangeAmount>();
+            _directoryCache.Clear();
 
-            foreach (var bone in bones)
+            var vanillaPosesPath = Path.Combine("UserData/studio", "pose");
+            if (Directory.Exists(vanillaPosesPath))
             {
-                dictionary.Add(bone.baseObject.name, bone.guideObject.changeAmount);
+                CacheDirectory(vanillaPosesPath);
             }
-
-            return dictionary;
         }
 
-        private List<PoseSearchResult> SearchCustomPoses(SearchQuery query)
+        private void CacheDirectory(string directoryPath)
         {
-            var results = new List<PoseSearchResult>();
-            var files = Directory.GetFiles(Constants.POSES_DIRECTORY, "*.png");
-            var filteredFiles = FilterFilesByQuery(files, query.Text);
-            var pagedFiles = GetPagedResults(filteredFiles, query.Page, query.ResultsPerPage);
-
-            foreach (var filePath in pagedFiles)
+            try
             {
-                var texture = LoadPoseTexture(filePath);
-                if (texture != null)
+                var files = Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories)
+                    .Where(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                                f.EndsWith(".dat", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                foreach (var filePath in files)
                 {
-                    results.Add(new PoseSearchResult
+                    var fileInfo = new FileInfo(filePath);
+                    var directory = Path.GetDirectoryName(filePath);
+
+                    var poseFileInfo = new PoseFileInfo
                     {
                         FilePath = filePath,
-                        PreviewTexture = texture,
-                        Info = new PoseInfo { FileName = Path.GetFileNameWithoutExtension(filePath) }
-                    });
+                        FileName = Path.GetFileNameWithoutExtension(filePath).ToLower(),
+                        Directory = directory.Replace("/", "\\"),
+                        Created = fileInfo.CreationTime,
+                        Modified = fileInfo.LastWriteTime,
+                        FileSize = fileInfo.Length
+                    };
+
+                    if (!_directoryCache.ContainsKey(directory))
+                        _directoryCache[directory] = new List<PoseFileInfo>();
+
+                    _directoryCache[directory].Add(poseFileInfo);
                 }
             }
-
-            return results;
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error caching directory {directoryPath}: {ex.Message}");
+            }
         }
 
-        private List<PoseSearchResult> SearchVanillaPoses(SearchQuery query)
+        private void InvalidateCache()
+        {
+            _lastCacheUpdate = DateTime.MinValue;
+            needRevalidate = true;
+        }
+
+        private List<PoseFileInfo> GetAllPoseFiles()
+        {
+            var allFiles = new List<PoseFileInfo>();
+
+            foreach (var directoryFiles in _directoryCache.Values)
+            {
+                allFiles.AddRange(directoryFiles);
+            }
+
+            return allFiles;
+        }
+
+        private List<PoseFileInfo> FilterFiles(List<PoseFileInfo> files, SearchQuery query)
+        {
+            var filtered = files.AsEnumerable();
+
+
+            query.Directory = query.Directory.Replace("/", "\\");
+            if (query.Directory != "ALL")
+            {
+                filtered = filtered.Where(f => f.Directory.Equals(query.Directory, StringComparison.OrdinalIgnoreCase) ||
+                                               f.Directory.StartsWith(query.Directory, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!query.Text.IsNullOrWhiteSpace())
+            {
+                var searchTerm = query.Text.ToLower();
+                filtered = filtered.Where(f => f.FileName.Contains(searchTerm));
+            }
+
+            return filtered.ToList();
+        }
+
+        private List<PoseFileInfo> SortFiles(List<PoseFileInfo> files, SortBy sortBy)
+        {
+            switch (sortBy)
+            {
+                case SortBy.Name:
+                    return files.OrderBy(f => f.FileName).ToList();
+                case SortBy.DateCreated:
+                    return files.OrderByDescending(f => f.Created).ToList();
+                case SortBy.DateModified:
+                    return files.OrderByDescending(f => f.Modified).ToList();
+                case SortBy.NameDescending:
+                    return files.OrderByDescending(f => f.FileName).ToList();
+                case SortBy.DateCreatedDescending:
+                    return files.OrderBy(f => f.Created).ToList();
+                case SortBy.DateModifiedDescending:
+                    return files.OrderBy(f => f.Modified).ToList();
+                default:
+                    return files.OrderBy(f => f.FileName).ToList();
+            }
+        }
+
+        private List<PoseFileInfo> GetPagedResults(List<PoseFileInfo> files, int page, int resultsPerPage)
+        {
+            var offset = (page - 1) * resultsPerPage;
+            return files.Skip(offset).Take(resultsPerPage).ToList();
+        }
+
+        private List<PoseSearchResult> ConvertToSearchResults(List<PoseFileInfo> files)
         {
             var results = new List<PoseSearchResult>();
-            var vanillaPosesPath = Path.Combine("UserData/studio", "pose");
 
-            if (!Directory.Exists(vanillaPosesPath))
-                return results;
-
-            var files = Directory.GetFiles(vanillaPosesPath, "*.*", SearchOption.AllDirectories)
-                .Where(f => f.EndsWith(".png") || f.EndsWith(".dat"))
-                .ToArray();
-
-            var filteredFiles = FilterFilesByQuery(files, query.Text);
-            var pagedFiles = GetPagedResults(filteredFiles, query.Page, query.ResultsPerPage);
-
-            foreach (var filePath in pagedFiles)
+            foreach (var file in files)
             {
-                var texture = LoadPoseTextureWithFallback(filePath);
+                var texture = LoadPoseTexture(file.FilePath);
+                if (texture == null)
+                {
+                    texture = CreatePlaceholderTexture(file.FileName, Path.GetExtension(file.FilePath));
+                }
+
                 results.Add(new PoseSearchResult
                 {
-                    FilePath = filePath,
+                    FilePath = file.FilePath,
                     PreviewTexture = texture,
-                    Info = new PoseInfo { FileName = Path.GetFileNameWithoutExtension(filePath) }
+                    FileCreated = file.Created,
+                    FileModified = file.Modified,
+                    Info = new PoseInfo
+                    {
+                        FileName = file.FileName,
+                        Directory = file.Directory,
+                        Created = file.Created,
+                        Modified = file.Modified
+                    }
                 });
             }
 
             return results;
-        }
-
-        private static void EnsureDirectoriesExist()
-        {
-            Directory.CreateDirectory(Constants.POSES_DIRECTORY);
-            Directory.CreateDirectory(Constants.TEXTURES_DIRECTORY);
-        }
-
-        private IEnumerable<string> FilterFilesByQuery(string[] files, string query)
-        {
-            if (query.IsEmptyOrWhitespace())
-                return files;
-
-            return files.Where(file =>
-                Path.GetFileNameWithoutExtension(file.ToLower())
-                    .Contains(query.ToLower()));
-        }
-
-        private static IEnumerable<string> GetPagedResults(IEnumerable<string> files, int page, int resultsPerPage)
-        {
-            var offset = (page - 1) * resultsPerPage;
-            return files.Skip(offset).Take(resultsPerPage);
         }
 
         private Texture2D LoadPoseTexture(string filePath)
@@ -213,61 +301,47 @@ namespace PoseLib.KKS
 
             try
             {
-                var texture = new Texture2D(1, 1);
-                texture.LoadImage(File.ReadAllBytes(filePath));
-                texture.Apply();
-                _loadedTextures[filePath] = texture;
-                return texture;
+                var extension = Path.GetExtension(filePath).ToLower();
+                if (extension == ".png")
+                {
+                    var texture = new Texture2D(1, 1);
+                    texture.LoadImage(File.ReadAllBytes(filePath));
+                    texture.Apply();
+                    _loadedTextures[filePath] = texture;
+                    return texture;
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Failed to load texture from {filePath}: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private Texture2D placeholderTexture = null;
+
+        private Texture2D CreatePlaceholderTexture(string fileName, string fileExtension)
+        {
+            try
+            {
+                if (placeholderTexture != null)
+                {
+                    return placeholderTexture;
+                }
+                var texture = new Texture2D(1, 1);
+                
+
+                texture.SetPixel(1, 1, new Color(0.3f, 0.3f, 0.3f, 1f) );
+                texture.Apply();
+
+                placeholderTexture = texture;
+                return texture;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to create placeholder texture: {ex.Message}");
                 return null;
-            }
-        }
-
-        private Texture2D LoadPoseTextureWithFallback(string filePath)
-        {
-            if (_loadedTextures.TryGetValue(filePath, out var cachedTexture))
-                return cachedTexture;
-
-            Texture2D texture = null;
-            var extension = Path.GetExtension(filePath).ToLower();
-
-            if (extension == ".png")
-            {
-                try
-                {
-                    texture = new Texture2D(1, 1);
-                    texture.LoadImage(File.ReadAllBytes(filePath));
-                    texture.Apply();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Failed to load PNG texture from {filePath}: {ex.Message}");
-                }
-            }
-
-            if (texture == null)
-            {
-                texture = _textureManager.CreatePlaceholderTexture(Path.GetFileName(filePath), extension);
-            }
-
-            _loadedTextures[filePath] = texture;
-            return texture;
-        }
-
-        private static void ApplyFkDataToCharacter(OCIChar character, Dictionary<string, ChangeAmount> poseData)
-        {
-            var bones = character.fkCtrl.listBones;
-            foreach (var bone in bones)
-            {
-                if (!poseData.TryGetValue(bone.transform.name, out var amount))
-                    continue;
-
-                bone.changeAmount.rot = amount.rot;
-                bone.changeAmount.scale = amount.scale;
-                bone.changeAmount.pos = amount.pos;
             }
         }
 
@@ -279,7 +353,7 @@ namespace PoseLib.KKS
                     UnityEngine.Object.Destroy(texture);
             }
             _loadedTextures.Clear();
-            _textureManager?.Dispose();
+            _directoryCache.Clear();
         }
     }
 }

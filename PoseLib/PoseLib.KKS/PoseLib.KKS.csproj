@@ -107,16 +107,6 @@
     <ItemGroup>
       <Analyzer Include="..\..\packages\Microsoft.Unity.Analyzers.1.18.0\analyzers\dotnet\cs\Microsoft.Unity.Analyzers.dll" />
     </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\..\SmartRect\SmartRect.Universal\SmartRect.Universal.csproj">
-        <Project>{c91df2a5-b779-4d7a-9639-82ec78ddce23}</Project>
-        <Name>SmartRect.Universal</Name>
-      </ProjectReference>
-      <ProjectReference Include="..\..\TexFac.Universal\TexFac.Universal.csproj">
-        <Project>{fcb22027-cbb9-423f-8a25-917a25a1ca49}</Project>
-        <Name>TexFac.Universal</Name>
-      </ProjectReference>
-    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
     <Import Project="..\..\packages\IllusionLibs.BepInEx.Harmony.2.9.0\build\IllusionLibs.BepInEx.Harmony.targets" Condition="Exists('..\..\packages\IllusionLibs.BepInEx.Harmony.2.9.0\build\IllusionLibs.BepInEx.Harmony.targets')" />
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
