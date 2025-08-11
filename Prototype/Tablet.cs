@@ -1,0 +1,410 @@
+using System;
+using System.Runtime.InteropServices;
+using System.Threading;
+
+/// <summary>
+/// Represents a tablet input device that utilizes WinTabAPI for digitizer integration.
+/// Provides functionality to interact with and manage the tablet state, including
+/// pressure sensitivity and packet data processing.
+/// </summary>
+public class Tablet : IDisposable
+{
+    #region Wintab P/Invoke Declarations
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern bool WTInfoA(uint wCategory, uint nIndex, IntPtr lpOutput);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern uint WTInfoA(uint wCategory, uint nIndex, byte[] lpOutput);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr WTOpenA(IntPtr hWnd, ref LogContext lpLogCtx, bool fEnable);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern bool WTClose(IntPtr hCtx);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern int WTPacketsGet(IntPtr hCtx, int cMaxPkts, IntPtr lpPkts);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern bool WTPacket(IntPtr hCtx, uint wSerial, IntPtr lpPkt);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern int WTQueueSizeGet(IntPtr hCtx);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern bool WTQueueSizeSet(IntPtr hCtx, int nPkts);
+
+    [DllImport("Wintab32.dll", CharSet = CharSet.Auto)]
+    private static extern bool WTGetA(IntPtr hCtx, ref LogContext lpLogCtx);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetActiveWindow();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetDesktopWindow();
+
+    #region Constants
+
+    private const uint WTI_INTERFACE = 1;
+    private const uint IFC_SPECVERSION = 1;
+    private const uint WTI_DEFCONTEXT = 3;
+    private const uint WTI_DEFSYSCTX = 4;
+    private const uint WTI_DEVICES = 100;
+    private const uint DVC_NPRESSURE = 15;
+    private const uint WTI_DDCTXS = 400;
+
+    private const uint CXO_SYSTEM = 0x0001;
+    private const uint CXO_PEN = 0x0002;
+    private const uint CXO_MESSAGES = 0x0004;
+
+
+    private const uint PK_CONTEXT = 0x0001;
+    private const uint PK_STATUS = 0x0002;
+    private const uint PK_TIME = 0x0004;
+    private const uint PK_CHANGED = 0x0008;
+    private const uint PK_SERIAL_NUMBER = 0x0010;
+    private const uint PK_CURSOR = 0x0020;
+    private const uint PK_BUTTONS = 0x0040;
+    private const uint PK_X = 0x0080;
+    private const uint PK_Y = 0x0100;
+    private const uint PK_Z = 0x0200;
+    private const uint PK_NORMAL_PRESSURE = 0x0400;
+    private const uint PK_TANGENT_PRESSURE = 0x0800;
+    private const uint PK_ORIENTATION = 0x1000;
+
+    #endregion
+
+    #region Structs
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Axis
+    {
+        public int axMin;
+        public int axMax;
+        public uint axUnits;
+        public int axResolution;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    private struct LogContext
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 40)]
+        public string lcName;
+        public uint lcOptions;
+        public uint lcStatus;
+        public uint lcLocks;
+        public uint lcMsgBase;
+        public uint lcDevice;
+        public uint lcPktRate;
+        public uint lcPktData;
+        public uint lcPktMode;
+        public uint lcMoveMask;
+        public int lcBtnDnMask;
+        public int lcBtnUpMask;
+        public int lcInOrgX;
+        public int lcInOrgY;
+        public int lcInOrgZ;
+        public int lcInExtX;
+        public int lcInExtY;
+        public int lcInExtZ;
+        public int lcOutOrgX;
+        public int lcOutOrgY;
+        public int lcOutOrgZ;
+        public int lcOutExtX;
+        public int lcOutExtY;
+        public int lcOutExtZ;
+        public int lcSensX;
+        public int lcSensY;
+        public int lcSensZ;
+        public bool lcSysMode;
+        public int lcSysOrgX;
+        public int lcSysOrgY;
+        public int lcSysExtX;
+        public int lcSysExtY;
+        public int lcSysSensX;
+        public int lcSysSensY;
+    }
+
+    // This matches the default PACKETDATA from pktdef.h
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct Packet
+    {
+        public uint pkButtons;          // PK_BUTTONS
+        public int pkX;                 // PK_X
+        public int pkY;                 // PK_Y
+        public uint pkNormalPressure;   // PK_NORMAL_PRESSURE
+    }
+
+    #endregion
+
+    #endregion
+
+    private IntPtr _context = IntPtr.Zero;
+    private bool _isInitialized;
+    private float _currentPressure;
+    private uint _maxPressure = 65535;
+    private readonly object _lockObject = new object();
+    private const int MAX_PACKETS = 128;
+
+    public float CurrentPressure
+    {
+        get
+        {
+            lock (_lockObject)
+            {
+                return _currentPressure;
+            }
+        }
+    }
+
+    public uint RawPressure { get; private set; }
+    public uint MaxPressure => _maxPressure;
+    
+    public Packet LastPacket;
+
+    public bool IsInitialized => _isInitialized;
+
+    /// <summary>
+    /// Initialize with diagnostic output to understand what's happening
+    /// </summary>
+    public bool Initialize()
+    {
+        try
+        {
+            if (!IsWintabAvailable())
+            {
+                return false;
+            }
+
+            var logContext = GetDefaultDigitizingContext();
+            if (!logContext.HasValue)
+            {
+
+                return false;
+            }
+
+            var context = logContext.Value;
+
+            context.lcName = "WinTabReader";
+
+            context.lcPktData = PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE;
+            
+            context.lcOptions = CXO_MESSAGES | CXO_SYSTEM;
+            context.lcPktMode = 0;
+            context.lcMoveMask = PK_X | PK_Y | PK_NORMAL_PRESSURE;
+            context.lcPktRate = 100;
+
+            context.lcOutOrgX = 0;
+            context.lcOutOrgY = 0;
+            context.lcOutExtX = 10000;
+            context.lcOutExtY = 10000;
+            
+            IntPtr hwnd = GetActiveWindow();
+            if (hwnd == IntPtr.Zero)
+                hwnd = GetForegroundWindow();
+            
+            _context = WTOpenA(hwnd, ref context, true);
+            if (_context == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            LogContext actualContext = new LogContext();
+            WTGetA(_context, ref actualContext);
+            WTQueueSizeSet(_context, MAX_PACKETS);
+
+            _maxPressure = GetMaxPressure();
+            if (_maxPressure == 0)
+                _maxPressure = 65535;
+
+            _isInitialized = true;
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+    }
+
+    public bool Query(out Packet data)
+    {
+        data = default;
+        if (!_isInitialized)
+            return false;
+        
+        IntPtr packetPtr = IntPtr.Zero;
+        try
+        {
+            int packetSize = Marshal.SizeOf(typeof(Packet));
+            int maxPackets = 32;
+            packetPtr = Marshal.AllocHGlobal(packetSize * maxPackets);
+            
+            int numPackets = WTPacketsGet(_context, maxPackets, packetPtr);
+
+            if (numPackets > 0)
+            {
+                IntPtr lastPacketPtr = new IntPtr(packetPtr.ToInt64() + (numPackets - 1) * packetSize);
+                var packet = (Packet)Marshal.PtrToStructure(lastPacketPtr, typeof(Packet));
+
+                data = packet;
+                LastPacket = packet;
+                RawPressure = packet.pkNormalPressure;
+                return true;
+            }
+        }
+        catch (Exception e)
+        {
+            // Ignore
+        }
+        finally
+        {
+            if (packetPtr != IntPtr.Zero)
+                Marshal.FreeHGlobal(packetPtr);
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Get pressure using minimal packet structure
+    /// </summary>
+    public float GetPressure()
+    {
+        if (!_isInitialized)
+            return 0f;
+
+        Packet packet;
+        if (Query(out packet))
+        {
+            var normalizedPressure = _maxPressure > 0 ? Math.Min(1.0f, (float)packet.pkNormalPressure / _maxPressure) : 0f;
+            
+            lock (_lockObject)
+            {
+                _currentPressure = normalizedPressure;
+            }
+
+            return normalizedPressure;
+        }
+
+        return 0f;
+    }
+
+    /// <summary>
+    /// Check if Wintab is available
+    /// </summary>
+    private bool IsWintabAvailable()
+    {
+        try
+        {
+            return WTInfoA(0, 0, IntPtr.Zero);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Get the default digitizing context
+    /// </summary>
+    private LogContext? GetDefaultDigitizingContext()
+    {
+        try
+        {
+            var buffer = new byte[Marshal.SizeOf(typeof(LogContext))];
+
+            uint result = WTInfoA(WTI_DEFCONTEXT, 0, buffer);
+
+            if (result == 0)
+            {
+                result = WTInfoA(WTI_DEFSYSCTX, 0, buffer);
+            }
+
+            if (result > 0)
+            {
+                IntPtr ptr = Marshal.AllocHGlobal(buffer.Length);
+                try
+                {
+                    Marshal.Copy(buffer, 0, ptr, buffer.Length);
+                    return (LogContext)Marshal.PtrToStructure(ptr, typeof(LogContext));
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(ptr);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Ignore
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Get the maximum pressure value
+    /// </summary>
+    private uint GetMaxPressure()
+    {
+        try
+        {
+            var axisBuffer = new byte[Marshal.SizeOf(typeof(Axis))];
+            uint result = WTInfoA(WTI_DEVICES, DVC_NPRESSURE, axisBuffer);
+
+            if (result > 0)
+            {
+                IntPtr ptr = Marshal.AllocHGlobal(axisBuffer.Length);
+                try
+                {
+                    Marshal.Copy(axisBuffer, 0, ptr, axisBuffer.Length);
+                    var axis = (Axis)Marshal.PtrToStructure(ptr, typeof(Axis));
+                    if (axis.axMax > 0)
+                    {
+
+                        return (uint)axis.axMax;
+                    }
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(ptr);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Ignore
+        }
+
+        return ushort.MaxValue;
+    }
+
+    public void Dispose()
+    {
+        if (_context != IntPtr.Zero)
+        {
+            try
+            {
+                WTClose(_context);
+            }
+            catch
+            {
+                // Ignore
+            }
+
+            _context = IntPtr.Zero;
+        }
+
+        _isInitialized = false;
+        GC.SuppressFinalize(this);
+    }
+
+    ~Tablet()
+    {
+        Dispose();
+    }
+}
