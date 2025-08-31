@@ -9,24 +9,29 @@
 		<Import_RootNamespace>Prototype</Import_RootNamespace>
 	</PropertyGroup>
 	<ItemGroup>    
+    <Compile Include="$(MSBuildThisFileDirectory)Audio.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Bepin.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Curve.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConfigFile.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DataBinder.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IMGUIElement.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IL2CSharp.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Input.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Performance\VirtualScrollView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Point.cs" />
 		<Compile Include="$(MSBuildThisFileDirectory)String.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StyleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Tablet.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Texture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Charts.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\ColorPicker.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Dropdown.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)UIElements\FileBrowser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIElements\Gradient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIElements\IMGUIElement.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\IMGUIWindow.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Layout\FlexLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Layout\GridLayout.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIElements\Layout\SmartRect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Layout\StackLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\MultiSelectDropdown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Slider.cs" />

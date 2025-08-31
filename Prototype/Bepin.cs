@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
-using StrayTech;
 
 namespace Prototype
 {
@@ -29,7 +28,7 @@ namespace Prototype
 
                 if (declaringType != null)
                 {
-                    var pluginAttribute = declaringType.GetCustomAttribute<BepInPlugin>();
+                    var pluginAttribute = Attribute.GetCustomAttribute(declaringType, typeof(BepInPlugin)) as BepInPlugin;
                     if (pluginAttribute != null && typeof(BaseUnityPlugin).IsAssignableFrom(declaringType))
                     {
                         return FindPluginInstance(declaringType);
@@ -37,8 +36,9 @@ namespace Prototype
 
                     var assembly = declaringType.Assembly;
                     var pluginType = assembly.GetTypes()
-                        .FirstOrDefault(t => t.GetCustomAttribute<BepInPlugin>() != null &&
-                                             typeof(BaseUnityPlugin).IsAssignableFrom(t));
+                        .FirstOrDefault(t => Attribute.GetCustomAttribute(t, typeof(BepInPlugin)) != null &&
+                                             typeof(BaseUnityPlugin).IsAssignableFrom(t)
+                                             );
 
                     if (pluginType != null)
                     {
@@ -70,7 +70,8 @@ namespace Prototype
 
                 if (declaringType != null)
                 {
-                    var pluginAttribute = declaringType.GetCustomAttribute<BepInPlugin>();
+                    // var pluginAttribute = declaringType.GetCustomAttribute<BepInPlugin>();
+                    var pluginAttribute = Attribute.GetCustomAttribute(declaringType, typeof(BepInPlugin)) as BepInPlugin;
                     if (pluginAttribute != null)
                     {
                         return pluginAttribute.GUID;
@@ -78,7 +79,7 @@ namespace Prototype
 
                     var assembly = declaringType.Assembly;
                     var assemblyPluginAttr = assembly.GetTypes()
-                        .Select(t => t.GetCustomAttribute<BepInPlugin>())
+                        .Select(t => Attribute.GetCustomAttribute(t, typeof(BepInPlugin)) as BepInPlugin)
                         .FirstOrDefault(attr => attr != null);
 
                     if (assemblyPluginAttr != null)
@@ -112,7 +113,7 @@ namespace Prototype
 
                 if (declaringType != null)
                 {
-                    var pluginAttribute = declaringType.GetCustomAttribute<BepInPlugin>();
+                    var pluginAttribute = Attribute.GetCustomAttribute(declaringType, typeof(BepInPlugin)) as BepInPlugin;
                     if (pluginAttribute != null)
                     {
                         return new PluginInfo
@@ -127,11 +128,11 @@ namespace Prototype
 
                     var assembly = declaringType.Assembly;
                     var pluginType = assembly.GetTypes()
-                        .FirstOrDefault(t => t.GetCustomAttribute<BepInPlugin>() != null);
+                        .FirstOrDefault(t => Attribute.GetCustomAttribute(t, typeof(BepInPlugin)) != null);
 
                     if (pluginType != null)
                     {
-                        var attr = pluginType.GetCustomAttribute<BepInPlugin>();
+                        var attr = Attribute.GetCustomAttribute(pluginType, typeof(BepInPlugin)) as BepInPlugin;
                         return new PluginInfo
                         {
                             GUID = attr.GUID,
@@ -168,11 +169,11 @@ namespace Prototype
                 if (assembly != null && !IsSystemAssembly(assembly))
                 {
                     var pluginType = assembly.GetTypes()
-                        .FirstOrDefault(t => t.GetCustomAttribute<BepInPlugin>() != null);
+                        .FirstOrDefault(t => Attribute.GetCustomAttribute(t, typeof(BepInPlugin)) != null);
 
                     if (pluginType != null)
                     {
-                        var attr = pluginType.GetCustomAttribute<BepInPlugin>();
+                        var attr = Attribute.GetCustomAttribute(pluginType, typeof(BepInPlugin)) as BepInPlugin;
                         return attr.GUID;
                     }
                 }
@@ -187,7 +188,7 @@ namespace Prototype
             if (chainloader != null)
             {
                 var pluginInfos = BepInEx.Bootstrap.Chainloader.PluginInfos;
-                var pluginAttribute = pluginType.GetCustomAttribute<BepInPlugin>();
+                var pluginAttribute = Attribute.GetCustomAttribute(pluginType, typeof(BepInPlugin)) as BepInPlugin;
 
                 if (pluginAttribute != null && pluginInfos.TryGetValue(pluginAttribute.GUID, out var pluginInfo))
                 {

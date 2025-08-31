@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Prototype
+namespace Prototype.UIElements
 {
     /// <summary>
     /// Represents an abstract base class for immediate mode GUI (IMGUI) elements.

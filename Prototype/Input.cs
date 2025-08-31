@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace Prototype
             {
                 mainKey
             }).Concat<KeyCode>(bind.Modifiers).ToArray<KeyCode>());
+
             return mainKey != KeyCode.None && UnityInput.Current.GetKeyDown(mainKey) && Mods(source.ToArray<KeyCode>(), mainKey);
         }
         

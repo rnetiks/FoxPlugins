@@ -29,7 +29,7 @@ namespace Prototype.UIElements
         public float Value
         {
             get => _value;
-            set => SetValue(value);
+            set => SetValue(value, AllowUnclamped);
         }
 
         public float MinValue
