@@ -11,6 +11,8 @@ namespace PoseLib.KKS
 {
     public class UIManager : IDisposable
     {
+        #region Properties
+
         private readonly PoseLibraryManager _poseManager;
         public static ManualLogSource _logger;
         private readonly ScreenshotManager _screenshotManager;
@@ -22,10 +24,21 @@ namespace PoseLib.KKS
 
         private readonly UIState _uiState;
         private readonly SaveWindowState _saveState;
-        private readonly UITheme _theme;
+        public static UITheme _theme;
 
         private Dictionary<Color, Texture2D> _colorCache = new Dictionary<Color, Texture2D>();
         private Vector2 _scrollPosition = Vector2.zero;
+        private bool isDirectoryDropdownOpen;
+        private Vector2 directoryScrollPosition;
+        private bool isSortingDropdownOpen;
+        private List<string> _cachedDirectories;
+        private string[] _cachedDisplayNames;
+        private DateTime _lastDirectoryRefresh = DateTime.MinValue;
+        private int _cachedSelectedIndex = 0;
+        private string _lastSelectedDirectory = "";
+        private Modal _modal;
+
+        #endregion
 
         public UIManager(PoseLibraryManager poseManager, ManualLogSource logger)
         {
@@ -56,6 +69,12 @@ namespace PoseLib.KKS
             if (!_theme.IsInitialized)
                 _theme.InitializeStyles();
 
+            if (_modal != null)
+            {
+                _modal.OnGUI();
+                return;
+            }
+
             if (_isSaveWindowOpen)
             {
                 RenderSaveWindow();
@@ -74,6 +93,8 @@ namespace PoseLib.KKS
 
             _saveWindowRect = new Rect((Screen.width - 500) / 2, (Screen.height - 400) / 2, 500, 400);
         }
+
+        #region Main Window
 
         private void RenderMainWindow()
         {
@@ -126,7 +147,14 @@ namespace PoseLib.KKS
             {
                 var saveButtonRect = new Rect(currentX, currentY, 100, 25);
                 if (GUI.Button(saveButtonRect, "Save Pose", _theme.ButtonStyle))
-                    OpenSaveWindow(selectedCharacters[0]);
+                {
+                    if (Event.current.shift)
+                    {
+                        SavePoseImmediate(selectedCharacters[0]);
+                    }
+                    else
+                        OpenSaveWindow(selectedCharacters[0]);
+                }
                 currentX += 110;
             }
 
@@ -160,17 +188,6 @@ namespace PoseLib.KKS
                 GUI.Label(messageRect, "Select a character to save poses", _theme.WarningStyle);
             }
         }
-
-        private bool isDirectoryDropdownOpen;
-
-        private Vector2 directoryScrollPosition;
-        private bool isSortingDropdownOpen;
-
-        private List<string> _cachedDirectories;
-        private string[] _cachedDisplayNames;
-        private DateTime _lastDirectoryRefresh = DateTime.MinValue;
-        private int _cachedSelectedIndex = 0;
-        private string _lastSelectedDirectory = "";
 
         private void DrawDirectoryDropdown(Rect rect)
         {
@@ -397,10 +414,16 @@ namespace PoseLib.KKS
             var deleteRect = new Rect(itemRect.x + buttonWidth + 10, buttonY, buttonWidth, buttonHeight);
             if (GUI.Button(deleteRect, "Delete", _theme.DeleteButtonStyle))
             {
-                if (GUI.changed)
+                if (Event.current.shift)
                 {
                     _poseManager.DeletePose(pose.FilePath);
+                    return;
                 }
+                _modal = new YNModal(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 100f, 400f, 200f), "Are you sure you want to delete this file?", "Confirm", () =>
+                {
+                    _poseManager.DeletePose(pose.FilePath);
+                    _modal = null;
+                }, () => _modal = null);
             }
         }
 
@@ -428,6 +451,8 @@ namespace PoseLib.KKS
 
             GUI.enabled = true;
         }
+
+        #endregion
 
         #region Save Window
 
@@ -526,8 +551,6 @@ namespace PoseLib.KKS
             }
         }
 
-        #endregion
-
         private void OpenSaveWindow(OCIChar character)
         {
             _saveState.Character = character;
@@ -551,8 +574,27 @@ namespace PoseLib.KKS
         {
             try
             {
-                _poseManager.SavePose(_saveState.FileName, _saveState.Character, _saveState.Screenshot);
-                CloseSaveWindow();
+                var template = new Template(_saveState.FileName);
+                template.Compile();
+                var fullPath = Path.Combine("UserData/studio/pose", $"{template.Value}.png");
+                if (File.Exists(fullPath))
+                {
+                    _modal = new YNModal(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 150f, 400f, 300f),
+                        "File already exists, do you want to overwrite it?", "Confirm", () =>
+                        {
+                            _poseManager.SavePose(template.Value, _saveState.Character, _saveState.Screenshot);
+                            CloseSaveWindow();
+                            _modal = null;
+                        }, () =>
+                        {
+                            _modal = null;
+                        });
+                }
+                else
+                {
+                    _poseManager.SavePose(template.Value, _saveState.Character, _saveState.Screenshot);
+                    CloseSaveWindow();
+                }
             }
             catch (Exception ex)
             {
@@ -560,11 +602,26 @@ namespace PoseLib.KKS
             }
         }
 
+        private void SavePoseImmediate(OCIChar character)
+        {
+            _saveState.Character = character;
+            _saveState.Screenshot = _screenshotManager.TakeScreenshot(
+                _saveState.ScreenshotSize,
+                _saveState.ScreenshotSize);
+            var template = new Template(Entry._defaultName.Value);
+            template.Compile();
+            UIManager._logger.LogDebug($"Immediate save: {template.Value}");
+            _poseManager.SavePose(template.Value, _saveState.Character, _saveState.Screenshot);
+            _uiState.SearchQuery = Path.GetFileName(template.Value);
+        }
+
         private void CloseSaveWindow()
         {
             _saveState.Reset();
             _isSaveWindowOpen = false;
         }
+
+        #endregion
 
         private void UpdateSearchCooldown()
         {
@@ -577,7 +634,7 @@ namespace PoseLib.KKS
                 _uiState.SearchCooldownTimer = Constants.SEARCH_COOLDOWN_DURATION;
             }
         }
-        
+
         public void Dispose()
         {
             foreach (var texture in _colorCache.Values)

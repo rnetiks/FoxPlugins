@@ -6,7 +6,7 @@ namespace PoseLib.KKS
     {
         public const string GUID = "org.fox.poselib";
         public const string NAME = "PoseLibrary";
-        public const string VERSION = "1.2.1";
+        public const string VERSION = "1.3.0";
         
         public const string TEXTURES_DIRECTORY = "Fox-Textures";
         public const string BACKGROUND_IMAGE_PATH = "./wb.png";

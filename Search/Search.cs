@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Search.KKS
+namespace Search
 {
 	[BepInPlugin(GUID, "Search", "1.0.0")]
 	public partial class Search : BaseUnityPlugin
 	{
-		const string GUID = "org.fox.search";
+		public const string GUID = "org.fox.search";
 		//Todo Not thread safe
 		private Dictionary<object, ISearchCommand> commands;
 		private ConfigEntry<KeyboardShortcut> toggleUI;

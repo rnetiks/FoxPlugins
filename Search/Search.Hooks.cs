@@ -1,7 +1,7 @@
 using BepInEx.Configuration;
 using HarmonyLib;
 
-namespace Search.KKS
+namespace Search
 {
 	public partial class Search
 	{

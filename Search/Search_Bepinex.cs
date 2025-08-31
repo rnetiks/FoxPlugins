@@ -5,7 +5,7 @@ using HarmonyLib;
 using System.Linq;
 using UnityEngine.Assertions;
 
-namespace Search.KKS
+namespace Search
 {
 	public partial class Search
 	{

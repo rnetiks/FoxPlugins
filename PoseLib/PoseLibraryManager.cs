@@ -17,7 +17,7 @@ namespace PoseLib.KKS
         private readonly ManualLogSource _logger;
         private readonly Dictionary<string, List<PoseFileInfo>> _directoryCache;
         private DateTime _lastCacheUpdate = DateTime.MinValue;
-        private const double CACHE_LIFETIME_SECONDS = 30; // Cache for 30 seconds
+        private const double CACHE_LIFETIME_SECONDS = 30;
 
         public PoseLibraryManager(ManualLogSource logger)
         {
@@ -95,14 +95,18 @@ namespace PoseLib.KKS
             try
             {
                 var fullPath = Path.Combine("UserData/studio/pose", $"{fileName}.png");
-
+                
+                string directoryName = Path.GetDirectoryName(fullPath);
+                UIManager._logger.LogDebug(directoryName);
+                if (!Directory.Exists(directoryName))
+                    Directory.CreateDirectory(directoryName);
                 _fileHandler.SavePoseFile(fullPath, character, screenshot);
 
                 InvalidateCache();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error saving pose: {ex.Message}");
+                _logger.LogError($"Error saving pose: {ex.StackTrace}");
                 throw;
             }
         }

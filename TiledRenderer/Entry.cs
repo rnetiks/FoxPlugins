@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
-using HarmonyLib;
+using Prototype.UIElements;
 using UnityEngine;
 
 namespace TiledRenderer
@@ -26,7 +26,6 @@ namespace TiledRenderer
         public string outputPath = "TiledRender";
         private bool _uiOpen;
         public bool saveIndividualTiles = true;
-        public bool renderAsync = false;
         public float delayBetweenTiles = 0.1f;
         private float progress = 0;
 
@@ -41,9 +40,12 @@ namespace TiledRenderer
         private void Awake()
         {
             _openUIKey = Config.Bind("General", "Open UI", new KeyboardShortcut(KeyCode.None));
-            _render = Config.Bind("General", "Render", new KeyboardShortcut(KeyCode.None));
         }
 
+        private Slider tilesXSlider = new Slider(1, 1, 20, "Tiles X", $"F0"){AllowUnclamped = true};
+        private Slider tilesYSlider = new Slider(1, 1, 20, "Tiles Y", $"F0"){AllowUnclamped = true};
+        private Slider tileWidthSlider = new Slider(1920, 512, 4096, "Tile Width", $"F0"){AllowUnclamped = true};
+        private Slider tileHeightSlider = new Slider(1080, 512, 4096, "Tile Height", $"F0"){AllowUnclamped = true};
         private void OnGUI()
         {
             if (!_uiOpen) return;
@@ -52,20 +54,37 @@ namespace TiledRenderer
             GUILayout.BeginArea(screenRect);
             GUILayout.BeginVertical("box");
             GUILayout.Label("Tiled Renderer Configuration");
-            GUILayout.Label($"Tiles X: {tilesX}");
-            tilesX = (int)GUILayout.HorizontalSlider(tilesX, 1, 20);
-            GUILayout.Label($"Tiles Y: {tilesY}");
-            tilesY = (int)GUILayout.HorizontalSlider(tilesY, 1, 20);
-            GUILayout.Label($"Tile Width: {tileWidth}");
-            tileWidth = (int)GUILayout.HorizontalSlider(tileWidth, 512, 4096);
-            GUILayout.Label($"Tile Height: {tileHeight}");
-            tileHeight = (int)GUILayout.HorizontalSlider(tileHeight, 512, 4096);
+            tilesX = (int)tilesXSlider.Draw();
             GUILayout.Space(10);
-            saveIndividualTiles = GUILayout.Toggle(saveIndividualTiles, "Save Individual Tiles");
+            tilesY = (int)tilesYSlider.Draw();
             GUILayout.Space(10);
-            long finalMemory = (long)(tilesX * tileWidth) * (tilesY * tileHeight) * 3;
+            tileWidth = (int)tileWidthSlider.Draw();
+            GUILayout.Space(10);
+            tileHeight = (int)tileHeightSlider.Draw();
+            GUILayout.Space(10);
+            saveIndividualTiles = GUILayout.Toggle(saveIndividualTiles, saveIndividualTiles ? "Save tiles" : "Dry run");
+            GUILayout.Space(10);
+            if (GUILayout.Button("Detect Screen resolution"))
+            {
+                tileWidthSlider.Value = Screen.width;
+                tileHeightSlider.Value = Screen.height;
+                if (tilesXSlider.Value > tilesYSlider.Value)
+                {
+                    tilesYSlider.Value = tilesXSlider.Value;
+                }
+                else
+                {
+                    tilesXSlider.Value = tilesYSlider.Value;
+                }
+            }
+            if (GUILayout.Button("Detect Aspect Ratio"))
+            {
+                float aspect = Screen.width / (float)Screen.height;
+                tileHeightSlider.Value = (int)Mathf.Ceil(tileWidthSlider.Value / aspect);
+            }
+            long finalMemory = (long)tileWidth * tileHeight * 12;
             GUILayout.Label($"Final Size: {tilesX * tileWidth}x{tilesY * tileHeight}");
-            GUILayout.Label($"Est. File Size: {finalMemory / 1024 / 1024} MB");
+            GUILayout.Label($"Est. Tile Memory: {(finalMemory / 1024f / 1024):F1} MB");
             GUILayout.Space(10);
             if (GUILayout.Button("Start Render"))
             {
@@ -89,8 +108,6 @@ namespace TiledRenderer
         {
             if (_openUIKey.Value.IsDown())
                 _uiOpen = !_uiOpen;
-            if (_render.Value.IsDown())
-                StartTileRendering();
         }
 
         public void StartTileRendering()
@@ -125,10 +142,6 @@ namespace TiledRenderer
                 for (var x = 0; x < tilesX; x++)
                 {
                     yield return StartCoroutine(RenderTile(x, y));
-                    if (renderAsync && delayBetweenTiles > 0)
-                    {
-                        yield return new WaitForSeconds(delayBetweenTiles);
-                    }
                 }
                 float progress = (float)(y + 1) / tilesY;
                 this.progress = progress;
@@ -139,7 +152,7 @@ namespace TiledRenderer
             if (saveIndividualTiles)
             {
                 Logger.LogDebug($"Saved to: {currentRenderFolder}");
-                string join = string.Join(" ", Directory.GetFiles(currentRenderFolder).Select(e => Path.GetFileName(e)));
+                string join = string.Join(" ", Directory.GetFiles(currentRenderFolder).Select(e => Path.GetFileName(e)).ToArray());
                 try
                 {
                     Process.Start(currentRenderFolder);
@@ -157,7 +170,7 @@ namespace TiledRenderer
                     p.BeginOutputReadLine();
                     p.OutputDataReceived += (sender, args) => Logger.LogDebug(args.Data);
                     p.ErrorDataReceived += (sender, args) => Logger.LogError(args.Data);
-                    p.WaitForExit();
+                    p.WaitForExit(); // Inefficient, but it works
                 }
                 catch (Exception e)
                 {
@@ -184,13 +197,10 @@ namespace TiledRenderer
             top = top * 2f - 1f;
             Matrix4x4 tileProjection = CreateTileProjectionMatrix(left, right, bottom, top);
             renderCamera.projectionMatrix = tileProjection;
-
-            if (renderAsync)
-                yield return new WaitForEndOfFrame();
-
+            
+            yield return null;
             RenderTexture targetTexture = renderCamera.targetTexture;
             RenderTexture active = RenderTexture.active;
-            RenderTexture temporary = RenderTexture.GetTemporary(tileWidth, tileHeight, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Default, 1);
             Texture2D tileTexture = new Texture2D(tileWidth, tileHeight, textureFormat, false);
             var rect = renderCamera.rect;
             
@@ -243,6 +253,10 @@ namespace TiledRenderer
             }
             return matrix;
         }
+        
+        private static GUIStyle _style;
+
+        private static GUIStyle Style => _style ?? (_style = new GUIStyle(GUI.skin.box));
 
         /// <summary>
         /// Fallback Frustum support for older unity versions
@@ -258,6 +272,7 @@ namespace TiledRenderer
             float c = -(far + near) / (far - near);
             float d = -(2.0f * far * near) / (far - near);
 
+            
             m[0, 0] = x;
             m[0, 1] = 0;
             m[0, 2] = a;
@@ -281,6 +296,7 @@ namespace TiledRenderer
             return m;
         }
         
+        private static MethodInfo PNGEncoder, JPGEncoder;
         private static MethodInfo _modernPNG, _modernJPG, _legacyPNG, _legacyJPG;
         private static bool _initializedTextureAbstractions;
         
@@ -290,7 +306,7 @@ namespace TiledRenderer
             {
                 var imageConversion = Type.GetType("UnityEngine.ImageConversion") ?? 
                                       Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetType("UnityEngine.ImageConversion") != null)?.GetType("UnityEngine.ImageConversion");
-            
+
                 if (imageConversion != null)
                 {
                     _modernPNG = imageConversion.GetMethod("EncodeToPNG", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Texture2D) }, null);
@@ -331,8 +347,6 @@ namespace TiledRenderer
 
         private void SaveIndividualTile(Texture2D tileTexture, int tileX, int tileY)
         {
-            Logger.LogDebug($"{_modernPNG}, {_modernJPG}, {_legacyPNG}, {_legacyJPG}");
-            
             var maxTiles = tilesX * tilesY;
             string tileFileName = $"{(tilesY - tileY + 1):D3}_{(tileX + 1):D3}.png";
             string tilePath = Path.Combine(currentRenderFolder, tileFileName);

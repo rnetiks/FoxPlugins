@@ -16,8 +16,6 @@ namespace DBToggler
     {
         private void Update()
         {
-            bool enableRequested = Init.EnableDynamicBonesKey.Value.IsUp();
-            bool disableRequested = Init.DisableDynamicBonesKey.Value.IsUp();
             bool ExperimentalToggle = Init.ExperimanlBonesKey.Value.IsUp();
 
             if (ExperimentalToggle)
@@ -27,6 +25,8 @@ namespace DBToggler
                 return;
             }
 
+            bool enableRequested = Init.EnableDynamicBonesKey.Value.IsUp();
+            bool disableRequested = Init.DisableDynamicBonesKey.Value.IsUp();
             if (!enableRequested && !disableRequested)
                 return;
 

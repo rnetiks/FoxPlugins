@@ -1,7 +1,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Search.KKS
+namespace Search
 {
 	public partial class Search
 	{

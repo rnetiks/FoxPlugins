@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.Assertions;
 
-namespace Search.KKS
+namespace Search
 {
 	public interface ISearchCommand : IEquatable<ISearchCommand>
 	{
