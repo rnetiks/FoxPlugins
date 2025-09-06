@@ -19,6 +19,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Input.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Performance\VirtualScrollView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Point.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Progress.cs" />
 		<Compile Include="$(MSBuildThisFileDirectory)String.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)StyleManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Tablet.cs" />
@@ -34,6 +35,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Layout\SmartRect.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Layout\StackLayout.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\MultiSelectDropdown.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UIElements\Notification.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\Slider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UIElements\TreeView.cs" />
   </ItemGroup>

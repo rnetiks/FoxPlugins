@@ -18,7 +18,6 @@ namespace Prototype.UIElements
         private ColorWheelShape _shape = ColorWheelShape.Circle;
         private int _textureSize = 128;
         public float Quality = 1f;
-        private bool _isDirty = true;
         private GUIStyle _filterButton;
         private GUIStyle _filterButtonSelected;
 
@@ -95,11 +94,7 @@ namespace Prototype.UIElements
             get => _shape;
             set
             {
-                if (_shape != value)
-                {
-                    _shape = value;
-                    _isDirty = true;
-                }
+                _shape = value;
             }
         }
 
@@ -118,24 +113,26 @@ namespace Prototype.UIElements
         {
             _selectedColor = color;
             Color.RGBToHSV(color, out _hue, out _saturation, out _brightness);
-            _isDirty = true;
             OnColorChanged?.Invoke(_selectedColor);
         }
 
         public Color Draw(Rect rect)
         {
-            if (_isDirty)
+            if (_colorWheelTexture == null)
             {
                 GenerateColorWheel();
-                _isDirty = false;
             }
 
             float sliderWidth = 20f;
             float spacing = 5f;
             Rect wheelRect = new Rect(rect.x, rect.y, rect.width - sliderWidth - spacing, rect.height);
+            // Rect wheelRect = new Rect(rect.x, rect.y, rect.height, rect.height);
             Rect sliderRect = new Rect(rect.x + wheelRect.width + spacing, rect.y, sliderWidth, rect.height);
 
+            
+            GUI.color = new Color(_brightness, _brightness, _brightness, 1f);
             DrawColorWheel(wheelRect);
+            
 
             DrawBrightnessSlider(sliderRect);
 
@@ -188,7 +185,7 @@ namespace Prototype.UIElements
                 movingHue = false;
                 currentEvent.Use();
             }
-
+            GUI.color = Color.white;
             DrawSelectionIndicator(rect);
         }
 
@@ -213,7 +210,6 @@ namespace Prototype.UIElements
                     float localY = currentEvent.mousePosition.y - rect.y;
                     _brightness = Mathf.Clamp01(1f - (localY / rect.height));
                     UpdateColor();
-                    _isDirty = true;
 
                     currentEvent.Use();
                     UnityEngine.Input.ResetInputAxes();
@@ -248,6 +244,7 @@ namespace Prototype.UIElements
                 if (GUI.Button(buttonRect, shape.ToString(), buttonStyle))
                 {
                     Shape = shape;
+                    GenerateColorWheel();
                     GUIUtility.hotControl = 0;
                 }
             }
@@ -255,7 +252,6 @@ namespace Prototype.UIElements
 
         private void GenerateColorWheel()
         {
-            var startNew = Stopwatch.StartNew();
             if (_colorWheelTexture != null)
             {
                 UnityEngine.Object.DestroyImmediate(_colorWheelTexture);
@@ -276,7 +272,7 @@ namespace Prototype.UIElements
                     {
                         normalizedPos.y = 1f - normalizedPos.y;
                         var h = PositionToHS(normalizedPos);
-                        pixelColor = Color.HSVToRGB(h.h, h.s, _brightness);
+                        pixelColor = Color.HSVToRGB(h.h, h.s, 1);
                     }
 
                     _colorWheelTexture.SetPixel(x, y, pixelColor);
@@ -376,8 +372,6 @@ namespace Prototype.UIElements
         {
             int height = Mathf.Max(1, (int)rect.height);
             Texture2D texture = new Texture2D(1, height, TextureFormat.RGB24, false);
-
-            Color baseColor = Color.HSVToRGB(_hue, _saturation, 1f);
 
             for (int y = 0; y < height; y++)
             {
