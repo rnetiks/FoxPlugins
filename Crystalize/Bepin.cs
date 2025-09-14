@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -16,10 +17,11 @@ namespace Crystalize
         /// <returns>
         /// An instance of the calling plugin as a BaseUnityPlugin object if found, or null if no valid plugin instance is identified.
         /// </returns>
-        public static BaseUnityPlugin GetCallingPlugin()
+        public static List<BaseUnityPlugin> GetCallingPlugins()
         {
             var stackTrace = new StackTrace();
             var frames = stackTrace.GetFrames();
+            List<BaseUnityPlugin> plugins = new List<BaseUnityPlugin>();
 
             foreach (var frame in frames)
             {
@@ -31,7 +33,7 @@ namespace Crystalize
                     var pluginAttribute = Attribute.GetCustomAttribute(declaringType, typeof(BepInPlugin)) as BepInPlugin;
                     if (pluginAttribute != null && typeof(BaseUnityPlugin).IsAssignableFrom(declaringType))
                     {
-                        return FindPluginInstance(declaringType);
+                        plugins.Add(FindPluginInstance(declaringType));
                     }
 
                     var assembly = declaringType.Assembly;
@@ -42,12 +44,12 @@ namespace Crystalize
 
                     if (pluginType != null)
                     {
-                        return FindPluginInstance(pluginType);
+                        plugins.Add(FindPluginInstance(pluginType));
                     }
                 }
             }
 
-            return null;
+            return plugins;
         }
 
         /// Retrieves detailed information about the plugin assembly that is calling this method.
