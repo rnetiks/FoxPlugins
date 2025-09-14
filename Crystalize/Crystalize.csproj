@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
+            Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{20CFD0F4-D60E-45D2-98AE-0E3C6B8B32A1}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>Crystalize</RootNamespace>
+        <AssemblyName>Crystalize</AssemblyName>
+        <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+      <Compile Include="Audio.cs" />
+      <Compile Include="Bepin.cs" />
+      <Compile Include="ConfigFile.cs" />
+      <Compile Include="Curve.cs" />
+      <Compile Include="DataBinder.cs" />
+      <Compile Include="Digitizer\Tablet.cs" />
+      <Compile Include="Digitizer\TabletManager.cs" />
+      <Compile Include="Extension.cs" />
+      <Compile Include="IL2CSharp.cs" />
+      <Compile Include="Input.cs" />
+      <Compile Include="Point.cs" />
+      <Compile Include="Progress.cs" />
+      <Compile Include="String.cs" />
+      <Compile Include="StyleManager.cs" />
+      <Compile Include="Texture.cs" />
+      <Compile Include="UIElements\Charts.cs" />
+      <Compile Include="UIElements\ColorPicker.cs" />
+      <Compile Include="UIElements\Dropdown.cs" />
+      <Compile Include="UIElements\Gradient.cs" />
+      <Compile Include="UIElements\IMGUIElement.cs" />
+      <Compile Include="UIElements\IMGUIWindow.cs" />
+      <Compile Include="UIElements\Layout\FlexLayout.cs" />
+      <Compile Include="UIElements\Layout\GridLayout.cs" />
+      <Compile Include="UIElements\Layout\SmartRect.cs" />
+      <Compile Include="UIElements\Layout\StackLayout.cs" />
+      <Compile Include="UIElements\Menu.cs" />
+      <Compile Include="UIElements\MultiSelectDropdown.cs" />
+      <Compile Include="UIElements\Notification.cs" />
+      <Compile Include="UIElements\Slider.cs" />
+      <Compile Include="UIElements\TreeView.cs" />
+      <Compile Include="UIElements\VirtualScrollView.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
+        <HintPath>..\packages\BepInEx.BaseLib.5.4.21\lib\net35\BepInEx.dll</HintPath>
+      </Reference>
+      <Reference Include="MonoMod.Utils">
+        <HintPath>..\packages\MonoMod.Utils.22.5.1.1\lib\net35\MonoMod.Utils.dll</HintPath>
+      </Reference>
+      <Reference Include="System">
+        <HintPath>..\..\..\..\..\Windows\Microsoft.NET\Framework\v2.0.50727\System.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+        <HintPath>..\packages\UnityEngine.5.6.1\lib\net35\UnityEngine.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="packages.config" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+</Project>
