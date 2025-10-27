@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Crystalize.UIElements
+namespace Addin
 {
     /// <summary>
     /// Represents a UI element for a dropdown that allows multiple selections.

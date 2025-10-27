@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Crystalize.UIElements
+namespace Addin
 {
     public class Dropdown
     {
