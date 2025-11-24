@@ -759,9 +759,7 @@ namespace Addin
 			bool ctrl = currentEvent.control || currentEvent.command;
 			bool shift = currentEvent.shift;
 			bool alt = currentEvent.alt;
-
-			var logger = Type.GetType("MethodProfiler").GetField("Logger").GetValue(null);
-			logger.GetType().GetMethod("LogDebug").Invoke(logger, new object[] { (int)Event.current.character });
+			
 			switch (currentEvent.keyCode)
 			{
 				case KeyCode.Backspace:
