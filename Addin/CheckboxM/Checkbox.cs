@@ -7,22 +7,28 @@ namespace Addin
 	public class Checkbox
 	{
         private bool _state;
-        private bool _isHovering = false;
-        private float _clickTime = 0f;
+        private bool _isHovering;
+        private float _clickTime;
         private Vector2 _clickPos;
-        private bool _isDragging = false;
-        private float _dragProgress = 0f;
-        private float _dragStartProgress = 0f;
-        private float _dragStartMouseX = 0f;
+        private bool _isDragging;
+        private float _dragProgress;
+        private float _dragStartProgress;
+        private float _dragStartMouseX;
         private const float CLICK_THRESHOLD = 0.2f;
         private const float DRAG_THRESHOLD = 5f;
         private float _margin = 2f;
-        private static Dictionary<Color, Texture2D> _solidTextures = new Dictionary<Color, Texture2D>();
         
-        private Color offColor = new Color(0.47f, 0.47f, 0.47f);
-        private Color onColor = new Color(0.4f, 0.7f, 1f, 1f);
-        private Color backgroundColor = new Color(0.2f, 0.2f, 0.2f, 1f);
-        private Color checkColor = new Color(0.47f, 0.47f, 0.47f);
+        // Singletons
+        private static Dictionary<Color, Texture2D> _solidTextures = new Dictionary<Color, Texture2D>();
+
+        private static Color offColor = new Color(0.47f, 0.47f, 0.47f);
+        private static Color onColor = new Color(0.4f, 0.7f, 1f, 1f);
+        private static Color backgroundColor = bgColorOff;
+        private static Color checkColor = new Color(0.47f, 0.47f, 0.47f);
+        private static Color borderColorOn = new Color(0.6f, 0.6f, 0.6f, 1f);
+        private static Color borderColorOff = new Color(0.4f, 0.4f, 0.4f, 1f);
+        private static Color bgColorOn = new Color(0.25f, 0.25f, 0.25f, 1f);
+        private static Color bgColorOff = new Color(0.2f, 0.2f, 0.2f, 1f);
 
         public bool State
         {
@@ -83,54 +89,12 @@ namespace Addin
 
             if (currentEvent.type == EventType.MouseDrag && GUIUtility.hotControl == controlID)
             {
-                float dragDistance = Vector2.Distance(currentEvent.mousePosition, _clickPos);
-                
-                if (!_isDragging && dragDistance > DRAG_THRESHOLD)
-                {
-                    _isDragging = true;
-                    _dragStartProgress = _dragProgress;
-                    _dragStartMouseX = currentEvent.mousePosition.x;
-                }
-
-                if (_isDragging)
-                {
-                    float min = Mathf.Min(rect.width, rect.height);
-                    float maxDragRange = rect.width - min;
-                    
-                    float mouseDelta = currentEvent.mousePosition.x - _dragStartMouseX;
-                    _dragProgress = Mathf.Clamp01(_dragStartProgress + mouseDelta / maxDragRange);
-
-                    bool newState = _dragProgress > 0.5f;
-                    
-                    if (newState != _state)
-                    {
-                        _state = newState;
-                        OnValueChanged?.Invoke(_state);
-                    }
-                }
-                currentEvent.Use();
+                ProcessMouseDrag(rect, currentEvent);
             }
 
             if (currentEvent.type == EventType.MouseUp && GUIUtility.hotControl == controlID)
             {
-                if (!_isDragging)
-                {
-                    float clickDuration = Time.realtimeSinceStartup - _clickTime;
-                    float dragDistance = Vector2.Distance(currentEvent.mousePosition, _clickPos);
-
-                    if (clickDuration < CLICK_THRESHOLD && dragDistance < DRAG_THRESHOLD)
-                    {
-                        SetState(!_state);
-                    }
-                }
-                else
-                {
-                    _dragProgress = _state ? 1f : 0f;
-                }
-
-                _isDragging = false;
-                GUIUtility.hotControl = 0;
-                currentEvent.Use();
+                HandleMouseUp(currentEvent);
             }
 
             DrawCheckbox(rect);
@@ -139,12 +103,64 @@ namespace Addin
                 Input.ResetInputAxes();
             return _state;
         }
+        private void ProcessMouseDrag(Rect rect, Event currentEvent)
+        {
+
+            float dragDistance = Vector2.Distance(currentEvent.mousePosition, _clickPos);
+                
+            if (!_isDragging && dragDistance > DRAG_THRESHOLD)
+            {
+                _isDragging = true;
+                _dragStartProgress = _dragProgress;
+                _dragStartMouseX = currentEvent.mousePosition.x;
+            }
+
+            if (_isDragging)
+            {
+                float min = Mathf.Min(rect.width, rect.height);
+                float maxDragRange = rect.width - min;
+                    
+                float mouseDelta = currentEvent.mousePosition.x - _dragStartMouseX;
+                _dragProgress = Mathf.Clamp01(_dragStartProgress + mouseDelta / maxDragRange);
+
+                bool newState = _dragProgress > 0.5f;
+                    
+                if (newState != _state)
+                {
+                    _state = newState;
+                    OnValueChanged?.Invoke(_state);
+                }
+            }
+            currentEvent.Use();
+        }
+        private void HandleMouseUp(Event currentEvent)
+        {
+
+            if (!_isDragging)
+            {
+                float clickDuration = Time.realtimeSinceStartup - _clickTime;
+                float dragDistance = Vector2.Distance(currentEvent.mousePosition, _clickPos);
+
+                if (clickDuration < CLICK_THRESHOLD && dragDistance < DRAG_THRESHOLD)
+                {
+                    SetState(!_state);
+                }
+            }
+            else
+            {
+                _dragProgress = _state ? 1f : 0f;
+            }
+
+            _isDragging = false;
+            GUIUtility.hotControl = 0;
+            currentEvent.Use();
+        }
 
         private void DrawCheckbox(Rect rect)
         {
-            Color borderColor = _isHovering ? new Color(0.6f, 0.6f, 0.6f, 1f) : new Color(0.4f, 0.4f, 0.4f, 1f);
+            Color borderColor = _isHovering ? borderColorOn : borderColorOff;
 
-            backgroundColor = _isHovering ? new Color(0.25f, 0.25f, 0.25f, 1f) : new Color(0.2f, 0.2f, 0.2f, 1f);
+            backgroundColor = _isHovering ? bgColorOn : bgColorOff;
             
             DrawBorder(rect, borderColor, 1f);
             GUI.DrawTexture(rect, GetOrCreateSolid(backgroundColor));
@@ -152,7 +168,7 @@ namespace Addin
             float min = Mathf.Min(rect.width, rect.height);
             float maxDragRange = rect.width - min;
             
-            float xPos = rect.x + _margin + (_dragProgress * maxDragRange);
+            float xPos = rect.x + _margin + _dragProgress * maxDragRange;
             Rect innerRect = new Rect(xPos, rect.y + _margin, min - _margin * 2, min - _margin * 2);
             
             checkColor = Color.Lerp(offColor, onColor, _dragProgress);

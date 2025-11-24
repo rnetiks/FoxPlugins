@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{cd670d49-6595-481e-a331-acc5d79c5f61}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>TextureFactory</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)TextureElement.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextureFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextureFormatHandler.cs" />
+
+    </ItemGroup>
+</Project>

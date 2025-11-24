@@ -10,44 +10,37 @@ namespace TexFac.Universal
     /// </summary>
     public static class TextureFactory
     {
-        public enum Device
-        {
-            CPU,
-            GPU
-        }
-
         /// <summary>
         /// Creates a new TextureElement with the specified dimensions.
         /// </summary>
-        public static ITextureElement Create(int width, int height, TextureFormat format = TextureFormat.RGBA32, Device device = Device.CPU)
+        public static TextureElement Create(int width, int height, TextureFormat format = TextureFormat.RGBA32)
         {
-            return device == Device.CPU ? (ITextureElement)new CPUTextureElement(width, height, format) : (ITextureElement)new GPUTextureElement(width, height, format);
-            return new CPUTextureElement(width, height, format);
+            return new TextureElement(width, height, format);
         }
 
         /// <summary>
         /// Wraps an existing Texture2D in a TextureElement.
         /// </summary>
-        public static CPUTextureElement From(Texture2D texture)
+        public static TextureElement From(Texture2D texture)
         {
-            return new CPUTextureElement(texture);
+            return new TextureElement(texture);
         }
 
         /// <summary>
         /// Loads a texture from file or creates it with the provided callback if not found.
         /// </summary>
-        public static CPUTextureElement Load(string filepath, Func<string, Texture2D> onNotFound)
+        public static TextureElement Load(string filepath, Func<string, Texture2D> onNotFound)
         {
             if (!File.Exists(filepath))
             {
                 var texture2D = onNotFound(filepath);
-                return new CPUTextureElement(texture2D);
+                return new TextureElement(texture2D);
             }
 
             var data = new Texture2D(1, 1);
             data.LoadImage(File.ReadAllBytes(filepath));
             data.Apply();
-            return new CPUTextureElement(data);
+            return new TextureElement(data);
         }
 
         /// <summary>
@@ -56,7 +49,7 @@ namespace TexFac.Universal
         /// <param name="filepath">The file path of the texture to load.</param>
         /// <returns>A TextureElement instance representing the loaded texture.</returns>
         /// <exception cref="FileNotFoundException">Thrown if the specified file does not exist.</exception>
-        public static CPUTextureElement Load(string filepath)
+        public static TextureElement Load(string filepath)
         {
             if (!File.Exists(filepath))
             {
@@ -66,13 +59,13 @@ namespace TexFac.Universal
             var data = new Texture2D(1, 1);
             data.LoadImage(File.ReadAllBytes(filepath));
             data.Apply();
-            return new CPUTextureElement(data);
+            return new TextureElement(data);
         }
 
         /// <summary>
         /// Creates a new TextureElement with a vertical gradient.
         /// </summary>
-        public static ITextureElement Gradient(int width, int height, Color topColor, Color bottomColor)
+        public static TextureElement Gradient(int width, int height, Color topColor, Color bottomColor)
         {
             var element = Create(width, height);
             return element.BackgroundGradient(topColor, bottomColor, 90);
@@ -81,7 +74,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a new TextureElement with a solid color.
         /// </summary>
-        public static ITextureElement SolidColor(int width, int height, Color32 color)
+        public static TextureElement SolidColor(int width, int height, Color32 color)
         {
             var element = Create(width, height);
             return element.BackgroundColor(color.r, color.g, color.b, color.a);
@@ -90,7 +83,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a new TextureElement with a checkerboard pattern.
         /// </summary>
-        public static unsafe ITextureElement Checkerboard(int width, int height, Color32 color1, Color32 color2,
+        public static unsafe TextureElement Checkerboard(int width, int height, Color32 color1, Color32 color2,
             int tileSize = 8)
         {
             var element = Create(width, height);
@@ -202,7 +195,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a new TextureElement with a polka dot pattern.
         /// </summary>
-        public static unsafe ITextureElement PolkaDots(int width, int height, Color32 backgroundColor, Color32 dotColor,
+        public static unsafe TextureElement PolkaDots(int width, int height, Color32 backgroundColor, Color32 dotColor,
             int dotRadius = 5, int spacing = 20)
         {
             var element = Create(width, height);
@@ -258,7 +251,7 @@ namespace TexFac.Universal
         /// <summary>
         /// Creates a new TextureElement with a striped pattern.
         /// </summary>
-        public static ITextureElement Stripes(int width, int height, Color color1, Color color2, float angle = 45,
+        public static TextureElement Stripes(int width, int height, Color color1, Color color2, float angle = 45,
             int stripeWidth = 10)
         {
             var element = Create(width, height);
