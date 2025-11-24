@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace Addin
-{
-    public class VirtualScrollView
-    {
+{ 
+    public class VirtualScrollView 
+    { 
         private Vector2 _scrollPosition;
         private float _itemHeight;
         private int _visibleStartIndex;
@@ -21,6 +21,12 @@ namespace Addin
             _useVariableHeight = useVariableHeight;
         }
 
+        /// Begins a scroll view, allowing the contents to be scrollable within a specified area.
+        /// Calculates the visible range of items based on the scroll position and area dimensions.
+        /// The scroll view must be concluded with a corresponding call to EndScrollView.
+        /// <param name="position">The area in which the scroll view is drawn.</param>
+        /// <param name="totalItems">The total number of items to be potentially displayed within the scroll view.</param>
+        /// <param name="viewRect">The computed rectangle defining the complete scrollable content area, returned as an output parameter.</param>
         public void BeginScrollView(Rect position, int totalItems, out Rect viewRect)
         {
             float totalHeight = _useVariableHeight ? CalculateTotalHeight(totalItems) : totalItems * _itemHeight;
