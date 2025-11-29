@@ -9,6 +9,8 @@
         <Import_RootNamespace>TextureFactory</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Extension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SVGConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureElement.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureFormatHandler.cs" />
