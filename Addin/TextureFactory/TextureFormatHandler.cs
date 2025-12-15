@@ -132,7 +132,7 @@ namespace TexFac.Universal
             }
         }
 
-         /// <summary>
+        /// <summary>
         /// Determines whether the handler supports the specified texture format.
         /// </summary>
         /// <param name="format">The texture format to check for support.</param>

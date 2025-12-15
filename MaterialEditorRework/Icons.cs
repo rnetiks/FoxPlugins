@@ -132,6 +132,22 @@ namespace MaterialEditorRework
 			}
 		}
 
+		public static Texture2D LayerIcon
+		{
+			get
+			{
+				if (_layersIcon == null)
+				{
+					var rawData = GetSvgData("layers.svg");
+					var bytes = Svg.SvgContentToPngBytes(rawData, IconSize, IconSize);
+					_layersIcon = new Texture2D(IconSize, IconSize);
+					ImageConversion.LoadImage(_layersIcon, bytes);
+				}
+				
+				return _layersIcon;
+			}
+		}
+
 		private static string GetSvgData(string path)
 		{
 			var rawData = KKAPI.Utilities.ResourceUtils.GetEmbeddedResource("MaterialEditorRework.Resources.SVGs." + path, typeof(Icons).Assembly);

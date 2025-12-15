@@ -10,7 +10,7 @@ namespace MaterialEditorRework.Views
 {
 	public class ListTreeviewView : BaseElementView
 	{
-		List<TreeViewItemParent> items = new List<TreeViewItemParent>();
+		public List<TreeViewItemParent> items = new List<TreeViewItemParent>();
 
 		private string _filter = string.Empty;
 		public string Filter => _filter;
@@ -45,15 +45,12 @@ namespace MaterialEditorRework.Views
 
 		public void DeselectAll()
 		{
-			foreach (var treeViewItemParent in items)
+			foreach (var parent in Entry.Instance.listTreeviewView.items)
 			{
-				treeViewItemParent.Selected = false;
-				if (treeViewItemParent.Children != null)
+				parent.Selected = false;
+				foreach (var child in parent.Children)
 				{
-					foreach (var treeViewItemChild in treeViewItemParent.Children)
-					{
-						treeViewItemChild.Selected = false;
-					}
+					child.Selected = false;
 				}
 			}
 		}
@@ -77,53 +74,36 @@ namespace MaterialEditorRework.Views
 
 		private void DrawList(Rect rect)
 		{
-			bool reduce = CalculateHeight() > rect.height;
-			int i = 0;
-			scrollPosition = GUI.BeginScrollView(rect, scrollPosition, new Rect(0, 0, 0, CalculateHeight()));
 
+			int yx = 0;
 			if (items.Any(x => x.Renderer.name.Contains(Filter)))
 			{
+				int sum = items.Where(x => x.Renderer.name.ToLower().Contains(_filter.ToLower())).Sum(x => x.CalculateHeight());
+				bool reduce = sum > rect.height;
+				scrollPosition = GUI.BeginScrollView(rect, scrollPosition, new Rect(0, 0, 0, sum + 5));
 				foreach (var item in items)
 				{
 					if (item.Renderer.name.Contains(Filter))
 					{
-						item.Draw(new Rect(8, 55 * i + 8, reduce ? 293 : 303, 50));
-						i++;
+						item.Draw(new Rect(8, yx + 8, reduce ? 293 : 303, 50));
+						yx += item.CalculateHeight();
 					}
 				}
+				GUI.EndScrollView();
 			}
 			else
 			{
+				int sum = items.Sum(x => x.CalculateHeight());
+				bool reduce = sum > rect.height;
+				scrollPosition = GUI.BeginScrollView(rect, scrollPosition, new Rect(0, 0, 0, sum + 5));
 				foreach (var item in items)
 				{
-
-					item.Draw(new Rect(8, 55 * i + 8, reduce ? 293 : 303, 50));
-					i++;
+					item.Draw(new Rect(8, yx + 8, reduce ? 293 : 303, 50));
+					yx += item.CalculateHeight();
 				}
+				GUI.EndScrollView();
 			}
 
-			GUI.EndScrollView();
-		}
-
-		private int CalculateHeight()
-		{
-			int i = 0;
-			foreach (var treeViewItemParent in items)
-			{
-				if (treeViewItemParent.Renderer.name.Contains(Filter) || (treeViewItemParent.Children != null && treeViewItemParent.Children.Any(x => x.Material.name.Contains(Filter)) && treeViewItemParent.Open))
-				{
-					i += 55;
-					if (treeViewItemParent.Children != null && treeViewItemParent.Open)
-					{
-						foreach (var unused in treeViewItemParent.Children)
-						{
-							i += 55;
-						}
-					}
-				}
-			}
-
-			return i;
 		}
 	}
 }

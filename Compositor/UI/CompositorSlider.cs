@@ -58,6 +58,8 @@ namespace DefaultNamespace
             set => _format = value;
         }
 
+        public bool AllowUnclamped;
+
         public event Action<float> OnValueChanged;
 
         public CompositorSlider(float value, float minValue, float maxValue, string label = "", string format = "F2")
@@ -252,7 +254,7 @@ namespace DefaultNamespace
         {
             if (float.TryParse(_editText, out float newValue))
             {
-                SetValue(newValue, true);
+                SetValue(newValue, AllowUnclamped);
             }
 
             _isEditingText = false;

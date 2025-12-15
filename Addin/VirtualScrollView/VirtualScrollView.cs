@@ -88,12 +88,16 @@ namespace Addin
                 _visibleStartIndex = 0;
                 _visibleEndIndex = totalItems - 1;
 
+                bool foundStart = false;
                 float currentY = 0;
                 for (int i = 0; i < totalItems; i++)
                 {
                     float itemHeight = GetItemHeight(i);
-                    if (currentY + itemHeight >= viewTop && _visibleStartIndex == 0)
+                    if (!foundStart && currentY + itemHeight >= viewTop)
+                    {
                         _visibleStartIndex = i;
+                        foundStart = true;
+                    }
 
                     if (currentY > viewBottom)
                     {

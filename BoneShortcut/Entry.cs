@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
@@ -85,7 +84,6 @@ namespace BoneShortcut
         private void Awake()
         {
             Debug = Config.Bind("Config", "Debug", false);
-
             #region FK
 
             FK_LEFT_WRIST = Config.Bind("Forward Kinematics", "Left Wrist", KeyboardShortcut.Empty);

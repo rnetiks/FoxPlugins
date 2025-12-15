@@ -3,15 +3,51 @@
     <Platform Name="Any CPU" />
     <Platform Name="AnyCPU" />
   </Configurations>
+  <Folder Name="/Addins/">
+    <Project Path="Addin\35proc\35proc.shproj" />
+    <Project Path="Addin\Charts\Charts.shproj" />
+    <Project Path="Addin\CheckboxM\CheckboxM.shproj" />
+    <Project Path="Addin\Checkbox\Checkbox.shproj" />
+    <Project Path="Addin\ColorPicker\ColorPicker.shproj" />
+    <Project Path="Addin\ConfigFile\ConfigFile.shproj" />
+    <Project Path="Addin\debug\debug.shproj" />
+    <Project Path="Addin\Dropdown\Dropdown.shproj" />
+    <Project Path="Addin\Gradient\Gradient.shproj" />
+    <Project Path="Addin\MSDropdown\MSDropdown.shproj" />
+    <Project Path="Addin\Poly\Poly.shproj" />
+    <Project Path="Addin\ScrollView\ScrollView.shproj" />
+    <Project Path="Addin\Slider\Slider.shproj" />
+    <Project Path="Addin\TextEditor\TextEditor.shproj" />
+    <Project Path="Addin\TextureFactory\TextureFactory.shproj" />
+    <Project Path="Addin\VirtualScrollView\VirtualScrollView.shproj" />
+  </Folder>
   <Folder Name="/BoneShortcut/">
-    <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#" />
-    <Project Path="BoneShortcut\BoneShortcut.KK\BoneShortcut.KK.csproj" Type="Classic C#" />
-    <Project Path="BoneShortcut\BoneShortcut.shproj" />
+    <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="BoneShortcut\BoneShortcut.KK\BoneShortcut.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="BoneShortcut\BoneShortcut.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
   </Folder>
   <Folder Name="/ColliderSound/">
-    <Project Path="ColliderSound\ColliderSound.KKS\ColliderSound.KKS.csproj" Type="Classic C#" />
-    <Project Path="ColliderSound\ColliderSound.KK\ColliderSound.KK.csproj" Type="Classic C#" />
-    <Project Path="ColliderSound\ColliderSound.shproj" />
+    <Project Path="ColliderSound\ColliderSound.KKS\ColliderSound.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="ColliderSound\ColliderSound.KK\ColliderSound.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="ColliderSound\ColliderSound.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
   </Folder>
   <Folder Name="/Compositor/">
     <Project Path="Compositor.KKS\Compositor.KKS.csproj" Type="Classic C#">
@@ -22,19 +58,24 @@
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
-    <Project Path="Compositor\Compositor.shproj" />
-  </Folder>
-  <Folder Name="/DahliaEucharisLilium/">
-    <Project Path="Dahlia Eucharis Lilium\Dahlia Eucharis Lilium.shproj" />
+    <Project Path="Compositor\Compositor.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
   </Folder>
   <Folder Name="/DBToggler/">
-    <Project Path="DBToggler.KKS\DBToggler.KKS.csproj" Type="Classic C#" />
-    <Project Path="DBToggler\DBToggler.Core\DBToggler.Core.shproj" />
-    <Project Path="DBToggler\DBToggler.KK\DBToggler.KK.csproj" Type="Classic C#" />
-  </Folder>
-  <Folder Name="/KoiUpdater/">
-    <Project Path="KoiUpdater.KKS\KoiUpdater.KKS.csproj" Type="Classic C#" />
-    <Project Path="KoiUpdater.Shared\KoiUpdater.Shared.shproj" />
+    <Project Path="DBToggler.KKS\DBToggler.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="DBToggler\DBToggler.Core\DBToggler.Core.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="DBToggler\DBToggler.KK\DBToggler.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
   </Folder>
   <Folder Name="/PoseLib/">
     <Project Path="PoseLib.KK\PoseLib.KK.csproj" Type="Classic C#">
@@ -50,63 +91,53 @@
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
   </Folder>
-  <Folder Name="/Prefab/">
-    <Project Path="Prefab.KKS\Prefab.KKS.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-    </Project>
-    <Project Path="Prefab.KK\Prefab.KK.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-    </Project>
-    <Project Path="Prefab\Prefab.shproj" />
-  </Folder>
   <Folder Name="/PrismaLib/">
-    <Project Path="PrismaLib\PrismaLib.KKS\PrismaLib.KKS.csproj" Type="Classic C#" />
-    <Project Path="PrismaLib\PrismaLib.KK\PrismaLib.KK.csproj" Type="Classic C#" />
-    <Project Path="PrismaLib\PrismaLib.shproj" />
+    <Project Path="PrismaLib\PrismaLib.KKS\PrismaLib.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="PrismaLib\PrismaLib.KK\PrismaLib.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="PrismaLib\PrismaLib.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
   </Folder>
   <Folder Name="/Search/">
-    <Project Path="Search\Search.shproj" />
-    <Project Path="Search\Search.Universal\Search.Universal.csproj" Type="Classic C#" />
+    <Project Path="Search\Search.shproj">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="Search\Search.Universal\Search.Universal.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
   </Folder>
-  <Folder Name="/SmartRect/">
-    <Project Path="SmartRect\SmartRect.shproj" />
-    <Project Path="SmartRect\SmartRect.Universal\SmartRect.Universal.csproj" Type="Classic C#" />
-  </Folder>
-  <Project Path="ASAKURA FXN-Q\ASAKURA FXN-Q.csproj" Type="Classic C#">
-    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-  </Project>
   <Project Path="BoxSelect.KKS\BoxSelect.KKS.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="ConsoleApplication\ConsoleApplication.csproj" Type="Classic C#">
+  <Project Path="InternalConsole\InternalConsole.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="Crystalize\Crystalize.csproj" Type="Classic C#">
+  <Project Path="MaterialEditorRework\MaterialEditorRework.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="HarmonyPatchInspector\HarmonyPatchInspector.csproj" Type="Classic C#">
-    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-  </Project>
-  <Project Path="LogRedirector.KKS\LogRedirector.KKS.csproj" Type="Classic C#">
-    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  <Project Path="PathTracingNative\PathTracingNative.vcxproj">
+    <Configuration Solution="Debug|Any CPU" Project="Debug|Win32" />
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Win32" />
+    <Configuration Solution="Release|Any CPU" Project="Release|Win32" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Win32" />
   </Project>
   <Project Path="Sculpt.KKS\Sculpt.KKS.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
   <Project Path="TestPlugin\TestPlugin.csproj" Type="Classic C#">
-    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-  </Project>
-  <Project Path="TexFac.Universal\TexFac.Universal.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>

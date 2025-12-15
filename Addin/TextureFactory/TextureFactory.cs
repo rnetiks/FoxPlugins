@@ -63,15 +63,6 @@ namespace TexFac.Universal
         }
 
         /// <summary>
-        /// Creates a new TextureElement with a vertical gradient.
-        /// </summary>
-        public static TextureElement Gradient(int width, int height, Color topColor, Color bottomColor)
-        {
-            var element = Create(width, height);
-            return element.BackgroundGradient(topColor, bottomColor, 90);
-        }
-
-        /// <summary>
         /// Creates a new TextureElement with a solid color.
         /// </summary>
         public static TextureElement SolidColor(int width, int height, Color32 color)

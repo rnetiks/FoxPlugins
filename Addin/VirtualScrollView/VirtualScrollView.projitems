@@ -9,7 +9,7 @@
         <Import_RootNamespace>VirtualScrollView</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)VirtualScrollView.cs" />
+        <Compile Include="$(MSBuildThisFileDirectory)VirtualScrollView.cs"/>
 
     </ItemGroup>
 </Project>

@@ -41,14 +41,11 @@
       <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
         <HintPath>..\..\packages\IllusionLibs.Koikatu.Assembly-CSharp.2019.4.27.4\lib\net35\Assembly-CSharp.dll</HintPath>
       </Reference>
-      <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-        <HintPath>..\..\packages\IllusionLibs.Koikatu.Assembly-CSharp-firstpass.2019.4.27.4\lib\net35\Assembly-CSharp-firstpass.dll</HintPath>
-      </Reference>
       <Reference Include="BepInEx, Version=5.4.22.0, Culture=neutral, processorArchitecture=MSIL">
         <HintPath>..\..\packages\IllusionLibs.BepInEx.5.4.22\lib\net35\BepInEx.dll</HintPath>
       </Reference>
-      <Reference Include="KKAPI, Version=1.42.1.0, Culture=neutral, processorArchitecture=MSIL">
-        <HintPath>..\..\packages\IllusionModdingAPI.KKAPI.1.42.1\lib\net35\KKAPI.dll</HintPath>
+      <Reference Include="KKAPI, Version=1.43.0.0, Culture=neutral, processorArchitecture=MSIL">
+        <HintPath>..\..\packages\IllusionModdingAPI.KKAPI.1.43.0\lib\net35\KKAPI.dll</HintPath>
       </Reference>
       <Reference Include="System">
         <HintPath>..\..\..\..\..\..\Windows\Microsoft.NET\Framework\v2.0.50727\System.dll</HintPath>
@@ -61,6 +58,7 @@
       </Reference>
     </ItemGroup>
     <ItemGroup>
+      <None Include="App.config" />
       <None Include="packages.config" />
     </ItemGroup>
     <ItemGroup>

@@ -88,6 +88,23 @@ namespace MaterialEditorRework.CustomElements
 				Renderer.enabled = !Renderer.enabled;
 			}
 
+			if (Children != null && Children.Any())
+			{
+				var position = new Rect(rect.x + 9, rect.y + 13, 24, 24);
+				if (position.Contains(Event.current.mousePosition))
+				{
+					GUI.DrawTexture(position, EyeHoverBackground);
+				}
+				if (!Open)
+					GUI.DrawTexture(new Rect(rect.x + 13, rect.y + 17, 16, 16), ChevronRightIcon);
+				else
+				{
+					GUI.DrawTexture(new Rect(rect.x + 13, rect.y + 17, 16, 16), ChevronDownIcon);
+				}
+				if (GUI.Button(position, GUIContent.none, GUIStyle.none))
+					Open = !Open;
+			}
+
 			GUI.SetNextControlName(this.GetHashCode().ToString());
 			if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
 			{
@@ -98,17 +115,18 @@ namespace MaterialEditorRework.CustomElements
 			}
 
 
-			if (Children != null && Children.Any())
-			{
-				if (!Open)
-					GUI.DrawTexture(new Rect(rect.x + 13, rect.y + 17, 16, 16), ChevronRightIcon);
-				else
-					GUI.DrawTexture(new Rect(rect.x + 13, rect.y + 17, 16, 16), ChevronDownIcon);
-			}
 			GUI.DrawTexture(new Rect(rect.x + 37, rect.y + (rect.height / 2 - 8), 16, 16), Icons.BoxIcon);
 
 			GUI.Label(new Rect(rect.x + 65, rect.y + 14, 160, 20), Renderer.name, LabelStyle);
 
+			if (Open && Children != null && Children.Any())
+			{
+				for (int index = 0; index < Children.Length; index++)
+				{
+					var child = Children[index];
+					child.Draw(new Rect(rect.x + 30, rect.y + 55 + 55 * index, rect.width - 40, 50));
+				}
+			}
 		}
 
 		private void drawSelectedBackground(Rect rect)
@@ -121,6 +139,21 @@ namespace MaterialEditorRework.CustomElements
 		{
 			GUI.DrawTexture(rect, ActiveBackgroundColorBorder);
 			GUI.DrawTexture(new Rect(rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2), ActiveBackground);
+		}
+
+		public int CalculateHeight()
+		{
+			int i = 0;
+			i += 55;
+			if (Children != null && Children.Any() && Open)
+			{
+				foreach (var child in Children)
+				{
+					i += 55;
+				}
+			}
+
+			return i;
 		}
 	}
 }

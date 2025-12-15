@@ -121,6 +121,8 @@
         <Compile Include="Exporter\TextureExporter.cs" />
         <Compile Include="Exporter\UVExporter.cs" />
         <Compile Include="Icons.cs" />
+        <Compile Include="IniFile.cs" />
+        <Compile Include="MaterialCache.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
         <Compile Include="StyleCache.cs" />
         <Compile Include="Styles.cs" />
@@ -188,6 +190,9 @@
     <Import Project="..\packages\IllusionLibs.KoikatsuSunshine.UnityEngine.UIModule.2019.4.9\build\IllusionLibs.KoikatsuSunshine.UnityEngine.UIModule.targets" Condition="Exists('..\packages\IllusionLibs.KoikatsuSunshine.UnityEngine.UIModule.2019.4.9\build\IllusionLibs.KoikatsuSunshine.UnityEngine.UIModule.targets')" />
     <Import Project="..\packages\IllusionLibs.KoikatsuSunshine.UnityEngine.TextRenderingModule.2019.4.9\build\IllusionLibs.KoikatsuSunshine.UnityEngine.TextRenderingModule.targets" Condition="Exists('..\packages\IllusionLibs.KoikatsuSunshine.UnityEngine.TextRenderingModule.2019.4.9\build\IllusionLibs.KoikatsuSunshine.UnityEngine.TextRenderingModule.targets')" />
     <Import Project="..\Addin\CheckboxM\CheckboxM.projitems" Label="Shared" />
+    <Import Project="..\Addin\Slider\Slider.projitems" Label="Shared" />
+    <Import Project="..\Addin\35proc\35proc.projitems" Label="Shared" />
+    <Import Project="..\Addin\debug\debug.projitems" Label="Shared" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">

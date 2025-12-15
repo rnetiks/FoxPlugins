@@ -16,6 +16,7 @@ namespace MaterialEditorRework.Views
 
 		public override void Initialize()
 		{
+			_dropdown.OnSelectionChanged += DropdownOnSelectionChanged;
 			_headerTitleStyle = new GUIStyle(GUI.skin.label)
 			{
 				fontStyle = FontStyle.Bold,
@@ -37,20 +38,64 @@ namespace MaterialEditorRework.Views
 
 			IsInitialized = true;
 
-			_dropdown.OnSelectionChanged += DropdownOnOnSelectionChanged;
-		}
-		private void DropdownOnOnSelectionChanged(int index)
-		{
-
 		}
 
-		public void CleanTypeDropdown()
+		public List<GameObject> Types = new List<GameObject>();
+
+		private void DropdownOnSelectionChanged(int index)
 		{
-			_dropdown.SetOptions(new string[0]);
+			BepInEx.Logging.Logger.CreateLogSource("MaterialEditorRework").LogInfo($"Dropdown changed to {index}");
+			List<TreeViewItemParent> parents = new List<TreeViewItemParent>();
+			if (index == 0)
+			{
+				var chaControl = KKAPI.Studio.StudioAPI.GetSelectedCharacters().First().charInfo;
+				var body = chaControl.objBody.GetComponentsInChildren<Renderer>(true);
+				var face = chaControl.objHead.GetComponentsInChildren<Renderer>(true);
+				foreach (var renderer in body.Concat(face))
+				{
+					TreeViewItemParent parent = new TreeViewItemParent(new Vector2(303, 101))
+					{
+						Renderer = renderer
+					};
+
+					List<TreeViewItemChild> childrenItems = new List<TreeViewItemChild>();
+					foreach (var material in renderer.materials)
+					{
+						childrenItems.Add(new TreeViewItemChild() { Material = material, Parent = parent});
+					}
+
+					parent.Children = childrenItems.ToArray();
+					parents.Add(parent);
+				}
+
+				Entry.Instance.listTreeviewView.AddItems(parents.ToArray());
+			}
+			else
+			{
+				Entry.Instance.listTreeviewView.CleanItems();
+				foreach (var renderer in Types[index - 1].GetComponentsInChildren<Renderer>())
+				{
+					TreeViewItemParent parent = new TreeViewItemParent(new Vector2(303, 101))
+					{
+						Renderer = renderer
+					};
+
+					List<TreeViewItemChild> childrenItems = new List<TreeViewItemChild>();
+					foreach (var material in renderer.materials)
+					{
+						childrenItems.Add(new TreeViewItemChild() { Material = material, Parent = parent});
+					}
+
+					parent.Children = childrenItems.ToArray();
+					parents.Add(parent);
+				}
+				Entry.Instance.listTreeviewView.AddItems(parents.ToArray());
+			}
 		}
 
 		public void UpdateDropdown(ChaControl chaCtrl)
 		{
+			Types.Clear();
 			List<string> options = new List<string>();
 			options.Add("Body");
 
@@ -60,6 +105,7 @@ namespace MaterialEditorRework.Views
 				if (clothes[index] != null && clothes[index].GetComponentInChildren<ChaClothesComponent>() != null)
 				{
 					options.Add($"Clothes {ClothesIndexToString(index)}");
+					Types.Add(clothes[index]);
 				}
 			}
 
@@ -69,6 +115,7 @@ namespace MaterialEditorRework.Views
 				if (hair[i] != null && hair[i].GetComponent<ChaCustomHairComponent>() != null)
 				{
 					options.Add(hair[i].name);
+					Types.Add(hair[i]);
 				}
 			}
 
@@ -77,12 +124,14 @@ namespace MaterialEditorRework.Views
 			{
 				if (accessories[i] != null)
 				{
-					string optionName = $"Accessory {chaCtrl.infoAccessory[i].Name}";
+					string optionName = $"ACC: {chaCtrl.infoAccessory[i].Name}";
 					options.Add(optionName);
+					Types.Add(accessories[i]);
 				}
 			}
-			_dropdown = new Dropdown(options.ToArray());
-			_dropdown.SetMaxContainerSize(new Vector2(287, 200));
+			// _dropdown = new Dropdown(options.ToArray());
+			_dropdown.SetOptions(options.ToArray(), 0);
+			_dropdown.SetMaxContainerSize(new Vector2(400, 200));
 		}
 
 		private string ClothesIndexToString(int index)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
+using DefaultNamespace;
 using KKAPI;
 using KKAPI.Studio.SaveLoad;
 using KKAPI.Utilities;
@@ -23,17 +24,18 @@ namespace MaterialEditorRework
 		const string VERSION = "1.0.0.0";
 
 		public static ConfigEntry<float> borderSize;
+		public static IniFile iniFile = new IniFile(Paths.BepInExConfigPath + "/MaterialEditorRework.ini");
 
 		public static Entry Instance;
 
 		private void Awake()
 		{
 			borderSize = Config.Bind("General", "Border Size", 2f, new ConfigDescription("A test", new AcceptableValueRange<float>(0, 10), null));
-
 			backgroundStyle = new GUIStyle();
 			backgroundStyle.normal.background = null;
 
 			Instance = this;
+
 
 			StudioSaveLoadApi.ObjectsSelected += StudioSaveLoadApiOnObjectsSelected;
 			StudioSaveLoadApi.ObjectDeleted += StudioSaveLoadApiOnObjectDeleted;
@@ -69,14 +71,14 @@ namespace MaterialEditorRework
 						{
 							Renderer = renderer
 						};
-						
+
 						List<TreeViewItemChild> childrenItems = new List<TreeViewItemChild>();
 						foreach (var material in renderer.materials)
 						{
-							childrenItems.Add(new TreeViewItemChild(){Material = material});
+							childrenItems.Add(new TreeViewItemChild() { Material = material, Parent = currentItem });
 						}
 						currentItem.Children = childrenItems.ToArray();
-						
+
 						items.Add(currentItem);
 					}
 					listTreeviewView.AddItems(items.ToArray());
@@ -132,8 +134,8 @@ namespace MaterialEditorRework
 			GUI.DrawTexture(NoneSelectedRect, TextureCache.GetOrCreateSolid(Color.white));
 			if (listTreeviewView.AnySelected())
 			{
-				propertyHeaderView.Draw(new Rect(320, 0, _windowPosition.width - 320, 98));
 				propertyContentView.Draw(new Rect(320, 98, 730, 502));
+				propertyHeaderView.Draw(new Rect(320, 0, _windowPosition.width - 320, 98));
 			}
 			else
 			{

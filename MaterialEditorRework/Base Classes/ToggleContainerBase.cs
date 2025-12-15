@@ -15,11 +15,14 @@ namespace MaterialEditorRework.Views
 
 		public ToggleContainerBase(Vector2 size)
 		{
-			_headerTextureClose = TextureFactory.SolidColor(size.x, size.y, Color.white)
+			_headerTextureClose = TextureFactory.SolidColor((int)size.x, (int)size.y, Color.white)
 				.BorderRadius(10, aliasDistance: 0.5f);
-			_headerTextureOpen = TextureFactory.SolidColor(size.x, size.y, Color.white)
+			_headerTextureOpen = TextureFactory.SolidColor((int)size.x, (int)size.y, Color.white)
 				.BorderRadius(10, BorderType.TopLeft | BorderType.TopRight, 0.5f);
-			_footerTexture = TextureFactory.SolidColor(size.x, 10, Color.white)
+			_footerTexture = TextureFactory.SolidColor((int)size.x, 10, Color.white)
+				.BorderRadius(10, BorderType.BottomLeft | BorderType.BottomRight, 0.5f);
+			
+			var q = TextureFactory.SolidColor((int)size.x, 10, Color.white)
 				.BorderRadius(10, BorderType.BottomLeft | BorderType.BottomRight, 0.5f);
 		}
 		public void Draw(Rect header, Rect content)

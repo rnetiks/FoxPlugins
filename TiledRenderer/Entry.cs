@@ -4,9 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Addin;
 using BepInEx;
 using BepInEx.Configuration;
-using Prototype.UIElements;
+using HarmonyLib;
 using UnityEngine;
 
 namespace TiledRenderer
@@ -40,12 +41,23 @@ namespace TiledRenderer
         private void Awake()
         {
             _openUIKey = Config.Bind("General", "Open UI", new KeyboardShortcut(KeyCode.None));
+            Harmony.CreateAndPatchAll(GetType());
         }
 
-        private Slider tilesXSlider = new Slider(1, 1, 20, "Tiles X", $"F0"){AllowUnclamped = true};
-        private Slider tilesYSlider = new Slider(1, 1, 20, "Tiles Y", $"F0"){AllowUnclamped = true};
-        private Slider tileWidthSlider = new Slider(1920, 512, 4096, "Tile Width", $"F0"){AllowUnclamped = true};
-        private Slider tileHeightSlider = new Slider(1080, 512, 4096, "Tile Height", $"F0"){AllowUnclamped = true};
+        public static bool _StopCull = false;
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Camera), nameof(Camera.ResetProjectionMatrix))]
+        public static bool RenderCamera_Render_Prefix(Camera __instance)
+        {
+            return !_StopCull;
+        }
+
+        private Slider tilesXSlider = new Slider(1, 1, 20, "Tiles X", $"F0") { AllowUnclamped = true };
+        private Slider tilesYSlider = new Slider(1, 1, 20, "Tiles Y", $"F0") { AllowUnclamped = true };
+        private Slider tileWidthSlider = new Slider(1920, 512, 4096, "Tile Width", $"F0") { AllowUnclamped = true };
+        private Slider tileHeightSlider = new Slider(1080, 512, 4096, "Tile Height", $"F0") { AllowUnclamped = true };
+
         private void OnGUI()
         {
             if (!_uiOpen) return;
@@ -123,6 +135,7 @@ namespace TiledRenderer
                 Logger.LogError("Render camera is not assigned");
                 yield break;
             }
+            _StopCull = true;
             string timestamp = DateTime.Now.ToString("yy-MM-dd_HH-mm-ss");
             currentRenderFolder = Path.Combine(outputPath, $"TiledRender_{timestamp}");
             if (!Directory.Exists(currentRenderFolder) && saveIndividualTiles)
@@ -168,8 +181,8 @@ namespace TiledRenderer
                     });
                     p.BeginErrorReadLine();
                     p.BeginOutputReadLine();
-                    p.OutputDataReceived += (sender, args) => Logger.LogDebug(args.Data);
-                    p.ErrorDataReceived += (sender, args) => Logger.LogError(args.Data);
+                    p.OutputDataReceived += (sender, args) => Logger.LogDebug("VIPS: " + args.Data);
+                    p.ErrorDataReceived += (sender, args) => Logger.LogError("VIPS: " + args.Data);
                     p.WaitForExit(); // Inefficient, but it works
                 }
                 catch (Exception e)
@@ -177,7 +190,8 @@ namespace TiledRenderer
                     Logger.LogError(e);
                 }
             }
-            Cleanup();
+            cln();
+            _StopCull = false;
         }
 
         private IEnumerator RenderTile(int tileX, int tileY)
@@ -197,13 +211,13 @@ namespace TiledRenderer
             top = top * 2f - 1f;
             Matrix4x4 tileProjection = CreateTileProjectionMatrix(left, right, bottom, top);
             renderCamera.projectionMatrix = tileProjection;
-            
+
             yield return null;
             RenderTexture targetTexture = renderCamera.targetTexture;
             RenderTexture active = RenderTexture.active;
             Texture2D tileTexture = new Texture2D(tileWidth, tileHeight, textureFormat, false);
             var rect = renderCamera.rect;
-            
+
             renderCamera.targetTexture = tileRenderTexture;
             renderCamera.rect = new Rect(0, 0, 1, 1);
             renderCamera.Render();
@@ -253,7 +267,7 @@ namespace TiledRenderer
             }
             return matrix;
         }
-        
+
         private static GUIStyle _style;
 
         private static GUIStyle Style => _style ?? (_style = new GUIStyle(GUI.skin.box));
@@ -272,7 +286,7 @@ namespace TiledRenderer
             float c = -(far + near) / (far - near);
             float d = -(2.0f * far * near) / (far - near);
 
-            
+
             m[0, 0] = x;
             m[0, 1] = 0;
             m[0, 2] = a;
@@ -295,16 +309,16 @@ namespace TiledRenderer
 
             return m;
         }
-        
+
         private static MethodInfo PNGEncoder, JPGEncoder;
         private static MethodInfo _modernPNG, _modernJPG, _legacyPNG, _legacyJPG;
         private static bool _initializedTextureAbstractions;
-        
+
         private static void InitImageConversion()
         {
             try
             {
-                var imageConversion = Type.GetType("UnityEngine.ImageConversion") ?? 
+                var imageConversion = Type.GetType("UnityEngine.ImageConversion") ??
                                       Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetType("UnityEngine.ImageConversion") != null)?.GetType("UnityEngine.ImageConversion");
 
                 if (imageConversion != null)
@@ -317,31 +331,31 @@ namespace TiledRenderer
                 _legacyJPG = typeof(Texture2D).GetMethod("EncodeToJPG", BindingFlags.Public | BindingFlags.Instance, null, new Type[0], null);
             }
             catch { }
-        
+
             _initializedTextureAbstractions = true;
         }
-        
+
         public static byte[] EncodeToPNG(Texture2D texture)
         {
             if (!_initializedTextureAbstractions) InitImageConversion();
-        
+
             if (_modernPNG != null)
                 return (byte[])_modernPNG.Invoke(null, new object[] { texture });
             if (_legacyPNG != null)
                 return (byte[])_legacyPNG.Invoke(texture, new object[0]);
-        
+
             throw new NotSupportedException("PNG encoding not available");
         }
 
         public static byte[] EncodeToJPG(Texture2D texture)
         {
             if (!_initializedTextureAbstractions) InitImageConversion();
-        
+
             if (_modernJPG != null)
                 return (byte[])_modernJPG.Invoke(null, new object[] { texture });
             if (_legacyJPG != null)
                 return (byte[])_legacyJPG.Invoke(texture, new object[0]);
-        
+
             throw new NotSupportedException("JPG encoding not available");
         }
 
@@ -356,11 +370,16 @@ namespace TiledRenderer
             Logger.LogDebug($"Saved tile: {tileFileName} (ID: {currentTileId}, Grid: {tileX + 1}, {tileY + 1})");
         }
 
-        private void Cleanup()
+        private void cln()
         {
-            if (originalProjectionMatrix != default)
+            if (originalProjectionMatrix != default && renderCamera != null)
                 renderCamera.projectionMatrix = originalProjectionMatrix;
-            renderCamera.targetTexture = null;
+
+            if (renderCamera != null)
+            {
+                renderCamera.targetTexture = null;
+            }
+
             if (tileRenderTexture != null)
             {
                 tileRenderTexture.Release();
@@ -374,7 +393,7 @@ namespace TiledRenderer
 
         private void OnDestroy()
         {
-            Cleanup();
+            cln();
         }
     }
 }

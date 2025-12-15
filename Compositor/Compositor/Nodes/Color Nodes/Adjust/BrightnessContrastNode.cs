@@ -75,7 +75,7 @@ namespace Compositor.KK
 
             var imageData = _inputs[0].GetValue<float[]>();
 
-            // Tiny optimization, stops the node from taking unnecessary resources
+            // Tiny optimization stops the node from taking unnecessary resources
             if (!_inputs[1].IsConnected && !_inputs[2].IsConnected && brightness == 0 && contrast == 0)
             {
                 _outputs[0].SetValue(imageData);

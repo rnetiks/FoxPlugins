@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Addin
@@ -25,6 +26,19 @@ namespace Addin
         private Vector2 _clickPos;
         private const float CLICK_THRESHOLD = 0.2f;
         private const float DRAG_THRESHOLD = 3f;
+        private Dictionary<int, Texture2D> _textures = new Dictionary<int, Texture2D>();
+
+        private Texture2D Texture(Color color)
+        {
+            int hash = color.GetHashCode();
+            if (_textures.TryGetValue(hash, out Texture2D texture))
+                return texture;
+            texture = new Texture2D(1, 1);
+            texture.SetPixel(0, 0, color);
+            texture.Apply();
+            _textures[hash] = texture;
+            return texture;
+        }
 
         public float Value
         {
@@ -62,6 +76,9 @@ namespace Addin
             set => _format = value;
         }
 
+        /// Indicates whether the slider is allowed to operate with values outside of the defined minimum and maximum range.
+        /// If set to true, the slider will accept unclamped values and will not restrict inputs to the specified range.
+        /// If set to false, the slider will clamp input values to the defined range of MinValue and MaxValue.
         public bool AllowUnclamped;
 
         public event Action<float> OnValueChanged;
@@ -155,7 +172,7 @@ namespace Addin
                         float range = _maxValue - _minValue;
                         float magnitude = Mathf.Pow(10, Mathf.Floor(Mathf.Log10(range)));
                         float snapIncrement = magnitude * 0.1f;
-    
+
                         newValue = Mathf.Round(newValue / snapIncrement) * snapIncrement;
                     }
 
@@ -299,17 +316,17 @@ namespace Addin
             }
             DrawBorder(rect, borderColor, 1f);
 
-            GUI.DrawTexture(rect, Texture.GetOrCreateSolid(backgroundColor));
+            GUI.DrawTexture(rect, Texture(backgroundColor));
 
             if (_value >= _minValue && _value <= _maxValue)
             {
                 Rect fillRect = new Rect(rect.x, rect.y, rect.width * normalizedValue, rect.height);
-                GUI.DrawTexture(fillRect, Texture.GetOrCreateSolid(fillColor));
+                GUI.DrawTexture(fillRect, Texture(fillColor));
             }
             else
             {
                 Rect indicatorRect = new Rect(rect.x + 2, rect.y + 2, rect.width - 4, rect.height - 4);
-                GUI.DrawTexture(indicatorRect, Texture.GetOrCreateSolid(new Color(fillColor.r, fillColor.g, fillColor.b, 0.3f)));
+                GUI.DrawTexture(indicatorRect, Texture(new Color(fillColor.r, fillColor.g, fillColor.b, 0.3f)));
             }
 
 
@@ -330,7 +347,7 @@ namespace Addin
                 fontSize = 11,
                 fontStyle = FontStyle.Bold
             };
-            
+
             Rect shadowRect = new Rect(rect.x + 1, rect.y + 1, rect.width, rect.height);
             GUI.Label(shadowRect, displayText, new GUIStyle(textStyle) { normal = { textColor = Color.black } });
             GUI.Label(rect, displayText, textStyle);
@@ -338,7 +355,7 @@ namespace Addin
 
         private void DrawBorder(Rect rect, Color color, float thickness)
         {
-            GUI.DrawTexture(new Rect(rect.x-thickness, rect.y-thickness, rect.width+thickness*2, rect.height+thickness*2), Texture.GetOrCreateSolid(color));
+            GUI.DrawTexture(new Rect(rect.x - thickness, rect.y - thickness, rect.width + thickness * 2, rect.height + thickness * 2), Texture(color));
         }
 
         public void ResetToDefault()

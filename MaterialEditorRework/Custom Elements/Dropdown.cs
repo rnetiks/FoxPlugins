@@ -62,6 +62,12 @@ namespace MaterialEditorRework.CustomElements
 			_options = options;
 		}
 
+		public void SetOptions(string[] options, int index)
+		{
+			_options = options;
+			this._selectedIndex = index;
+		}
+
 		public void SelectOption(string option)
 		{
 			int index = Array.IndexOf(_options, option);
@@ -229,7 +235,7 @@ namespace MaterialEditorRework.CustomElements
 						GUI.DrawTexture(optionRect, _containerItemHoverTexture);
 					}
 
-					GUI.Label(new Rect(optionRect.x + 4, optionRect.y, optionRect.width - 8, optionRect.height), _options[i], _labelStyle);
+					GUI.Label(new Rect(optionRect.x + 4, optionRect.y, 300/*optionRect.width - 8*/, optionRect.height), _options[i], _labelStyle);
 
 					if (Event.current.type == EventType.MouseDown &&  optionRect.Contains(Event.current.mousePosition))
 					{
