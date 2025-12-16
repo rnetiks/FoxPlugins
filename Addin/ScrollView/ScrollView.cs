@@ -21,7 +21,7 @@ namespace Addin
         
         public Vector2 ScrollPosition => _scrollPosition;
 
-        public CustomScrollView(float scrollbarWidth = 2f)
+        public ScrollView(float scrollbarWidth = 2f)
         {
             ScrollbarWidth = scrollbarWidth;
             _scrollbarID = GUIUtility.GetControlID(FocusType.Passive);

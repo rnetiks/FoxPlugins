@@ -31,6 +31,17 @@ namespace Addin
 
         public event Action<List<GradientStop>> OnGradientChanged;
         public List<GradientStop> Stops => _stops;
+        
+        private static Dictionary<int, Texture2D> _textureCache = new Dictionary<int, Texture2D>();
+        private Texture2D GetTexture(Color color)
+        {
+            if (_textureCache.TryGetValue(color.GetHashCode(),  out var texture)) return texture;
+            texture = new Texture2D(1, 1);
+            texture.SetPixel(0, 0, color);
+            texture.Apply();
+            _textureCache[color.GetHashCode()] = texture;
+            return texture;
+        }
 
         public Gradient()
         {
@@ -127,10 +138,10 @@ namespace Addin
             Rect stopRect = new Rect(x - 6, stopsRect.y, 12, stopsRect.height);
 
             Color handleColor = stop.selected ? Color.yellow : Color.white;
-            GUI.DrawTexture(stopRect, Texture.GetOrCreateSolid(handleColor));
+            GUI.DrawTexture(stopRect, GetTexture(handleColor));
 
             Rect colorRect = new Rect(x - 4, stopsRect.y + 2, 8, stopsRect.height - 4);
-            GUI.DrawTexture(colorRect, Texture.GetOrCreateSolid(stop.color));
+            GUI.DrawTexture(colorRect, GetTexture(stop.color));
 
             bool isHovering = stopRect.Contains(currentEvent.mousePosition);
 
@@ -270,7 +281,7 @@ namespace Addin
 
         private void DrawBorder(Rect rect, Color color, float thickness)
         {
-            var borderTexture = Texture.GetOrCreateSolid(color);
+            var borderTexture = GetTexture(color);
             GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, thickness), borderTexture);
             GUI.DrawTexture(new Rect(rect.x, rect.y + rect.height - thickness, rect.width, thickness), borderTexture);
             GUI.DrawTexture(new Rect(rect.x, rect.y, thickness, rect.height), borderTexture);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Addin
@@ -16,9 +17,31 @@ namespace Addin
         private Texture2D _colorWheelTexture;
         private ColorWheelShape _shape = ColorWheelShape.Circle;
         private int _textureSize = 128;
-        public float Quality = 1f;
+        private float _quality = 1f;
+        public float Quality
+        {
+            get
+            {
+                return _quality;
+            }
+            set
+            {
+                _quality = value;
+                GenerateColorWheel();
+            }
+        }
         private GUIStyle _filterButton;
         private GUIStyle _filterButtonSelected;
+        private static Dictionary<int, Texture2D> _textureCache = new Dictionary<int, Texture2D>();
+        private Texture2D GetTexture(Color color)
+        {
+            if (_textureCache.TryGetValue(color.GetHashCode(),  out var texture)) return texture;
+            texture = new Texture2D(1, 1);
+            texture.SetPixel(0, 0, color);
+            texture.Apply();
+            _textureCache[color.GetHashCode()] = texture;
+            return texture;
+        }
 
 
         public GUIStyle FilterButton
@@ -32,12 +55,12 @@ namespace Addin
                         normal =
                         {
                             textColor = new Color(0.35f, 0.35f, 0.35f, 1f),
-                            background = Texture.GetOrCreateSolid(new Color(0.2f, 0.4f, 0.6f, 1f))
+                            background = GetTexture(new Color(0.2f, 0.4f, 0.6f, 1f))
                         },
                         hover =
                         {
                             textColor = new Color(1, 1, 1, 1f),
-                            background = Texture.GetOrCreateSolid(new Color(0.45f, 0.45f, 0.45f, 1f))
+                            background = GetTexture(new Color(0.45f, 0.45f, 0.45f, 1f))
                         },
                         fontSize = 9,
                         alignment = TextAnchor.MiddleCenter,
@@ -59,12 +82,12 @@ namespace Addin
                         normal =
                         {
                             textColor = Color.white,
-                            background = Texture.GetOrCreateSolid(new Color(0.2f, 0.4f, 0.6f, 1f))
+                            background = GetTexture(new Color(0.2f, 0.4f, 0.6f, 1f))
                         },
                         hover =
                         {
                             textColor = Color.white,
-                            background = Texture.GetOrCreateSolid(new Color(0.45f, 0.45f, 0.45f, 1f))
+                            background = GetTexture(new Color(0.45f, 0.45f, 0.45f, 1f))
                         },
                         fontSize = 9,
                         alignment = TextAnchor.MiddleCenter,
@@ -222,7 +245,7 @@ namespace Addin
             }
 
             float indicatorY = rect.y + rect.height * (1f - _brightness);
-            GUI.DrawTexture(new Rect(rect.x - 2, indicatorY - 1, rect.width + 4, 2), Texture.GetOrCreateSolid(Color.white));
+            GUI.DrawTexture(new Rect(rect.x - 2, indicatorY - 1, rect.width + 4, 2), GetTexture(Color.white));
 
             UnityEngine.Object.DestroyImmediate(brightnessTexture);
         }
@@ -256,7 +279,7 @@ namespace Addin
                 UnityEngine.Object.DestroyImmediate(_colorWheelTexture);
             }
 
-            int textureSize = (int)(_textureSize * Quality);
+            int textureSize = (int)(_textureSize * _quality);
             _colorWheelTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
 
             for (int x = 0; x < textureSize; x++)
@@ -337,8 +360,8 @@ namespace Addin
             screenPos.y = Mathf.Clamp(screenPos.y, rect.y, rect.y + rect.height);
 
             Color indicatorColor = _brightness > 0.5f ? Color.black : Color.white;
-            GUI.DrawTexture(new Rect(screenPos.x - 6, screenPos.y - 1, 12, 2), Texture.GetOrCreateSolid(indicatorColor));
-            GUI.DrawTexture(new Rect(screenPos.x - 1, screenPos.y - 6, 2, 12), Texture.GetOrCreateSolid(indicatorColor));
+            GUI.DrawTexture(new Rect(screenPos.x - 6, screenPos.y - 1, 12, 2), GetTexture(indicatorColor));
+            GUI.DrawTexture(new Rect(screenPos.x - 1, screenPos.y - 6, 2, 12), GetTexture(indicatorColor));
         }
 
         /// Converts hue and saturation values into a position on the color wheel or rectangle.

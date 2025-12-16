@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Addin
 {
     public class Polygon

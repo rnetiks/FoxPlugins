@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Addin
 {
-	public class Checkbox
+	public class CheckboxM
 	{
         private bool _state;
         private bool _isHovering;
@@ -44,7 +44,7 @@ namespace Addin
 
         public event Action<bool> OnValueChanged;
 
-        public Checkbox(bool state = false)
+        public CheckboxM(bool state = false)
         {
             _state = state;
             _dragProgress = state ? 1f : 0f;

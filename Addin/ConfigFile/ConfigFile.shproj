@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup Label="Globals">
-		<ProjectGuid>{22D36A43-DAAC-4E51-A572-EEAAE24C69D3}</ProjectGuid>
-		<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+		<ProjectGuid>{cd109895-2989-48cd-8139-141b4709a16d}</ProjectGuid>
 	</PropertyGroup>
 	<Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props"
 			Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
 	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\CodeSharing\Microsoft.CodeSharing.Common.Default.props"/>
 	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\CodeSharing\Microsoft.CodeSharing.Common.props"/>
-	<Import Project="SmartRect.projitems" Label="Shared"/>
+	<Import Project="ConfigFile.projitems" Label="Shared"/>
 	<Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\CodeSharing\Microsoft.CodeSharing.CSharp.targets"/>
 </Project>
