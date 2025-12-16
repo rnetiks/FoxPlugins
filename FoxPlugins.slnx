@@ -91,20 +91,6 @@
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
   </Folder>
-  <Folder Name="/PrismaLib/">
-    <Project Path="PrismaLib\PrismaLib.KKS\PrismaLib.KKS.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-    </Project>
-    <Project Path="PrismaLib\PrismaLib.KK\PrismaLib.KK.csproj" Type="Classic C#">
-      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-    </Project>
-    <Project Path="PrismaLib\PrismaLib.shproj">
-      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-    </Project>
-  </Folder>
   <Folder Name="/Search/">
     <Project Path="Search\Search.shproj">
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
@@ -116,10 +102,6 @@
     </Project>
   </Folder>
   <Project Path="BoxSelect.KKS\BoxSelect.KKS.csproj" Type="Classic C#">
-    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
-    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
-  </Project>
-  <Project Path="InternalConsole\InternalConsole.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
