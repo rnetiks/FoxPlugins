@@ -10,15 +10,12 @@ namespace MaterialEditorRework.CustomElements.ToggleContainers
 		}
 		public override void DrawHeader(Rect rect)
 		{
-			throw new System.NotImplementedException();
+			GUI.DrawTexture(new Rect(rect.x + 16, rect.y + rect.height / 2 - 10, 20, 20), Icons.ImageIcon);
+			GUI.Label(new Rect(rect.x + 48, rect.y + rect.height / 2 - 10, 100, 20), "Textures", Styles.BoldBlack);
 		}
 		public override void DrawContent(Rect rect)
 		{
-			throw new System.NotImplementedException();
-		}
-		public override int GetHeight()
-		{
-			throw new System.NotImplementedException();
+
 		}
 	}
 }

@@ -42,15 +42,10 @@ namespace MaterialEditorRework.Views.Property
 					_dropdown = new Dropdown();
 
 					List<Shader> shaders = new List<Shader>();
-					foreach (var shader in Resources.FindObjectsOfTypeAll<Shader>())
-					{
-						if (string.IsNullOrEmpty(shader.name.Trim()) || shaders.Contains(shader))
-							continue;
-						shaders.Add(shader);
-					}
+					shaders.AddRange(Resources.FindObjectsOfTypeAll<Shader>());
 
-					availableShaders = shaders.Distinct(x => x.name).ToArray();
-					availableShaders = availableShaders.OrderBy(x => x.name).ToArray();
+					// availableShaders = shaders.Distinct(x => x.name).ToArray();
+					availableShaders = shaders.OrderBy(x => x.name).ToArray();
 					_dropdown.SetOptions(availableShaders.Select(x => x.name).ToArray(), Array.IndexOf(availableShaders, material.shader));
 					_dropdown.SetMaxContainerSize(new Vector2(150, 200));
 

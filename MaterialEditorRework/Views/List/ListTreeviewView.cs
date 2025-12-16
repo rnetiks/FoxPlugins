@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
+using Addin;
 using MaterialEditorRework.CustomElements;
 using TexFac.Universal;
 using UnityEngine;
@@ -72,6 +73,7 @@ namespace MaterialEditorRework.Views
 
 		private Vector2 scrollPosition = Vector2.zero;
 
+		private ScrollView _csv = new ScrollView(5);
 		private void DrawList(Rect rect)
 		{
 
@@ -80,16 +82,18 @@ namespace MaterialEditorRework.Views
 			{
 				int sum = items.Where(x => x.Renderer.name.ToLower().Contains(_filter.ToLower())).Sum(x => x.CalculateHeight());
 				bool reduce = sum > rect.height;
-				scrollPosition = GUI.BeginScrollView(rect, scrollPosition, new Rect(0, 0, 0, sum + 5));
+				var position = _csv.BeginScrollView(rect, sum + 5);
+				// scrollPosition = GUI.BeginScrollView(rect, scrollPosition, new Rect(0, 0, 0, sum + 5));
 				foreach (var item in items)
 				{
 					if (item.Renderer.name.Contains(Filter))
 					{
-						item.Draw(new Rect(8, yx + 8, reduce ? 293 : 303, 50));
+						item.Draw(new Rect(8, position.y + yx + 8, reduce ? 293 : 303, 50));
 						yx += item.CalculateHeight();
 					}
 				}
-				GUI.EndScrollView();
+				_csv.EndScrollView();
+				// GUI.EndScrollView();
 			}
 			else
 			{

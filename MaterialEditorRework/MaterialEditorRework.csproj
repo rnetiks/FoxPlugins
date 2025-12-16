@@ -193,6 +193,8 @@
     <Import Project="..\Addin\Slider\Slider.projitems" Label="Shared" />
     <Import Project="..\Addin\35proc\35proc.projitems" Label="Shared" />
     <Import Project="..\Addin\debug\debug.projitems" Label="Shared" />
+    <Import Project="..\Addin\ColorPicker\ColorPicker.projitems" Label="Shared" />
+    <Import Project="..\Addin\ScrollView\ScrollView.projitems" Label="Shared" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">

@@ -148,6 +148,38 @@ namespace MaterialEditorRework
 			}
 		}
 
+		public static Texture2D ImageIcon
+		{
+			get
+			{
+				if (_imageIcon == null)
+				{
+					var rawData = GetSvgData("image.svg");
+					var bytes = Svg.SvgContentToPngBytes(rawData, IconSize, IconSize);
+					_imageIcon = new Texture2D(IconSize, IconSize);
+					ImageConversion.LoadImage(_imageIcon, bytes);
+				}
+				
+				return _imageIcon;
+			}
+		}
+
+		public static Texture2D PaletteIcon
+		{
+			get
+			{
+				if (_paletteIcon == null)
+				{
+					var rawData = GetSvgData("palette.svg");
+					var bytes = Svg.SvgContentToPngBytes(rawData, IconSize, IconSize);
+					_paletteIcon = new Texture2D(IconSize, IconSize);
+					ImageConversion.LoadImage(_paletteIcon, bytes);
+				}
+
+				return _paletteIcon;
+			}
+		}
+
 		private static string GetSvgData(string path)
 		{
 			var rawData = KKAPI.Utilities.ResourceUtils.GetEmbeddedResource("MaterialEditorRework.Resources.SVGs." + path, typeof(Icons).Assembly);
