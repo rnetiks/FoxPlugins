@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HarmonyPatchInspector")]
+[assembly: AssemblyTitle("Sculpt.KKS")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("HarmonyPatchInspector")]
+[assembly: AssemblyProduct("Sculpt.KKS")]
 [assembly: AssemblyCopyright("Copyright ©  2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("F574A845-56C0-4E92-A479-8F16B3336FF8")]
+[assembly: Guid("8D498EED-2452-4D3C-BDE5-A46801CED000")]
 
 // Version information for an assembly consists of the following four values:
 //
