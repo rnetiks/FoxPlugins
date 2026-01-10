@@ -3,7 +3,6 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Addin;
 using BepInEx;
 using BepInEx.Configuration;
@@ -13,107 +12,35 @@ using UnityEngine;
 namespace TiledRenderer
 {
     [BepInPlugin("org.fox.tiledrenderer", "Tiled Renderer", "1.0.0")]
-    [BepInProcess("CharaStudio")]
     public class Entry : BaseUnityPlugin
     {
-        ConfigEntry<KeyboardShortcut> _openUIKey;
-        ConfigEntry<KeyboardShortcut> _render;
-        public static Camera renderCamera;
-        public static int tilesX = 2;
-        public static int tilesY = 2;
-        public static int tileWidth = 1920;
-        public static int tileHeight = 1080;
-        public TextureFormat textureFormat = TextureFormat.RGB24;
-        public string outputPath = "TiledRender";
-        private bool _uiOpen;
-        public bool saveIndividualTiles = true;
-        public float delayBetweenTiles = 0.1f;
-        private float progress = 0;
+        private const int DEFAULT_TILE_COUNT = 2;
+        private const int DEFAULT_TILE_WIDTH = 1920;
+        private const int DEFAULT_TILE_HEIGHT = 1080;
+        private const int MIN_TILE_SIZE = 512;
+        private const int MAX_TILE_SIZE = 4096;
+        private const int MIN_TILE_COUNT = 1;
+        private const int MAX_TILE_COUNT = 20;
 
-        private Matrix4x4 originalProjectionMatrix;
-        private RenderTexture tileRenderTexture;
-        private string currentRenderFolder;
-        private int currentTileId;
-        private int finalImageWidth;
-        private int finalImageHeight;
-        private string combinedImagePath;
+        private ConfigEntry<KeyboardShortcut> _openUIKey;
+
+        private bool _uiOpen;
+        private float _progress;
+        private readonly Slider _tilesXSlider = new Slider(DEFAULT_TILE_COUNT, MIN_TILE_COUNT, MAX_TILE_COUNT, "Tiles X", "F0") { AllowUnclamped = true };
+        private readonly Slider _tilesYSlider = new Slider(DEFAULT_TILE_COUNT, MIN_TILE_COUNT, MAX_TILE_COUNT, "Tiles Y", "F0") { AllowUnclamped = true };
+        private readonly Slider _tileWidthSlider = new Slider(DEFAULT_TILE_WIDTH, MIN_TILE_SIZE, MAX_TILE_SIZE, "Tile Width", "F0") { AllowUnclamped = true };
+        private readonly Slider _tileHeightSlider = new Slider(DEFAULT_TILE_HEIGHT, MIN_TILE_SIZE, MAX_TILE_SIZE, "Tile Height", "F0") { AllowUnclamped = true };
+
+        private RenderSettings _renderSettings = new RenderSettings();
+
+        private RenderState _renderState;
+        private static bool _cameraResetProjectionMatrixBlocked;
 
         private void Awake()
         {
             _openUIKey = Config.Bind("General", "Open UI", new KeyboardShortcut(KeyCode.None));
             Harmony.CreateAndPatchAll(GetType());
-        }
-
-        public static bool _StopCull = false;
-
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(Camera), nameof(Camera.ResetProjectionMatrix))]
-        public static bool RenderCamera_Render_Prefix(Camera __instance)
-        {
-            return !_StopCull;
-        }
-
-        private Slider tilesXSlider = new Slider(1, 1, 20, "Tiles X", $"F0") { AllowUnclamped = true };
-        private Slider tilesYSlider = new Slider(1, 1, 20, "Tiles Y", $"F0") { AllowUnclamped = true };
-        private Slider tileWidthSlider = new Slider(1920, 512, 4096, "Tile Width", $"F0") { AllowUnclamped = true };
-        private Slider tileHeightSlider = new Slider(1080, 512, 4096, "Tile Height", $"F0") { AllowUnclamped = true };
-
-        private void OnGUI()
-        {
-            if (!_uiOpen) return;
-
-            var screenRect = new Rect(100, 100, 300, 400);
-            GUILayout.BeginArea(screenRect);
-            GUILayout.BeginVertical("box");
-            GUILayout.Label("Tiled Renderer Configuration");
-            tilesX = (int)tilesXSlider.Draw();
-            GUILayout.Space(10);
-            tilesY = (int)tilesYSlider.Draw();
-            GUILayout.Space(10);
-            tileWidth = (int)tileWidthSlider.Draw();
-            GUILayout.Space(10);
-            tileHeight = (int)tileHeightSlider.Draw();
-            GUILayout.Space(10);
-            saveIndividualTiles = GUILayout.Toggle(saveIndividualTiles, saveIndividualTiles ? "Save tiles" : "Dry run");
-            GUILayout.Space(10);
-            if (GUILayout.Button("Detect Screen resolution"))
-            {
-                tileWidthSlider.Value = Screen.width;
-                tileHeightSlider.Value = Screen.height;
-                if (tilesXSlider.Value > tilesYSlider.Value)
-                {
-                    tilesYSlider.Value = tilesXSlider.Value;
-                }
-                else
-                {
-                    tilesXSlider.Value = tilesYSlider.Value;
-                }
-            }
-            if (GUILayout.Button("Detect Aspect Ratio"))
-            {
-                float aspect = Screen.width / (float)Screen.height;
-                tileHeightSlider.Value = (int)Mathf.Ceil(tileWidthSlider.Value / aspect);
-            }
-            long finalMemory = (long)tileWidth * tileHeight * 12;
-            GUILayout.Label($"Final Size: {tilesX * tileWidth}x{tilesY * tileHeight}");
-            GUILayout.Label($"Est. Tile Memory: {(finalMemory / 1024f / 1024):F1} MB");
-            GUILayout.Space(10);
-            if (GUILayout.Button("Start Render"))
-            {
-                renderCamera = Camera.main;
-                progress = 0;
-                StartTileRendering();
-            }
-
-            if (progress > 0)
-            {
-                GUILayout.Label("Progress: " + progress.ToString("P1"));
-            }
-            GUILayout.EndVertical();
-            GUILayout.EndArea();
-
-            if (screenRect.Contains(Event.current.mousePosition))
-                Input.ResetInputAxes();
+            ImageEncoder.Initialize();
         }
 
         private void Update()
@@ -122,278 +49,325 @@ namespace TiledRenderer
                 _uiOpen = !_uiOpen;
         }
 
-        public void StartTileRendering()
+        private void OnGUI()
         {
-            InitImageConversion();
+            if (!_uiOpen) return;
+
+            var screenRect = new Rect(100, 100, 300, 400);
+            GUILayout.BeginArea(screenRect);
+            DrawUI();
+            GUILayout.EndArea();
+
+            if (screenRect.Contains(Event.current.mousePosition))
+                Input.ResetInputAxes();
+        }
+
+        private void DrawUI()
+        {
+            GUILayout.BeginVertical("box");
+            GUILayout.Label("Tiled Renderer Configuration");
+
+            DrawSliders();
+            DrawPresetButtons();
+            DrawRenderInfo();
+            DrawRenderButton();
+            DrawProgress();
+
+            GUILayout.EndVertical();
+        }
+
+        private void DrawSliders()
+        {
+            _renderSettings.TilesX = (int)_tilesXSlider.Draw();
+            GUILayout.Space(10);
+            _renderSettings.TilesY = (int)_tilesYSlider.Draw();
+            GUILayout.Space(10);
+            _renderSettings.TileWidth = (int)_tileWidthSlider.Draw();
+            GUILayout.Space(10);
+            _renderSettings.TileHeight = (int)_tileHeightSlider.Draw();
+            GUILayout.Space(10);
+        }
+
+        private void DrawPresetButtons()
+        {
+            if (GUILayout.Button("Detect Screen resolution"))
+            {
+                ApplyScreenResolution();
+            }
+
+            if (GUILayout.Button("Detect Aspect Ratio"))
+            {
+                ApplyAspectRatio();
+            }
+        }
+
+        private void DrawRenderInfo()
+        {
+            int finalWidth = _renderSettings.TilesX * _renderSettings.TileWidth;
+            int finalHeight = _renderSettings.TilesY * _renderSettings.TileHeight;
+            GUILayout.Label($"Final Size: {finalWidth}x{finalHeight}");
+            GUILayout.Space(10);
+
+            if (finalWidth > 50_000 || finalHeight > 50_000)
+                GUI.enabled = false;
+            else
+                GUI.enabled = true;
+        }
+
+        private void DrawRenderButton()
+        {
+            if (GUILayout.Button("Start Render"))
+            {
+                StartTileRendering();
+            }
+        }
+
+        private void DrawProgress()
+        {
+            if (_progress > 0)
+            {
+                GUILayout.Label($"Progress: {_progress:P1}");
+            }
+        }
+
+        private void ApplyScreenResolution()
+        {
+            _tileWidthSlider.Value = Screen.width;
+            _tileHeightSlider.Value = Screen.height;
+
+            if (_tilesXSlider.Value > _tilesYSlider.Value)
+                _tilesYSlider.Value = _tilesXSlider.Value;
+            else
+                _tilesXSlider.Value = _tilesYSlider.Value;
+        }
+
+        private void ApplyAspectRatio()
+        {
+            float aspect = Screen.width / (float)Screen.height;
+            _tileHeightSlider.Value = (int)Mathf.Ceil(_tileWidthSlider.Value / aspect);
+        }
+
+        private void StartTileRendering()
+        {
+            _progress = 0;
             StartCoroutine(RenderTiledImage());
         }
 
         private IEnumerator RenderTiledImage()
         {
-            if (renderCamera == null)
+            Camera camera = Camera.main;
+            if (camera == null)
             {
-                Logger.LogError("Render camera is not assigned");
+                Logger.LogError("Main camera is not available");
                 yield break;
             }
-            _StopCull = true;
-            string timestamp = DateTime.Now.ToString("yy-MM-dd_HH-mm-ss");
-            currentRenderFolder = Path.Combine(outputPath, $"TiledRender_{timestamp}");
-            if (!Directory.Exists(currentRenderFolder) && saveIndividualTiles)
-                Directory.CreateDirectory(currentRenderFolder);
-            currentTileId = 0;
-            originalProjectionMatrix = renderCamera.projectionMatrix;
-            tileRenderTexture = new RenderTexture(tileWidth, tileHeight, 24);
-            tileRenderTexture.format = RenderTextureFormat.ARGB32;
-            tileRenderTexture.Create();
-            finalImageWidth = tilesX * tileWidth;
-            finalImageHeight = tilesY * tileHeight;
 
-            Logger.LogDebug($"Starting tiled render: {finalImageWidth}x{finalImageHeight} ({tilesX}x{tilesY} tiles of {tileWidth}x{tileHeight})");
-            Logger.LogDebug($"Saving tiles to {currentRenderFolder}");
-            for (var y = 0; y < tilesY; y++)
-            {
-                for (var x = 0; x < tilesX; x++)
-                {
-                    yield return StartCoroutine(RenderTile(x, y));
-                }
-                float progress = (float)(y + 1) / tilesY;
-                this.progress = progress;
-                Logger.LogDebug($"Tiled render progress: {progress:P1}");
-            }
+            _renderState = new RenderState(camera, _renderSettings);
+            _cameraResetProjectionMatrixBlocked = true;
 
-            Logger.LogDebug($"Tiled render completed");
-            if (saveIndividualTiles)
-            {
-                Logger.LogDebug($"Saved to: {currentRenderFolder}");
-                string join = string.Join(" ", Directory.GetFiles(currentRenderFolder).Select(e => Path.GetFileName(e)).ToArray());
-                try
-                {
-                    Process.Start(currentRenderFolder);
-                    var p = Process.Start(new ProcessStartInfo()
-                    {
-                        WorkingDirectory = currentRenderFolder,
-                        Arguments = $"arrayjoin \"{join}\" output.png --across {tilesX}",
-                        FileName = "vips",
-                        RedirectStandardError = true,
-                        RedirectStandardInput = true,
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false
-                    });
-                    p.BeginErrorReadLine();
-                    p.BeginOutputReadLine();
-                    p.OutputDataReceived += (sender, args) => Logger.LogDebug("VIPS: " + args.Data);
-                    p.ErrorDataReceived += (sender, args) => Logger.LogError("VIPS: " + args.Data);
-                    p.WaitForExit(); // Inefficient, but it works
-                }
-                catch (Exception e)
-                {
-                    Logger.LogError(e);
-                }
-            }
-            cln();
-            _StopCull = false;
+            Logger.LogDebug($"Starting tiled render: {_renderState.FinalWidth}x{_renderState.FinalHeight} " +
+                            $"({_renderSettings.TilesX}x{_renderSettings.TilesY} tiles of {_renderSettings.TileWidth}x{_renderSettings.TileHeight})");
+
+            Logger.LogDebug($"Saving tiles to {_renderState.OutputFolder}");
+
+            yield return RenderAllTiles(camera);
+
+            Logger.LogDebug("Tiled render completed");
+
+            Logger.LogDebug($"Saved to: {_renderState.OutputFolder}");
+            TryStitchTiles();
+
+            ECLNP();
+            _cameraResetProjectionMatrixBlocked = false;
         }
 
-        private IEnumerator RenderTile(int tileX, int tileY)
+        private IEnumerator RenderAllTiles(Camera camera)
+        {
+            int tileIndex = 0;
+
+            for (int y = 0; y < _renderSettings.TilesY; y++)
+            {
+                for (int x = 0; x < _renderSettings.TilesX; x++)
+                {
+                    yield return RenderSingleTile(camera, x, y, ++tileIndex);
+                }
+
+                _progress = (float)(y + 1) / _renderSettings.TilesY;
+                Logger.LogDebug($"Tiled render progress: {_progress:P1}");
+            }
+        }
+
+        private IEnumerator RenderSingleTile(Camera camera, int tileX, int tileY, int tileIndex)
+        {
+            ConfigureShaderGlobals();
+
+            bool originalCulling = camera.useOcclusionCulling;
+            camera.useOcclusionCulling = false;
+
+            Matrix4x4 tileProjection = CalculateTileProjection(camera, tileX, tileY);
+            camera.projectionMatrix = tileProjection;
+
+            yield return null;
+
+            Texture2D tileTexture = RenderTileToTexture(camera);
+
+            camera.useOcclusionCulling = originalCulling;
+            
+            SaveTile(tileTexture, tileX, tileY, tileIndex);
+
+            DestroyImmediate(tileTexture);
+            RenderTexture.active = null;
+        }
+
+        private void ConfigureShaderGlobals()
         {
             Shader.SetGlobalTexture("_AlphaMask", Texture2D.whiteTexture);
             Shader.SetGlobalInt("_alpha_a", 1);
             Shader.SetGlobalInt("_alpha_b", 1);
             Shader.SetGlobalInt("_LineWidthS", 1);
-            currentTileId++;
-            float left = (float)tileX / tilesX;
-            float right = (float)(tileX + 1) / tilesX;
-            float bottom = (float)tileY / tilesY;
-            float top = (float)(tileY + 1) / tilesY;
-            left = left * 2f - 1f;
-            right = right * 2f - 1f;
-            bottom = bottom * 2f - 1f;
-            top = top * 2f - 1f;
-            Matrix4x4 tileProjection = CreateTileProjectionMatrix(left, right, bottom, top);
-            renderCamera.projectionMatrix = tileProjection;
-
-            yield return null;
-            RenderTexture targetTexture = renderCamera.targetTexture;
-            RenderTexture active = RenderTexture.active;
-            Texture2D tileTexture = new Texture2D(tileWidth, tileHeight, textureFormat, false);
-            var rect = renderCamera.rect;
-
-            renderCamera.targetTexture = tileRenderTexture;
-            renderCamera.rect = new Rect(0, 0, 1, 1);
-            renderCamera.Render();
-            renderCamera.rect = rect;
-
-            RenderTexture.active = tileRenderTexture;
-            tileTexture.ReadPixels(new Rect(0, 0, tileWidth, tileHeight), 0, 0);
-            tileTexture.Apply();
-            renderCamera.targetTexture = targetTexture;
-            RenderTexture.active = active;
-
-            if (saveIndividualTiles)
-            {
-                SaveIndividualTile(tileTexture, tileX, tileY);
-            }
-            DestroyImmediate(tileTexture);
-            RenderTexture.active = null;
         }
 
-        private Matrix4x4 CreateTileProjectionMatrix(float left, float right, float bottom, float top)
+        private Matrix4x4 CalculateTileProjection(Camera camera, int tileX, int tileY)
         {
-            Matrix4x4 matrix = originalProjectionMatrix;
-            if (renderCamera.orthographic)
-            {
-                float orthoLeft = renderCamera.orthographicSize * renderCamera.aspect * left;
-                float orthoRight = renderCamera.orthographicSize * renderCamera.aspect * right;
-                float orthoBottom = renderCamera.orthographicSize * bottom;
-                float orthoTop = renderCamera.orthographicSize * top;
-                matrix = Matrix4x4.Ortho(orthoLeft, orthoRight, orthoBottom, orthoTop, renderCamera.nearClipPlane, renderCamera.farClipPlane);
-            }
-            else
-            {
-                float near = renderCamera.nearClipPlane;
-                float far = renderCamera.farClipPlane;
+            float left = MapTileCoordinate(tileX, _renderSettings.TilesX);
+            float right = MapTileCoordinate(tileX + 1, _renderSettings.TilesX);
+            float bottom = MapTileCoordinate(tileY, _renderSettings.TilesY);
+            float top = MapTileCoordinate(tileY + 1, _renderSettings.TilesY);
 
-                float fov = renderCamera.fieldOfView * Mathf.Deg2Rad;
-                float height = 2f * near * Mathf.Tan(fov * 0.5f);
-                float width = height * renderCamera.aspect;
-
-                float tileLeft = left * width * 0.5f;
-                float tileRight = right * width * 0.5f;
-                float tileBottom = bottom * height * 0.5f;
-                float tileTop = top * height * 0.5f;
-
-                // matrix = Matrix4x4.Frustum(tileLeft, tileRight, tileBottom, tileTop, near, far);
-                matrix = CreateFrustumMatrix(tileLeft, tileRight, tileBottom, tileTop, near, far);
-            }
-            return matrix;
+            return camera.orthographic
+                ? CreateOrthographicTileMatrix(camera, left, right, bottom, top)
+                : CreatePerspectiveTileMatrix(camera, left, right, bottom, top);
         }
 
-        private static GUIStyle _style;
-
-        private static GUIStyle Style => _style ?? (_style = new GUIStyle(GUI.skin.box));
-
-        /// <summary>
-        /// Fallback Frustum support for older unity versions
-        /// </summary>
-        public static Matrix4x4 CreateFrustumMatrix(float left, float right, float bottom, float top, float near, float far)
+        private static float MapTileCoordinate(int value, int total)
         {
-            Matrix4x4 m = new Matrix4x4();
-
-            float x = (2.0f * near) / (right - left);
-            float y = (2.0f * near) / (top - bottom);
-            float a = (right + left) / (right - left);
-            float b = (top + bottom) / (top - bottom);
-            float c = -(far + near) / (far - near);
-            float d = -(2.0f * far * near) / (far - near);
-
-
-            m[0, 0] = x;
-            m[0, 1] = 0;
-            m[0, 2] = a;
-            m[0, 3] = 0;
-
-            m[1, 0] = 0;
-            m[1, 1] = y;
-            m[1, 2] = b;
-            m[1, 3] = 0;
-
-            m[2, 0] = 0;
-            m[2, 1] = 0;
-            m[2, 2] = c;
-            m[2, 3] = d;
-
-            m[3, 0] = 0;
-            m[3, 1] = 0;
-            m[3, 2] = -1;
-            m[3, 3] = 0;
-
-            return m;
+            return ((float)value / total) * 2f - 1f;
         }
 
-        private static MethodInfo PNGEncoder, JPGEncoder;
-        private static MethodInfo _modernPNG, _modernJPG, _legacyPNG, _legacyJPG;
-        private static bool _initializedTextureAbstractions;
+        private Matrix4x4 CreateOrthographicTileMatrix(Camera camera, float left, float right, float bottom, float top)
+        {
+            float orthoLeft = camera.orthographicSize * camera.aspect * left;
+            float orthoRight = camera.orthographicSize * camera.aspect * right;
+            float orthoBottom = camera.orthographicSize * bottom;
+            float orthoTop = camera.orthographicSize * top;
 
-        private static void InitImageConversion()
+            return Matrix4x4.Ortho(orthoLeft, orthoRight, orthoBottom, orthoTop,
+                camera.nearClipPlane, camera.farClipPlane);
+        }
+
+        private Matrix4x4 CreatePerspectiveTileMatrix(Camera camera, float left, float right, float bottom, float top)
+        {
+            float near = camera.nearClipPlane;
+            float far = camera.farClipPlane;
+            float fov = camera.fieldOfView * Mathf.Deg2Rad;
+            float height = 2f * near * Mathf.Tan(fov * 0.5f);
+            float width = height * camera.aspect;
+
+            float tileLeft = left * width * 0.5f;
+            float tileRight = right * width * 0.5f;
+            float tileBottom = bottom * height * 0.5f;
+            float tileTop = top * height * 0.5f;
+
+            return MatrixHelper.CreateFrustum(tileLeft, tileRight, tileBottom, tileTop, near, far);
+        }
+
+        private Texture2D RenderTileToTexture(Camera camera)
+        {
+            RenderTexture originalTarget = camera.targetTexture;
+            RenderTexture originalActive = RenderTexture.active;
+            Rect originalRect = camera.rect;
+
+            camera.targetTexture = _renderState.RenderTexture;
+            camera.rect = new Rect(0, 0, 1, 1);
+            camera.Render();
+            camera.rect = originalRect;
+
+            RenderTexture.active = _renderState.RenderTexture;
+            Texture2D texture = new Texture2D(_renderSettings.TileWidth, _renderSettings.TileHeight,
+                TextureFormat.RGB24, false);
+            texture.ReadPixels(new Rect(0, 0, _renderSettings.TileWidth, _renderSettings.TileHeight), 0, 0);
+            texture.Apply();
+
+            camera.targetTexture = originalTarget;
+            RenderTexture.active = originalActive;
+
+            return texture;
+        }
+
+        private void SaveTile(Texture2D texture, int tileX, int tileY, int tileIndex)
+        {
+            string fileName = $"{(_renderSettings.TilesY - tileY + 1):D3}_{(tileX + 1):D3}.png";
+            string filePath = Path.Combine(_renderState.OutputFolder, fileName);
+
+            byte[] pngData = ImageEncoder.EncodeToPNG(texture);
+            File.WriteAllBytes(filePath, pngData);
+
+            Logger.LogDebug($"Saved tile: {fileName} (ID: {tileIndex}, Grid: {tileX + 1}, {tileY + 1})");
+        }
+
+        private void TryStitchTiles()
         {
             try
             {
-                var imageConversion = Type.GetType("UnityEngine.ImageConversion") ??
-                                      Array.Find(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetType("UnityEngine.ImageConversion") != null)?.GetType("UnityEngine.ImageConversion");
-
-                if (imageConversion != null)
-                {
-                    _modernPNG = imageConversion.GetMethod("EncodeToPNG", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Texture2D) }, null);
-                    _modernJPG = imageConversion.GetMethod("EncodeToJPG", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Texture2D) }, null);
-                }
-
-                _legacyPNG = typeof(Texture2D).GetMethod("EncodeToPNG", BindingFlags.Public | BindingFlags.Instance, null, new Type[0], null);
-                _legacyJPG = typeof(Texture2D).GetMethod("EncodeToJPG", BindingFlags.Public | BindingFlags.Instance, null, new Type[0], null);
+                Process.Start(_renderState.OutputFolder);
+                StartVipsStitching();
             }
-            catch { }
-
-            _initializedTextureAbstractions = true;
-        }
-
-        public static byte[] EncodeToPNG(Texture2D texture)
-        {
-            if (!_initializedTextureAbstractions) InitImageConversion();
-
-            if (_modernPNG != null)
-                return (byte[])_modernPNG.Invoke(null, new object[] { texture });
-            if (_legacyPNG != null)
-                return (byte[])_legacyPNG.Invoke(texture, new object[0]);
-
-            throw new NotSupportedException("PNG encoding not available");
-        }
-
-        public static byte[] EncodeToJPG(Texture2D texture)
-        {
-            if (!_initializedTextureAbstractions) InitImageConversion();
-
-            if (_modernJPG != null)
-                return (byte[])_modernJPG.Invoke(null, new object[] { texture });
-            if (_legacyJPG != null)
-                return (byte[])_legacyJPG.Invoke(texture, new object[0]);
-
-            throw new NotSupportedException("JPG encoding not available");
-        }
-
-        private void SaveIndividualTile(Texture2D tileTexture, int tileX, int tileY)
-        {
-            var maxTiles = tilesX * tilesY;
-            string tileFileName = $"{(tilesY - tileY + 1):D3}_{(tileX + 1):D3}.png";
-            string tilePath = Path.Combine(currentRenderFolder, tileFileName);
-            byte[] pngData = EncodeToPNG(tileTexture);
-
-            File.WriteAllBytes(tilePath, pngData);
-            Logger.LogDebug($"Saved tile: {tileFileName} (ID: {currentTileId}, Grid: {tileX + 1}, {tileY + 1})");
-        }
-
-        private void cln()
-        {
-            if (originalProjectionMatrix != default && renderCamera != null)
-                renderCamera.projectionMatrix = originalProjectionMatrix;
-
-            if (renderCamera != null)
+            catch (Exception e)
             {
-                renderCamera.targetTexture = null;
+                Logger.LogError($"Failed to stitch tiles: {e}");
             }
+        }
 
-            if (tileRenderTexture != null)
+        private void StartVipsStitching()
+        {
+            string[] tileFiles = Directory.GetFiles(_renderState.OutputFolder)
+                .Select(Path.GetFileName)
+                .ToArray();
+            string fileList = string.Join(" ", tileFiles);
+
+            var processInfo = new ProcessStartInfo
             {
-                tileRenderTexture.Release();
-                DestroyImmediate(tileRenderTexture);
-                tileRenderTexture = null;
+                WorkingDirectory = _renderState.OutputFolder,
+                Arguments = $"arrayjoin \"{fileList}\" output.png --across {_renderSettings.TilesX}",
+                FileName = "vips",
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+
+            Process process = Process.Start(processInfo);
+            process.OutputDataReceived += (sender, args) => Logger.LogDebug($"VIPS: {args.Data}");
+            process.ErrorDataReceived += (sender, args) => Logger.LogError($"VIPS: {args.Data}");
+            process.BeginErrorReadLine();
+            process.BeginOutputReadLine();
+            process.WaitForExit();
+
+            foreach (string tileFile in tileFiles)
+            {
+                File.Delete(tileFile);
             }
 
-            currentTileId = 0;
-            currentRenderFolder = null;
+            Process.Start(new ProcessStartInfo("explorer.exe", _renderState.OutputFolder) { UseShellExecute = true });
+        }
+
+        private void ECLNP()
+        {
+            _renderState?.Dispose();
+            _renderState = null;
         }
 
         private void OnDestroy()
         {
-            cln();
+            ECLNP();
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Camera), nameof(Camera.ResetProjectionMatrix))]
+        public static bool PreventResetProjectionMatrix(Camera __instance)
+        {
+            return !_cameraResetProjectionMatrixBlocked;
         }
     }
+
 }
