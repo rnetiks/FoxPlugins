@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Addin;
 using BepInEx;
 using BepInEx.Configuration;
@@ -329,7 +330,7 @@ namespace TiledRenderer
             {
                 WorkingDirectory = _renderState.OutputFolder,
                 Arguments = $"arrayjoin \"{fileList}\" output.png --across {_renderSettings.TilesX}",
-                FileName = "vips",
+                FileName = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location) + "/vips",
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
@@ -345,10 +346,8 @@ namespace TiledRenderer
 
             foreach (string tileFile in tileFiles)
             {
-                File.Delete(tileFile);
+                File.Delete(_renderState.OutputFolder + "/" + tileFile);
             }
-
-            Process.Start(new ProcessStartInfo("explorer.exe", _renderState.OutputFolder) { UseShellExecute = true });
         }
 
         private void ECLNP()
