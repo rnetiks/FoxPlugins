@@ -11,7 +11,8 @@
     <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Constants.cs" />
         <Compile Include="$(MSBuildThisFileDirectory)Entry.cs"/>
-    <Compile Include="$(MSBuildThisFileDirectory)Modal\Modal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Modal\ModalBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Modal\WarningModal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Modal\YNModal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PoseData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PoseFileHandler.cs" />

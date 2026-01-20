@@ -16,7 +16,8 @@ namespace PoseLib.KKS
         public GUIStyle ControlsPanelStyle { get; private set; }
         public GUIStyle ButtonStyle { get; private set; }
         public GUIStyle LabelStyle { get; private set; }
-        public GUIStyle LabelCenterStyle { get; private set; }
+        public GUIStyle LabelMiddleCenterStyle { get; private set; }
+        public GUIStyle LabelMiddleLeftStyle { get; private set; }
         public GUIStyle TextFieldStyle { get; private set; }
         public GUIStyle TextAreaStyle { get; private set; }
         public GUIStyle DropdownStyle { get; private set; }
@@ -85,11 +86,18 @@ namespace PoseLib.KKS
                 fontSize = 12
             };
 
-            LabelCenterStyle = new GUIStyle(GUI.skin.label)
+            LabelMiddleCenterStyle = new GUIStyle(GUI.skin.label)
             {
                 normal = { textColor = Color.white },
                 fontSize = 12,
                 alignment = TextAnchor.MiddleCenter
+            };
+
+            LabelMiddleLeftStyle = new GUIStyle(GUI.skin.label)
+            {
+                normal = { textColor = Color.white },
+                fontSize = 12,
+                alignment = TextAnchor.MiddleLeft
             };
 
             TextFieldStyle = new GUIStyle(GUI.skin.textField)

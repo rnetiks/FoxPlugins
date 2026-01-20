@@ -18,6 +18,10 @@ namespace PoseLib.KKS
         private ConfigEntry<KeyboardShortcut> _openUIKey;
         public static ConfigEntry<string> _defaultName;
 
+        public static ConfigEntry<int> _windowWidth;
+        public static ConfigEntry<int> _windowHeight;
+        
+
         private PoseLibraryManager _poseManager;
         private UIManager _uiManager;
 
@@ -26,8 +30,6 @@ namespace PoseLib.KKS
         {
             InitializeConfiguration();
             InitializeManagers();
-
-            OCIChar _char;
         }
 
         private void InitializeConfiguration()
@@ -35,6 +37,9 @@ namespace PoseLib.KKS
             _openUIKey = Config.Bind("General", "Open Window",
                 new KeyboardShortcut(KeyCode.N, KeyCode.RightControl));
             _defaultName = Config.Bind("General", "Default Name", "PoseLib_${Date} ${Time}");
+            _windowWidth = Config.Bind("UI", "width", 900, 
+                new ConfigDescription("Sets the window width", new AcceptableValueRange<int>(900, 4096)));
+            _windowHeight = Config.Bind("UI", "height", 400, new ConfigDescription("Sets the window height", new AcceptableValueRange<int>(400, 2048)));
         }
         
         private void InitializeManagers()

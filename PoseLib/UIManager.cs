@@ -22,6 +22,8 @@ namespace PoseLib.KKS
         private Rect _windowRect;
         private Rect _saveWindowRect;
 
+        private Rect _windowResizeHandleRect;
+
         private readonly UIState _uiState;
         private readonly SaveWindowState _saveState;
         public static UITheme _theme;
@@ -36,7 +38,7 @@ namespace PoseLib.KKS
         private DateTime _lastDirectoryRefresh = DateTime.MinValue;
         private int _cachedSelectedIndex = 0;
         private string _lastSelectedDirectory = "";
-        private Modal _modal;
+        private ModalBase modal;
 
         #endregion
 
@@ -69,9 +71,9 @@ namespace PoseLib.KKS
             if (!_theme.IsInitialized)
                 _theme.InitializeStyles();
 
-            if (_modal != null)
+            if (modal != null)
             {
-                _modal.OnGUI();
+                modal.OnGUI(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 100f, 400f, 200f));
                 return;
             }
 
@@ -89,7 +91,7 @@ namespace PoseLib.KKS
         {
             var width = Mathf.Min(Screen.width * 0.8f, 1200);
             var height = Mathf.Min(Screen.height * 0.8f, 800);
-            _windowRect = new Rect((Screen.width - width) / 2, (Screen.height - height) / 2, width, height);
+            _windowRect = new Rect((Screen.width - width) / 2, (Screen.height - height) / 2, Entry._windowWidth.Value, Entry._windowHeight.Value);
 
             _saveWindowRect = new Rect((Screen.width - 500) / 2, (Screen.height - 400) / 2, 500, 400);
         }
@@ -100,10 +102,53 @@ namespace PoseLib.KKS
         {
             GUI.Box(_windowRect, "", _theme.WindowStyle);
 
-            if (_windowRect.Contains(Event.current.mousePosition))
+            if (_windowRect.Contains(Event.current.mousePosition) || _windowResizeHandleRect.Contains(Event.current.mousePosition))
                 Input.ResetInputAxes();
 
             _windowRect = GUI.Window(Constants.WINDOW_ID, _windowRect, DrawMainWindow, "", GUIStyle.none);
+            DrawResizeHandle();
+        }
+
+        private Vector2 _resizeStartPosition;
+        private float _initialWindowWidth;
+        private float _initialWindowHeight;
+        private bool _isResizing;
+        private void DrawResizeHandle()
+        {
+            var ev = Event.current;
+            _windowResizeHandleRect = new Rect(_windowRect.x + _windowRect.width - 10, _windowRect.y + _windowRect.height - 10, 20, 20);
+
+            bool isHovering = _windowResizeHandleRect.Contains(ev.mousePosition);
+            GUI.Box(_windowResizeHandleRect, "", isHovering || _isResizing ? _theme.HeaderStyle : _theme.MessageBoxStyle);
+
+            if (_windowResizeHandleRect.Contains(ev.mousePosition) && ev.type == EventType.MouseDown)
+            {
+                _isResizing = true;
+                _resizeStartPosition = ev.mousePosition;
+                _initialWindowWidth = _windowRect.width;
+                _initialWindowHeight = _windowRect.height;
+                ev.Use();
+            }
+
+            if (_isResizing)
+            {
+                if (ev.type == EventType.MouseDrag)
+                {
+                    var delta = ev.mousePosition - _resizeStartPosition;
+
+                    var width = Mathf.Max(900, _initialWindowWidth + delta.x);
+                    var height = Mathf.Max(400, _initialWindowHeight + delta.y);
+
+                    _windowRect = new Rect(_windowRect.x, _windowRect.y, width, height);
+                    ev.Use();
+                }else if (ev.type == EventType.MouseUp)
+                {
+                    _isResizing = false;
+                    Entry._windowWidth.Value = (int)_windowRect.width;
+                    Entry._windowHeight.Value = (int)_windowRect.height;
+                    ev.Use();
+                }
+            }
         }
 
         private void DrawMainWindow(int id)
@@ -128,7 +173,7 @@ namespace PoseLib.KKS
             var titleRect = new Rect(10, 5, _windowRect.width - 60, 20);
             GUI.Label(titleRect, "Pose Library", _theme.TitleStyle);
 
-            var closeRect = new Rect(_windowRect.width - 35, 5, 25, 20);
+            var closeRect = new Rect(_windowRect.width - 25, 5, 20, 20);
             if (GUI.Button(closeRect, "×", _theme.CloseButtonStyle))
             {
                 _isUIOpen = false;
@@ -137,7 +182,7 @@ namespace PoseLib.KKS
 
         private void DrawTopControls(OCIChar[] selectedCharacters)
         {
-            var controlsRect = new Rect(10, 35, _windowRect.width - 20, 60);
+            var controlsRect = new Rect(10, 35, _windowRect.width - 20, 35);
             GUI.Box(controlsRect, "", _theme.ControlsPanelStyle);
 
             var currentY = 40;
@@ -159,7 +204,7 @@ namespace PoseLib.KKS
             }
 
             var searchLabelRect = new Rect(currentX, currentY, 50, 25);
-            GUI.Label(searchLabelRect, "Search:", _theme.LabelStyle);
+            GUI.Label(searchLabelRect, "Search:", _theme.LabelMiddleLeftStyle);
             currentX += 55;
 
             var searchRect = new Rect(currentX, currentY, 200, 25);
@@ -379,7 +424,7 @@ namespace PoseLib.KKS
             GUI.DrawTexture(imageRect, pose.PreviewTexture, ScaleMode.ScaleToFit);
             if (pose.FilePath.ToLower().EndsWith(".dat", StringComparison.OrdinalIgnoreCase))
             {
-                GUI.Label(imageRect, "No Texture\nIncluded", _theme.LabelCenterStyle);
+                GUI.Label(imageRect, "No Texture\nIncluded", _theme.LabelMiddleCenterStyle);
             }
 
             var nameRect = new Rect(itemRect.x + 5, imageRect.yMax + 2, itemRect.width - 10, 20);
@@ -419,11 +464,11 @@ namespace PoseLib.KKS
                     _poseManager.DeletePose(pose.FilePath);
                     return;
                 }
-                _modal = new YNModal(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 100f, 400f, 200f), "Are you sure you want to delete this file?", "Confirm", () =>
+                modal = new YNModal(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 100f, 400f, 200f), "Are you sure you want to delete this file?", "Confirm", () =>
                 {
                     _poseManager.DeletePose(pose.FilePath);
-                    _modal = null;
-                }, () => _modal = null);
+                    modal = null;
+                }, () => modal = null);
             }
         }
 
@@ -579,15 +624,15 @@ namespace PoseLib.KKS
                 var fullPath = Path.Combine("UserData/studio/pose", $"{template.Value}.png");
                 if (File.Exists(fullPath))
                 {
-                    _modal = new YNModal(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 150f, 400f, 300f),
+                    modal = new YNModal(new Rect(Screen.width / 2f - 200f, Screen.height / 2f - 150f, 400f, 300f),
                         "File already exists, do you want to overwrite it?", "Confirm", () =>
                         {
                             _poseManager.SavePose(template.Value, _saveState.Character, _saveState.Screenshot);
                             CloseSaveWindow();
-                            _modal = null;
+                            modal = null;
                         }, () =>
                         {
-                            _modal = null;
+                            modal = null;
                         });
                 }
                 else
