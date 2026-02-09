@@ -22,7 +22,7 @@ namespace DefaultNamespace
     [ BepInDependency(ScreenshotManager.GUID) ]
     public class Entry : BaseUnityPlugin
     {
-        private const bool SCRIPT_ENGINE = true;
+        private const bool ScriptEngine = true;
         const string GUID = "com.fox.compositor";
         const string NAME = "Compositor";
         const string VERSION = "1.0.0";
@@ -79,7 +79,8 @@ namespace DefaultNamespace
                 AvailableNodes.Add(type);
             }
 
-            if (SCRIPT_ENGINE)
+            
+            if (ScriptEngine)
             {
                 Instance.InitializeConfig();
                 Instance.InitializeComponents();
