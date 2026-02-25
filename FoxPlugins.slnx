@@ -4,7 +4,6 @@
     <Platform Name="AnyCPU" />
   </Configurations>
   <Folder Name="/Addins/">
-    <Project Path="Addin\35proc\35proc.shproj" />
     <Project Path="Addin\Charts\Charts.shproj" />
     <Project Path="Addin\CheckboxM\CheckboxM.shproj" />
     <Project Path="Addin\Checkbox\Checkbox.shproj" />
@@ -19,7 +18,9 @@
     <Project Path="Addin\Slider\Slider.shproj" />
     <Project Path="Addin\TextEditor\TextEditor.shproj" />
     <Project Path="Addin\TextureFactory\TextureFactory.shproj" />
+    <Project Path="Addin\Transparent\Transparent.shproj" />
     <Project Path="Addin\VirtualScrollView\VirtualScrollView.shproj" />
+    <Project Path="Fbx\Fbx.shproj" />
   </Folder>
   <Folder Name="/BoneShortcut/">
     <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#">
@@ -35,6 +36,13 @@
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <Folder Name="/CIO/">
+    <Project Path="CIO.KKS\CIO.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="CIO\CIO.shproj" />
+  </Folder>
   <Folder Name="/ColliderSound/">
     <Project Path="ColliderSound\ColliderSound.KKS\ColliderSound.KKS.csproj" Type="Classic C#">
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
@@ -48,6 +56,25 @@
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
+  </Folder>
+  <Folder Name="/Commissions/">
+    <Project Path="TheBirdOfHermes.AI\TheBirdOfHermes.AI.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="TheBirdOfHermes.HS2\TheBirdOfHermes.HS2.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="TheBirdOfHermes.KKS\TheBirdOfHermes.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="TheBirdOfHermes.KK\TheBirdOfHermes.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="TheBirdOfHermes.Shared\TheBirdOfHermes.Shared.shproj" />
   </Folder>
   <Folder Name="/Compositor/">
     <Project Path="Compositor.KKS\Compositor.KKS.csproj" Type="Classic C#">
@@ -77,6 +104,19 @@
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <Folder Name="/DebugBoxes/">
+    <Project Path="DebugBoxes\DebugBoxes.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+  </Folder>
+  <Folder Name="/MoreBinds/">
+    <Project Path="MoreBinds.KKS\MoreBinds.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="MoreBinds.Shared\MoreBinds.Shared.shproj" />
+  </Folder>
   <Folder Name="/PoseLib/">
     <Project Path="PoseLib.KK\PoseLib.KK.csproj" Type="Classic C#">
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
@@ -101,7 +141,22 @@
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
   </Folder>
+  <Folder Name="/TOHYK/">
+    <Project Path="TOHYK.KKS\TOHYK.KKS.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
+    <Project Path="TOHYK.Shared\TOHYK.Shared.shproj" />
+  </Folder>
   <Project Path="BoxSelect.KKS\BoxSelect.KKS.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="E:\sunshine\CharaStudio_Data\csp\Assembly-CSharp.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="KKSRET\KKSRET.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
@@ -109,11 +164,9 @@
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="PathTracingNative\PathTracingNative.vcxproj">
-    <Configuration Solution="Debug|Any CPU" Project="Debug|Win32" />
-    <Configuration Solution="Debug|AnyCPU" Project="Debug|Win32" />
-    <Configuration Solution="Release|Any CPU" Project="Release|Win32" />
-    <Configuration Solution="Release|AnyCPU" Project="Release|Win32" />
+  <Project Path="PluginUpdater\PluginUpdater.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>
   <Project Path="Sculpt.KKS\Sculpt.KKS.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
