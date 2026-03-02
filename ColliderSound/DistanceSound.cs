@@ -262,11 +262,10 @@ namespace ColliderSound.KK
             if (Path.GetExtension(path).ToLower() == ".wav")
             {
                 byte[] fileData = File.ReadAllBytes(path);
-                Wav wav = new Wav(fileData);
-                Entry._logger.LogWarning($"WAV File: {fileData.Length}, {wav.SampleCount}, {wav.Channels}, {wav.Frequency}");
-                AudioClip audioClip = AudioClip.Create(Path.GetFileNameWithoutExtension(path), wav.SampleCount,
-                    wav.Channels, wav.Frequency, false);
-                audioClip.SetData(wav.LeftChannel, 0);
+                WavData wav = WavData.LoadFromBytes(fileData);
+                AudioClip audioClip = AudioClip.Create(Path.GetFileNameWithoutExtension(path), wav.Samples.Length / wav.Channels,
+                    wav.Channels, wav.SampleRate, false);
+                audioClip.SetData(wav.Samples, 0);
                 return audioClip;
             }
 

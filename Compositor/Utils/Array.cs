@@ -14,5 +14,15 @@ namespace Compositor.KK.Compositor
             }
             return array;
         }
+        
+        public static unsafe T[] FastFill<T>(T[] arr,int size, T value) where T : unmanaged
+        {
+            fixed (T* ptr = arr)
+            {
+                for (int i = 0; i < size; i++)
+                    ptr[i] = value;
+            }
+            return arr;
+        }
     }
 }

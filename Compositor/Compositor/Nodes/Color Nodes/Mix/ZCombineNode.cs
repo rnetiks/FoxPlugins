@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Compositor.KK.Compositor;
 using DefaultNamespace;
 using UnityEngine;
 using Array = Compositor.KK.Compositor.Array;
@@ -72,6 +73,7 @@ namespace Compositor.KK
         }
         protected override void ProcessInternal()
         {
+
         }
     }
 }

@@ -20,7 +20,6 @@ namespace BoxSelect.KKS
         private Vector2 startPosition;
         private bool isSelecting;
 
-        private ConfigEntry<string> s;
         private void Awake()
         {
             ctrl = FindObjectOfType<Studio.CameraControl>();
@@ -62,9 +61,6 @@ namespace BoxSelect.KKS
             ctrl.enabled = !isSelecting;
         }
 
-        private bool sr = false;
-        private Color t;
-        private int i = 4;
 
         private void OnGUI()
         {
@@ -111,7 +107,7 @@ namespace BoxSelect.KKS
                     selectedObjects.Add(guideObject.Value);
                 }
             }
-
+            
             RegisterSelectedObjects(guideObjectManager, selectedObjects);
         }
 

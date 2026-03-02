@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace TexFac.Universal
+namespace TexFac
 {
     /// <summary>
     /// Factory class for creating and loading textures.

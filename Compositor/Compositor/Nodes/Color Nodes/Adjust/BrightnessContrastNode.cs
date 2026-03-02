@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Compositor.KK
 {
+    // TODO split into separate Brightness and Contrast nodes
     /// <summary>
     /// Represents a compositor node for adjusting brightness and contrast in an image processing pipeline.
     /// </summary>
@@ -47,11 +48,12 @@ namespace Compositor.KK
         {
             var brightnessPosition = CompositorRenderer.Instance.GetPortScaledPosition(_inputs[1].LocalPosition);
             var contrastPosition = CompositorRenderer.Instance.GetPortScaledPosition(_inputs[2].LocalPosition);
-
+            
             if (!_inputs[1].IsConnected)
             {
                 _inputs[1].Name = "";
-                brightnessSlider.Draw(new Rect(contentRect.x + 10, brightnessPosition.y - 7.5f, contentRect.width - 50, 15));
+                brightnessSlider.Draw();
+                // brightnessSlider.Draw(new Rect(contentRect.x + 10, brightnessPosition.y - 7.5f, contentRect.width - 50, 15));
             }
             else
             {
@@ -70,10 +72,11 @@ namespace Compositor.KK
         }
         public override void Process()
         {
-            if (!_inputs[0].IsConnected)
+            var i0 = _inputs[0];
+            if (!i0.IsConnected)
                 return;
 
-            var imageData = _inputs[0].GetValue<float[]>();
+            var imageData = i0.GetValue<float[]>();
 
             // Tiny optimization stops the node from taking unnecessary resources
             if (!_inputs[1].IsConnected && !_inputs[2].IsConnected && brightness == 0 && contrast == 0)
@@ -81,6 +84,7 @@ namespace Compositor.KK
                 _outputs[0].SetValue(imageData);
                 return;
             }
+            
             float[] brightnessData;
             brightnessData = _inputs[1].IsConnected ? _inputs[1].GetValue<float[]>() : Array.FastFill(imageData.Length / 4, brightness);
 
@@ -88,9 +92,11 @@ namespace Compositor.KK
             contrastData = _inputs[2].IsConnected ? _inputs[2].GetValue<float[]>() : Array.FastFill(imageData.Length / 4, contrast);
             Entry.Logger.LogDebug($"{brightness}, {contrast}, {contrastData.Length}, {brightnessData.Length}, {imageData.Length}");
 
+            var stride = i0.PixelComponents;
             for (var i = 0; i < imageData.Length; i += 4)
             {
-                var idx = i / 4;
+                var idx = i / stride;
+                
                 float brightnessValue = brightnessData[idx];
                 float contrastValue = contrastData[idx];
 

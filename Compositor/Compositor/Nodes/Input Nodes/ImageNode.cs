@@ -12,9 +12,11 @@ namespace Compositor.KK
 
         protected override void InitializePorts()
         {
-            _outputs.Add(new NodeOutput("Texture", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.8f)));
+            // _outputs.Add(new NodeOutput("Texture", SocketType.RGBA, new Vector2(Size.x, Size.y * 0.8f)));
+            AddOutput("Texture", SocketType.RGBA);
         }
-
+        
+            
         public override void DrawContent(Rect contentRect)
         {
             if (_currentTexture != null)

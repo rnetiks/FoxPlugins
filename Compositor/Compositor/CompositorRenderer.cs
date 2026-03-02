@@ -394,7 +394,7 @@ namespace Compositor.KK
             {
                 var node = _manager.Nodes[i];
                 var windowId = _nodeWindowIdStart + i;
-
+                
                 var nodeRect = GUIUtils.ScaleRect(
                     new Rect(node.Position, node.Size), state.Zoom, new Vector2(state.OffsetX, state.OffsetY));
 

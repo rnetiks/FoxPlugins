@@ -19,8 +19,8 @@
     <Project Path="Addin\TextEditor\TextEditor.shproj" />
     <Project Path="Addin\TextureFactory\TextureFactory.shproj" />
     <Project Path="Addin\Transparent\Transparent.shproj" />
-    <Project Path="Addin\VirtualScrollView\VirtualScrollView.shproj" />
     <Project Path="Fbx\Fbx.shproj" />
+    <Project Path="UVorbis\UVorbis.shproj" />
   </Folder>
   <Folder Name="/BoneShortcut/">
     <Project Path="BoneShortcut\BoneShortcut.KKS\BoneShortcut.KKS.csproj" Type="Classic C#">
@@ -146,9 +146,17 @@
       <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
       <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
     </Project>
+    <Project Path="TOHYK.KK\TOHYK.KK.csproj" Type="Classic C#">
+      <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+      <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+    </Project>
     <Project Path="TOHYK.Shared\TOHYK.Shared.shproj" />
   </Folder>
   <Project Path="BoxSelect.KKS\BoxSelect.KKS.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="ConfigMan\ConfigMan.csproj" Type="Classic C#">
     <Configuration Solution="Debug|AnyCPU" Project="Debug|Any CPU" />
     <Configuration Solution="Release|AnyCPU" Project="Release|Any CPU" />
   </Project>

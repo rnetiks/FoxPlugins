@@ -9,6 +9,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using Studio;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace PoseLib.KKS
 {

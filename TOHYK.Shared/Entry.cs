@@ -51,6 +51,9 @@ namespace TOHYK
         public static ConfigEntry<KeyCode> CfgKeyMove { get; private set; }
         public static ConfigEntry<KeyCode> CfgKeyRotate { get; private set; }
         public static ConfigEntry<KeyCode> CfgKeyScale { get; private set; }
+        public static ConfigEntry<KeyCode> CfgKeyAxisX { get; private set; }
+        public static ConfigEntry<KeyCode> CfgKeyAxisY { get; private set; }
+        public static ConfigEntry<KeyCode> CfgKeyAxisZ { get; private set; }
         public static ConfigEntry<KeyCode> CfgKeyPivotCycle { get; private set; }
         public static ConfigEntry<KeyCode> CfgKeySnapCycle { get; private set; }
         public static ConfigEntry<PivotMode> CfgPivotMode { get; private set; }
@@ -98,6 +101,9 @@ namespace TOHYK
                 "Press to enter Rotate mode.");
             CfgKeyScale = Config.Bind("Hotkeys", "Scale", KeyCode.S,
                 "Press to enter Scale mode.");
+            CfgKeyAxisX = Config.Bind("Hotkeys", "X Axis", KeyCode.X);
+            CfgKeyAxisY = Config.Bind("Hotkeys", "Y Axis", KeyCode.Y);
+            CfgKeyAxisZ = Config.Bind("Hotkeys", "Z Axis", KeyCode.Z);
             CfgKeyPivotCycle = Config.Bind("Hotkeys", "Cycle Pivot", KeyCode.Period,
                 "Press to cycle through pivot modes (Median / Active / Individual).");
             CfgKeySnapCycle = Config.Bind("Hotkeys", "Toggle Snap", KeyCode.Comma);
@@ -319,6 +325,8 @@ namespace TOHYK
                     case TransformMode.Scale:
                         go.changeAmount.scale = _initScale[kvp.Key];
                         go.transformTarget.localScale = _initScale[kvp.Key];
+                        go.changeAmount.pos = _initPos[kvp.Key];
+                        go.transformTarget.localPosition = _initPos[kvp.Key];
                         break;
                 }
             }
@@ -370,7 +378,7 @@ namespace TOHYK
         {
             bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-            if (Input.GetKeyDown(KeyCode.X))
+            if (Input.GetKeyDown(CfgKeyAxisX.Value))
             {
                 if (shift)
                     SetConstraint(AxisConstraint.PlaneYZ, ConstraintSpace.Global);
@@ -378,7 +386,7 @@ namespace TOHYK
                     CycleAxisConstraint(AxisConstraint.AxisX);
                 RefreshMouseReferences();
             }
-            else if (Input.GetKeyDown(KeyCode.Y))
+            else if (Input.GetKeyDown(CfgKeyAxisY.Value))
             {
                 if (shift)
                     SetConstraint(AxisConstraint.PlaneXZ, ConstraintSpace.Global);
@@ -386,7 +394,7 @@ namespace TOHYK
                     CycleAxisConstraint(AxisConstraint.AxisY);
                 RefreshMouseReferences();
             }
-            else if (Input.GetKeyDown(KeyCode.Z))
+            else if (Input.GetKeyDown(CfgKeyAxisZ.Value))
             {
                 if (shift)
                     SetConstraint(AxisConstraint.PlaneXY, ConstraintSpace.Global);
@@ -673,6 +681,11 @@ namespace TOHYK
                 currentMouse.x - pivotScreen.x);
 
             float deltaAngle = (currentAngle - _startAngle) * Mathf.Rad2Deg;
+            
+            // Attempt to fix angle jagger, doesn'T seem to work well, maybe Marco con help?
+            // Possibly Euler issue?
+            while (deltaAngle > 180f) deltaAngle -= 360f;
+            while (deltaAngle < -180f) deltaAngle += 360f;
 
             if (_constraint == AxisConstraint.PlaneXY || _constraint == AxisConstraint.PlaneXZ || _constraint == AxisConstraint.PlaneYZ)
                 axis = GetPlaneNormal();
@@ -710,61 +723,40 @@ namespace TOHYK
             Camera cam = GetCamera();
             Vector2 currentMouse = Input.mousePosition;
 
-            bool isIndividual = CfgPivotMode.Value == PivotMode.IndividualOrigins;
+            Vector3 pivotScreen = cam.WorldToScreenPoint(_pivotWorld);
+            Vector2 pivotScreen2D = new Vector2(pivotScreen.x, pivotScreen.y);
+            float currentDist = Vector2.Distance(currentMouse, pivotScreen2D);
+            float ratio = currentDist / _startDist;
 
-            float sharedRatio = 1f;
-            if (!isIndividual)
+            if (_snapping)
             {
-                Vector3 pivotScreen = cam.WorldToScreenPoint(_pivotWorld);
-                Vector2 pivotScreen2D = new Vector2(pivotScreen.x, pivotScreen.y);
-                float currentDist = Vector2.Distance(currentMouse, pivotScreen2D);
-                sharedRatio = currentDist / _startDist;
-
-                if (_snapping)
-                {
-                    float snap = CfgSnapScale.Value;
-                    sharedRatio = Mathf.Round(sharedRatio / snap) * snap;
-                    if (sharedRatio < snap) sharedRatio = snap;
-                }
+                float snap = CfgSnapScale.Value;
+                ratio = Mathf.Round(ratio / snap) * snap;
+                if (ratio < snap) ratio = snap;
             }
+
+            Vector3 scaleFactor = ComputeScaleFactor(ratio);
+
+            bool isIndividual = CfgPivotMode.Value == PivotMode.IndividualOrigins;
 
             foreach (var kvp in _targets)
             {
                 var go = kvp.Value;
                 if (!go.enableScale) continue;
 
-                float ratio;
-                if (isIndividual)
-                {
-                    Vector3 objWorld = InitialWorldPos(kvp.Key);
-                    Vector3 objScreen = cam.WorldToScreenPoint(objWorld);
-                    Vector2 objScreen2D = new Vector2(objScreen.x, objScreen.y);
-
-                    float objStartDist = Vector2.Distance(_startMouseScreen, objScreen2D);
-                    if (objStartDist < 1f) objStartDist = 1f;
-
-                    float objCurrentDist = Vector2.Distance(currentMouse, objScreen2D);
-                    ratio = objCurrentDist / objStartDist;
-
-                    if (_snapping)
-                    {
-                        float snap = CfgSnapScale.Value;
-                        ratio = Mathf.Round(ratio / snap) * snap;
-                        if (ratio < snap) ratio = snap;
-                    }
-                }
-                else
-                {
-                    ratio = sharedRatio;
-                }
-
-                Vector3 scaleFactor = ComputeScaleFactor(ratio);
                 Vector3 initScale = _initScale[kvp.Key];
                 go.transformTarget.localScale = Vector3.Scale(initScale, scaleFactor);
                 go.changeAmount.scale = go.transformTarget.localScale;
+
+                if (go.enablePos && !isIndividual)
+                {
+                    Vector3 initWorld = InitialWorldPos(kvp.Key);
+                    Vector3 offset = initWorld - _pivotWorld;
+                    go.transformTarget.position = _pivotWorld + Vector3.Scale(offset, scaleFactor);
+                    go.changeAmount.pos = go.transformTarget.localPosition;
+                }
             }
         }
-
         private Vector3 ComputeScaleFactor(float ratio)
         {
             switch (_constraint)
@@ -843,6 +835,22 @@ namespace TOHYK
 
             Singleton<UndoRedoManager>.Instance.Push(
                 new GuideCommand.ScaleEqualsCommand(infos));
+
+            var anyMoved = _targets.Any(kvp => kvp.Value.enablePos && _initPos[kvp.Key] != kvp.Value.changeAmount.pos);
+
+            if (anyMoved)
+            {
+                var posInfos = _targets.Where(kvp => kvp.Value.enablePos)
+                    .Select(kvp => new GuideCommand.EqualsInfo()
+                    {
+                        dicKey = kvp.Key,
+                        oldValue = _initPos[kvp.Key],
+                        newValue = kvp.Value.changeAmount.pos,
+                    }).ToArray();
+                
+                Singleton<UndoRedoManager>.Instance.Push(
+                    new GuideCommand.MoveEqualsCommand(posInfos));
+            }
         }
 
         private Camera GetCamera()

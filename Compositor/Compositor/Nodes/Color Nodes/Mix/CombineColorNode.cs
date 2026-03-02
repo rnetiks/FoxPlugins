@@ -20,8 +20,8 @@ namespace Compositor.KK
         }
         public override void DrawContent(Rect contentRect)
         {
-
         }
+        
         /// <summary>
         /// Processes the inputs of the CombineColorNode and combines them into a single output.
         /// </summary>

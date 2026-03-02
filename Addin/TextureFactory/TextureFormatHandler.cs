@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace TexFac.Universal
+namespace TexFac
 {
     /// <summary>
     /// A utility class that provides functionality for working with pixel formats,

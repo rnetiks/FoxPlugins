@@ -1,50 +1,95 @@
 using System;
+using System.IO;
 
 namespace ColliderSound.KK
 {
-    public class Wav
+    public class WavData
     {
-        public float[] LeftChannel;
+        public float[] Samples;
+        public int SampleRate;
         public int Channels;
-        public int SampleCount;
-        public int Frequency;
+        public float Duration => Samples.Length / (float)(SampleRate * Channels);
 
-        private const int Offset = 44;
-
-        public Wav(byte[] wav)
+        public static WavData LoadFromBytes(byte[] bytes)
         {
-            Channels = BitConverter.ToInt16(wav, 22);
-            Frequency = BitConverter.ToInt32(wav, 24);
-            var bitsPerSample = BitConverter.ToInt16(wav, 34);
-            if (bitsPerSample != 16)
+            using (var ms = new MemoryStream(bytes))
+            using (var br = new BinaryReader(ms))
             {
-                throw new Exception("Invalid WAV format");
+
+                if (new string(br.ReadChars(4)) != "RIFF") throw new Exception("Invalid WAV");
+                br.ReadInt32();
+                if (new string(br.ReadChars(4)) != "WAVE") throw new Exception("Invalid WAV");
+
+                ushort format = 1;
+                int channels = 0, sampleRate = 0, bits = 0;
+                long dataPos = -1;
+                int dataSize = 0;
+
+                while (ms.Position + 8 <= ms.Length)
+                {
+                    string id = new string(br.ReadChars(4));
+                    int size = br.ReadInt32();
+                    long start = ms.Position;
+
+                    if (id == "fmt ")
+                    {
+                        format = br.ReadUInt16();
+                        channels = br.ReadUInt16();
+                        sampleRate = br.ReadInt32();
+                        br.ReadInt32();
+                        br.ReadUInt16();
+                        bits = br.ReadUInt16();
+                        if (format == 0xFFFE && size >= 40)
+                        {
+                            br.ReadBytes(8);
+                            format = br.ReadUInt16();
+                        }
+                    }
+                    else if (id == "data")
+                    {
+                        dataPos = ms.Position;
+                        dataSize = size;
+                    }
+
+                    ms.Position = start + size + (size & 1);
+                }
+
+                if (dataPos < 0) throw new Exception("No data chunk");
+                ms.Position = dataPos;
+
+                return new WavData
+                {
+                    Samples = Decode(br, dataSize, format, bits),
+                    SampleRate = sampleRate,
+                    Channels = channels
+                };
             }
-
-            SampleCount = (wav.Length - Offset) / (2 * Channels);
-
-            LeftChannel = new float[SampleCount * Channels];
-
-            int index = Offset;
-            for (int i = 0; i < SampleCount * Channels; i++)
-            {
-                LeftChannel[i] = BitConverter.ToInt16(wav, index) / 32768f;
-                index += 2;
-            }
-
-            LeftChannel = FadeIn(LeftChannel, Frequency, Entry.fadeInTime.Value);
         }
 
-        private float[] FadeIn(float[] audioData, int sampleRate, float fadeDuration)
+        static float[] Decode(BinaryReader br, int size, ushort fmt, int bits)
         {
-            int fadeSamples = (int)(sampleRate * fadeDuration);
-            for (int i = 0; i < fadeSamples && i < audioData.Length; i++)
-            {
-                float multiplier = i / (float)fadeSamples;
-                audioData[i] *= multiplier;
-            }
+            int count = size / (bits / 8);
+            float[] s = new float[count];
 
-            return audioData;
+            for (int i = 0; i < count; i++)
+            {
+                if (fmt == 3)
+                    s[i] = bits == 64 ? (float)br.ReadDouble() : br.ReadSingle();
+                else if (fmt == 1)
+                {
+                    switch (bits)
+                    {
+                        case 8:  s[i] = (br.ReadByte() - 128) / 128f; break;
+                        case 16: s[i] = br.ReadInt16() / 32768f; break;
+                        case 24:
+                            int v = br.ReadByte() | (br.ReadByte() << 8) | (br.ReadByte() << 16);
+                            s[i] = ((v & 0x800000) != 0 ? v | unchecked((int)0xFF000000) : v) / 8388608f;
+                            break;
+                        case 32: s[i] = br.ReadInt32() / 2147483648f; break;
+                    }
+                }
+            }
+            return s;
         }
     }
 }

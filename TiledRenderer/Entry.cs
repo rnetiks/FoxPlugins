@@ -27,10 +27,10 @@ namespace TiledRenderer
 
         private bool _uiOpen;
         private float _progress;
-        private readonly Slider _tilesXSlider = new Slider(DEFAULT_TILE_COUNT, MIN_TILE_COUNT, MAX_TILE_COUNT, "Tiles X", "F0") { AllowUnclamped = true };
-        private readonly Slider _tilesYSlider = new Slider(DEFAULT_TILE_COUNT, MIN_TILE_COUNT, MAX_TILE_COUNT, "Tiles Y", "F0") { AllowUnclamped = true };
-        private readonly Slider _tileWidthSlider = new Slider(DEFAULT_TILE_WIDTH, MIN_TILE_SIZE, MAX_TILE_SIZE, "Tile Width", "F0") { AllowUnclamped = true };
-        private readonly Slider _tileHeightSlider = new Slider(DEFAULT_TILE_HEIGHT, MIN_TILE_SIZE, MAX_TILE_SIZE, "Tile Height", "F0") { AllowUnclamped = true };
+        private readonly HorizontalSlider tilesXHorizontalSlider = new HorizontalSlider(DEFAULT_TILE_COUNT, MIN_TILE_COUNT, MAX_TILE_COUNT, "Tiles X", "F0") { AllowUnclamped = true };
+        private readonly HorizontalSlider tilesYHorizontalSlider = new HorizontalSlider(DEFAULT_TILE_COUNT, MIN_TILE_COUNT, MAX_TILE_COUNT, "Tiles Y", "F0") { AllowUnclamped = true };
+        private readonly HorizontalSlider tileWidthHorizontalSlider = new HorizontalSlider(DEFAULT_TILE_WIDTH, MIN_TILE_SIZE, MAX_TILE_SIZE, "Tile Width", "F0") { AllowUnclamped = true };
+        private readonly HorizontalSlider tileHeightHorizontalSlider = new HorizontalSlider(DEFAULT_TILE_HEIGHT, MIN_TILE_SIZE, MAX_TILE_SIZE, "Tile Height", "F0") { AllowUnclamped = true };
 
         private RenderSettings _renderSettings = new RenderSettings();
 
@@ -79,13 +79,13 @@ namespace TiledRenderer
 
         private void DrawSliders()
         {
-            _renderSettings.TilesX = (int)_tilesXSlider.Draw();
+            _renderSettings.TilesX = (int)tilesXHorizontalSlider.Draw();
             GUILayout.Space(10);
-            _renderSettings.TilesY = (int)_tilesYSlider.Draw();
+            _renderSettings.TilesY = (int)tilesYHorizontalSlider.Draw();
             GUILayout.Space(10);
-            _renderSettings.TileWidth = (int)_tileWidthSlider.Draw();
+            _renderSettings.TileWidth = (int)tileWidthHorizontalSlider.Draw();
             GUILayout.Space(10);
-            _renderSettings.TileHeight = (int)_tileHeightSlider.Draw();
+            _renderSettings.TileHeight = (int)tileHeightHorizontalSlider.Draw();
             GUILayout.Space(10);
         }
 
@@ -133,19 +133,19 @@ namespace TiledRenderer
 
         private void ApplyScreenResolution()
         {
-            _tileWidthSlider.Value = Screen.width;
-            _tileHeightSlider.Value = Screen.height;
+            tileWidthHorizontalSlider.Value = Screen.width;
+            tileHeightHorizontalSlider.Value = Screen.height;
 
-            if (_tilesXSlider.Value > _tilesYSlider.Value)
-                _tilesYSlider.Value = _tilesXSlider.Value;
+            if (tilesXHorizontalSlider.Value > tilesYHorizontalSlider.Value)
+                tilesYHorizontalSlider.Value = tilesXHorizontalSlider.Value;
             else
-                _tilesXSlider.Value = _tilesYSlider.Value;
+                tilesXHorizontalSlider.Value = tilesYHorizontalSlider.Value;
         }
 
         private void ApplyAspectRatio()
         {
             float aspect = Screen.width / (float)Screen.height;
-            _tileHeightSlider.Value = (int)Mathf.Ceil(_tileWidthSlider.Value / aspect);
+            tileHeightHorizontalSlider.Value = (int)Mathf.Ceil(tileWidthHorizontalSlider.Value / aspect);
         }
 
         private void StartTileRendering()

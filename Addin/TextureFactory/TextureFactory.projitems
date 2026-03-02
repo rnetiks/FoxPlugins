@@ -14,6 +14,35 @@
     <Compile Include="$(MSBuildThisFileDirectory)TextureElement.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureFactory.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextureFormatHandler.cs" />
-
     </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\BackgroundColor.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\BackgroundGradient.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\BackgroundRadialGradient.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Blur.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\BorderRadius.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\BoxShadow.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Brightness.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Checkerboard.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\ColorTint.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Contrast.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\EdgeDetection.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\GaussianBlur.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Grayscale.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Hue.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Invert.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Noise.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Opacity.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Pixelate.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\PolkaDots.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Posterize.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Saturation.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Sepia.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Sharpen.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Stripes.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Swirl.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Threshold.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Vignette.shader" />
+    <Content Include="$(MSBuildThisFileDirectory)Shaders\Wave.shader" />
+  </ItemGroup>
 </Project>

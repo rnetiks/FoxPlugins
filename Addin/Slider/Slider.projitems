@@ -9,7 +9,7 @@
         <Import_RootNamespace>Slider</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Slider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)HorizontalSlider.cs" />
 
     </ItemGroup>
 </Project>

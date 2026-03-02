@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{a71b0bf4-d500-496b-b1ac-68c32c239885}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>UVorbis</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Codebook.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\ArraySegmentExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\IReadOnlyCollection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\IReadOnlyDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\IReadOnlyList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\ReadOnlyDictionaryWrapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\ReadOnlyListWrapper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Compat\WeakReferenceT.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\HuffmanListNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\ICodebook.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IContainerReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IFactory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IFloor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IFloorData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IHuffman.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IMapping.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IMdct.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IMode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IPacket.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IPacketProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IResidue.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IStreamDecoder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IStreamStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\ITagData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\IVorbisReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\ICrc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\IForwardOnlyPacketProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\IPacketReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\IPageData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\IPageReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\IStreamPageReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\Ogg\PageFlags.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts\ParameterChangeEventArgs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DataPacket.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Factory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Floor0.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Floor1.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Huffman.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IContainerReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IPacketProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IVorbisStreamStatus.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Mapping.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Mdct.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Mode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NewStreamEventArgs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\ContainerReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\Crc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\ForwardOnlyPacketProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\ForwardOnlyPageReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\Packet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\PacketProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\PageReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\PageReaderBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Ogg\StreamPageReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Residue0.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Residue1.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Residue2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StreamDecoder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StreamStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TagData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)VorbisReader.cs" />
+
+    </ItemGroup>
+</Project>

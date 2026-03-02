@@ -94,6 +94,12 @@ namespace Compositor.KK
             var colorNode = new RGBNode();
             colorNode.Position = new Vector2(300, 200);
             AddNode(colorNode);
+
+            var outputNode = new CompositeNode();
+            outputNode.Position = new Vector2(600, 200);
+            AddNode(outputNode);
+            
+            ConnectNodes(colorNode, 0, outputNode, 0);
         }
 
         /// <summary>
@@ -311,7 +317,8 @@ namespace Compositor.KK
             if (clickedNode != null)
             {
                 SelectNode(clickedNode);
-                _dragOffset = mousePos - clickedNode.Position;
+                Vector2 worldMousePos = (mousePos / State.Zoom) - new Vector2(State.OffsetX, State.OffsetY);
+                _dragOffset = worldMousePos - clickedNode.Position;
             }
             else
             {
@@ -328,7 +335,7 @@ namespace Compositor.KK
         private void HandleDragging()
         {
             if (!_isDragging) return;
-
+            
             if (_selectedNode == null)
             {
                 State.OffsetX += Input.GetAxis("Mouse X") * (DRAG_SPEED / State.Zoom);
@@ -336,7 +343,9 @@ namespace Compositor.KK
             }
             else
             {
-                _selectedNode.Position = GetAdjustedMousePosition() - _dragOffset;
+                Vector2 mousePos = GetAdjustedMousePosition();
+                Vector2 worldMousePos = (mousePos / State.Zoom) - new Vector2(State.OffsetX, State.OffsetY);
+                _selectedNode.Position = worldMousePos - _dragOffset;
             }
 
             if (Input.GetMouseButtonUp(0))
@@ -434,6 +443,7 @@ namespace Compositor.KK
         /// </summary>
         internal void ProcessNodes()
         {
+            // This entire thing is so hard to read...
             _evaluationManager.BeginEvaluation();
 
             var processedNodes = new HashSet<ICompositorNode>();
@@ -441,6 +451,7 @@ namespace Compositor.KK
 
             foreach (var node in _nodes)
             {
+                // Grab all root nodes first, then process them in a breadth-first manner.
                 if (ShouldProcessNode(node, processedNodes))
                 {
                     if (node is LazyCompositorNode)
@@ -469,6 +480,7 @@ namespace Compositor.KK
                     {
                         foreach (var connection in output.Connections)
                         {
+                            // Forward propagate processing to the next node in the chain. 
                             if (ShouldProcessNode(connection.InputNode, processedNodes))
                             {
                                 if (connection.InputNode is LazyCompositorNode)

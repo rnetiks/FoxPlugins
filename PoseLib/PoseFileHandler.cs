@@ -79,8 +79,8 @@ namespace PoseLib.KKS
                         return false;
 
                     int version = reader.ReadInt32();
-                    reader.ReadInt32();
-                    reader.ReadString();
+                    reader.ReadInt32(); // gender
+                    reader.ReadString(); // file name
                     poseInfo.Load(reader, version);
 
                     foreach (var character in characters)

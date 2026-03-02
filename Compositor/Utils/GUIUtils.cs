@@ -80,28 +80,12 @@ namespace Compositor.KK
                 float t1 = (float)i / segments;
                 float t2 = (float)(i + 1) / segments;
 
-                Vector2 p1 = CalculateBezierPoint(t1, start, startTangent, endTangent, end);
-                Vector2 p2 = CalculateBezierPoint(t2, start, startTangent, endTangent, end);
-
+                Vector2 p1 = KKAPI.Utilities.Curve.Bezier(start, startTangent, endTangent, end, t1);
+                Vector2 p2 = KKAPI.Utilities.Curve.Bezier(start, startTangent, endTangent, end, t2);
+                
                 DrawLine(p1, p2, color, width);
             }
         }
-
-        private static Vector2 CalculateBezierPoint(float t, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)
-        {
-            float u = 1 - t;
-            float tt = t * t;
-            float uu = u * u;
-
-            float uuu = uu * u;
-            float ttt = tt * t;
-            Vector2 p = uuu * p0;
-            p += 3 * uu * t * p1;
-            p += 3 * u * tt * p2;
-            p += ttt * p3;
-            return p;
-        }
-
         /// <summary>
         /// Scales a rectangular area by a specified multiplier, applying an additional offset to its position.
         /// </summary>

@@ -9,7 +9,7 @@ namespace Compositor.KK.Compositor
         private static readonly Dictionary<int, Queue<float[]>> _floatArrayPools = new Dictionary<int, Queue<float[]>>();
         private static readonly object _lock = new object();
         private static long _totalAllocatedBytes = 0;
-        private static readonly long MAX_MEMORY_BYTES = 512 * 1024 * 1024;
+        private static readonly long MAX_MEMORY_BYTES = 536870912L;
         
         public static long TotalAllocatedBytes => _totalAllocatedBytes;
         public static long MaxMemoryBytes => MAX_MEMORY_BYTES;

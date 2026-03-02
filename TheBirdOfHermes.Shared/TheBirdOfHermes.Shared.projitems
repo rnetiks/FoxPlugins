@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{0e3e7a7c-966d-41e3-9b9b-d5594f54a8be}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>TheBirdOfHermes.Shared</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ScratchAudio.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SceneController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\AudioData.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\AudioLoader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\AudioManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\IAudioReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\OggReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\WavReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Waveform\WaveformRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AudioTrack.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TrackManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\AudioWindow.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\TrackPropertiesPopup.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\WindowStyles.cs" />
+
+    </ItemGroup>
+</Project>

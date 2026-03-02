@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TexFac.Universal
+namespace TexFac
 {
 	public static class Extension
 	{

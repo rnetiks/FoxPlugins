@@ -25,15 +25,15 @@ namespace Compositor.KK
         public unsafe override void Process()
         {
             Color color = _colorSelector.SelectedColor;
-            var pixelData = new float[Entry.ImageHeight * Entry.ImageWidth];
+            var pixelData = new float[1920 * 1080 * 4]; // Width * Height * RGBA
             fixed (float* pPixelData = pixelData)
             {
                 for (var i = 0; i < pixelData.Length; i+=4)
                 {
-                    pixelData[i] = color.r;
-                    pixelData[i + 1] = color.g;
-                    pixelData[i + 2] = color.b;
-                    pixelData[i + 3] = 1;
+                    pPixelData[i] = color.r;
+                    pPixelData[i + 1] = color.g;
+                    pPixelData[i + 2] = color.b;
+                    pPixelData[i + 3] = 1;
                 }
             }
             

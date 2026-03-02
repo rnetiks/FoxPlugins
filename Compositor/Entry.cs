@@ -22,7 +22,6 @@ namespace DefaultNamespace
     [ BepInDependency(ScreenshotManager.GUID) ]
     public class Entry : BaseUnityPlugin
     {
-        private const bool ScriptEngine = true;
         const string GUID = "com.fox.compositor";
         const string NAME = "Compositor";
         const string VERSION = "1.0.0";
@@ -62,7 +61,6 @@ namespace DefaultNamespace
             Compositor,
         }
 
-        public static AssetBundle _bundle;
         private WindowType _windowType = WindowType.Compositor;
         
         private void Awake()
@@ -89,6 +87,8 @@ namespace DefaultNamespace
             else
                 _harmony = Harmony.CreateAndPatchAll(GetType());
         }
+        
+        private const bool ScriptEngine = true;
         public static Entry Instance { get; private set; }
 
         private void InitializeConfig()

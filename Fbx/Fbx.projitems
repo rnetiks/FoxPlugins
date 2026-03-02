@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>{1ba425ef-950e-431a-9a51-60f91be76e64}</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>Fbx</Import_RootNamespace>
+    </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)DeflateWithChecksum.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ErrorLevel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxAsciiReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxAsciiWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxBinary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxBinaryReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxBinaryWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxDocument.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxIO.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxNode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxNodeList.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FbxVersion.cs" />
+  </ItemGroup>
+</Project>

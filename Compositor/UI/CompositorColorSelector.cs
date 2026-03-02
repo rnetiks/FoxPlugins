@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
+using Addin;
 using Compositor.KK;
-using Compositor.KKS.Utils;
 using UnityEngine;
 
 namespace DefaultNamespace
@@ -237,16 +237,7 @@ namespace DefaultNamespace
                     return true;
             }
         }
-
-        private bool IsInTriangle(Vector2 pos)
-        {
-            Vector2 v1 = new Vector2(0.5f, 0.1f);
-            Vector2 v2 = new Vector2(0.1f, 0.9f);
-            Vector2 v3 = new Vector2(0.9f, 0.9f);
-
-            return Vector.IsPointInTriangle(pos, v1, v2, v3);
-        }
-
+        
         public class HSStruct
         {
             public float h, s;

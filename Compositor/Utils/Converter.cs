@@ -14,6 +14,7 @@ namespace Compositor.KK.Utils
                 case SocketType.RGBA when to == SocketType.Alpha:
                 {
                     float[] result = new float[value.Length / 4];
+                    
                     fixed (float* pBytes = value)
                     {
                         for (var i = 0; i < result.Length; i++)

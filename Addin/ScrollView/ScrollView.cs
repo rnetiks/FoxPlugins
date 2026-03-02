@@ -9,21 +9,22 @@ namespace Addin
         private bool _isDraggingThumb;
         private float _dragStartY;
         private float _dragStartScroll;
+        private float _marginOfPixels = 0f;
         
-        public float ScrollbarWidth { get; set; } = 2f;
+        public float ScrollbarThickness { get; set; } = 2f;
         public Color ScrollbarBackgroundColor { get; set; } = new Color(0.1f, 0.1f, 0.1f, 0.3f);
         public Color ScrollThumbColor { get; set; } = new Color(0.4f, 0.4f, 0.4f, 0.8f);
         public Color ScrollThumbHoverColor { get; set; } = new Color(0.5f, 0.5f, 0.5f, 0.9f);
         public Color ScrollThumbActiveColor { get; set; } = new Color(0.6f, 0.6f, 0.6f, 1f);
         public float ScrollSensitivity { get; set; } = 20f;
         public bool AutoHide { get; set; } = false;
-        public float ThumbMinHeight { get; set; } = 20f;
+        public float ThumbMinSize { get; set; } = 20f;
         
         public Vector2 ScrollPosition => _scrollPosition;
 
-        public ScrollView(float scrollbarWidth = 2f)
+        public ScrollView(float scrollbarThickness = 2f)
         {
-            ScrollbarWidth = scrollbarWidth;
+            ScrollbarThickness = scrollbarThickness;
             _scrollbarID = GUIUtility.GetControlID(FocusType.Passive);
         }
 
@@ -37,7 +38,7 @@ namespace Addin
         public Rect BeginScrollView(Rect position, float contentHeight, float contentWidth = -1f)
         {
             if (contentWidth < 0)
-                contentWidth = position.width - ScrollbarWidth;
+                contentWidth = position.width - ScrollbarThickness;
 
             bool needsScrollbar = contentHeight > position.height;
 
@@ -47,7 +48,7 @@ namespace Addin
                 return new Rect(position.x, position.y, position.width, position.height);
             }
 
-            // Handle scroll wheel
+            // Meep Meep
             if (position.Contains(Event.current.mousePosition))
             {
                 if (Event.current.type == EventType.ScrollWheel)
@@ -57,6 +58,8 @@ namespace Addin
                     Event.current.Use();
                 }
             }
+            
+            /************************* I wanna have a foxgirl wife TT-TT */
 
             if (needsScrollbar)
             {
@@ -75,19 +78,19 @@ namespace Addin
 
         private void DrawCustomScrollbar(Rect viewRect, float contentHeight)
         {
-            float scrollbarX = viewRect.x + viewRect.width - ScrollbarWidth;
-            Rect scrollbarRect = new Rect(scrollbarX, viewRect.y, ScrollbarWidth, viewRect.height);
+            float scrollbarX = viewRect.x + viewRect.width - ScrollbarThickness;
+            Rect scrollbarRect = new Rect(scrollbarX, viewRect.y, ScrollbarThickness, viewRect.height);
             
             GUI.color = ScrollbarBackgroundColor;
             GUI.DrawTexture(scrollbarRect, Texture2D.whiteTexture);
             
             float visibleRatio = Mathf.Clamp01(viewRect.height / contentHeight);
-            float thumbHeight = Mathf.Max(ThumbMinHeight, viewRect.height * visibleRatio);
+            float thumbHeight = Mathf.Max(ThumbMinSize, viewRect.height * visibleRatio);
             float scrollRange = contentHeight - viewRect.height;
             float thumbRange = viewRect.height - thumbHeight;
             float thumbY = thumbRange > 0 ? ((_scrollPosition.y / scrollRange) * thumbRange) : 0;
             
-            Rect thumbRect = new Rect(scrollbarX, viewRect.y + thumbY, ScrollbarWidth, thumbHeight);
+            Rect thumbRect = new Rect(scrollbarX, viewRect.y + thumbY, ScrollbarThickness, thumbHeight);
 
             Event e = Event.current;
             bool isHovering = thumbRect.Contains(e.mousePosition);
