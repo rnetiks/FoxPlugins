@@ -21,6 +21,12 @@ namespace TheBirdOfHermes
 
         private const float SpeedSmoothing = 0.3f;
 
+        /// <summary>
+        /// Sets the audio samples, number of channels, and sample rate for the ScratchAudio component.
+        /// </summary>
+        /// <param name="samples">The array of audio sample data.</param>
+        /// <param name="channels">The number of audio channels in the sample data.</param>
+        /// <param name="sampleRate">The sample rate of the audio in Hz.</param>
         public void SetSamples(float[] samples, int channels, int sampleRate)
         {
             _samples = samples;
@@ -32,17 +38,30 @@ namespace TheBirdOfHermes
             _targetSpeed = 0;
         }
 
+        /// <summary>
+        /// Sets the playback position for the ScratchAudio component based on the provided time in seconds.
+        /// </summary>
+        /// <param name="timeInSeconds">The desired playback position in seconds.</param>
         public void SetPosition(float timeInSeconds)
         {
             _position = timeInSeconds * _sampleRate;
             _position = Math.Max(0, Math.Min(_position, _totalSamples - 1));
         }
 
+        /// <summary>
+        /// Sets the playback speed for the ScratchAudio component.
+        /// </summary>
+        /// <param name="speed">The desired playback speed. A value of 1 represents normal speed,
+        /// less than 1 for slower playback, and greater than 1 for faster playback.</param>
         public void SetSpeed(float speed)
         {
             _targetSpeed = speed;
         }
 
+        /// <summary>
+        /// Activates or deactivates the ScratchAudio component, resetting playback speed and target speed when deactivated.
+        /// </summary>
+        /// <param name="active">Indicates whether the component should be active. Pass true to activate or false to deactivate.</param>
         public void SetActive(bool active)
         {
             _isActive = active;
@@ -58,6 +77,11 @@ namespace TheBirdOfHermes
             _speed = Mathf.Lerp(_speed, _targetSpeed, SpeedSmoothing);
         }
 
+        /// <summary>
+        /// Processes audio data in real-time and applies scratching or scrubbing effects based on the playback position and speed.
+        /// </summary>
+        /// <param name="data">The buffer array of audio samples to be filled with processed audio data.</param>
+        /// <param name="channels">The number of audio output channels.</param>
         private void OnAudioFilterRead(float[] data, int channels)
         {
             if (!_isActive || _samples == null || Math.Abs(_speed) < 0.01f)

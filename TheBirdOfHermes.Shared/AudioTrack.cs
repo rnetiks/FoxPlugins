@@ -38,6 +38,10 @@ namespace TheBirdOfHermes
             Waveform = new WaveformRenderer();
         }
 
+        /// <summary>
+        /// Loads audio data from a specified file path and initializes various associated properties and components of the audio track.
+        /// </summary>
+        /// <param name="path">The file path of the audio file to load.</param>
         public void LoadFromFile(string path)
         {
             Clear();
@@ -48,6 +52,11 @@ namespace TheBirdOfHermes
             Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
         }
 
+        /// <summary>
+        /// Loads audio data from a byte array, initializes the audio track, and updates associated properties and components.
+        /// </summary>
+        /// <param name="audioBytes">The byte array containing the audio data to load.</param>
+        /// <param name="fileName">The name of the file associated with the audio data.</param>
         public void LoadFromBytes(byte[] audioBytes, string fileName)
         {
             Clear();
@@ -58,6 +67,13 @@ namespace TheBirdOfHermes
             Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
         }
 
+        /// <summary>
+        /// Synchronizes the playback state of the audio track with the provided playback time, play state, and master volume.
+        /// Adjusts the playback position and volume based on the timeline and audio settings.
+        /// </summary>
+        /// <param name="playbackTime">The current playback time of the timeline in seconds.</param>
+        /// <param name="isPlaying">Indicates whether the timeline is currently playing.</param>
+        /// <param name="masterVolume">The master volume level applied to the audio track.</param>
         public void SyncPlayback(float playbackTime, bool isPlaying, float masterVolume)
         {
             if (!HasAudio || Audio.Source == null) return;
@@ -96,6 +112,10 @@ namespace TheBirdOfHermes
             }
         }
 
+        /// <summary>
+        /// Seeks the audio track to a specified playback time, adjusting time within the effective timeline range and applying necessary trims.
+        /// </summary>
+        /// <param name="playbackTime">The target time in seconds to seek to within the audio track's timeline.</param>
         public void SeekTo(float playbackTime)
         {
             if (!HasAudio || Audio.Source == null) return;
@@ -109,6 +129,9 @@ namespace TheBirdOfHermes
             }
         }
 
+        /// <summary>
+        /// Clears all properties and components associated with the audio track, resetting it to its default state.
+        /// </summary>
         public void Clear()
         {
             Audio?.Clear();
@@ -125,6 +148,10 @@ namespace TheBirdOfHermes
             Waveform = null;
         }
 
+        /// <summary>
+        /// Adjusts the start and end trim values of the audio track to ensure they remain within valid bounds,
+        /// preventing overlaps and exceeding the full duration of the track.
+        /// </summary>
         public void ClampTrim()
         {
             if (!HasAudio) return;

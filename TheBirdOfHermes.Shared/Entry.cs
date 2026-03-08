@@ -95,6 +95,11 @@ namespace TheBirdOfHermes
             }
         }
 
+        /// <summary>
+        /// Calculates the start time and the visible duration of the view window within the timeline.
+        /// </summary>
+        /// <param name="startTime">The starting time of the view window on the timeline, adjusted for zoom and playhead position.</param>
+        /// <param name="visibleDuration">The duration of the portion of the timeline visible within the view window.</param>
         private void GetViewWindow(out float startTime, out float visibleDuration)
         {
             float duration = TL._duration;
@@ -171,6 +176,10 @@ namespace TheBirdOfHermes
                 DrawSelectedWaveform(waveformRect, selected);
         }
 
+        /// <summary>
+        /// Draws the toolbar interface on the specified rectangle area.
+        /// </summary>
+        /// <param name="rect">The rectangular area where the toolbar interface will be drawn.</param>
         private void DrawToolbar(Rect rect)
         {
             GUILayout.BeginArea(rect);
@@ -227,11 +236,19 @@ namespace TheBirdOfHermes
                 Input.ResetInputAxes();
         }
 
+        /// <summary>
+        /// Triggers a graphical update for the timeline interface, ensuring that any changes to the timeline's state are reflected visually.
+        /// </summary>
         private void ForceTimelineGUIUpdate()
         {
             TL.UpdateGrid();
         }
 
+        /// <summary>
+        /// Draws the selected audio track's waveform within the specified rectangular area.
+        /// </summary>
+        /// <param name="rect">The rectangular area where the waveform will be drawn.</param>
+        /// <param name="track">The audio track whose waveform will be rendered.</param>
         private void DrawSelectedWaveform(Rect rect, AudioTrack track)
         {
             int width = (int)rect.width;
@@ -261,6 +278,12 @@ namespace TheBirdOfHermes
             HandleSelectedWaveformInput(rect, startTime, visibleDuration, track);
         }
 
+        /// <summary>
+        /// Draws grid lines within the specified rectangular area based on the visible duration and start time.
+        /// </summary>
+        /// <param name="rect">The rectangular area where the grid lines will be drawn.</param>
+        /// <param name="startTime">The starting time of the visible region in the waveform.</param>
+        /// <param name="visibleDuration">The total duration of the visible region in the waveform.</param>
         private void DrawGridLines(Rect rect, float startTime, float visibleDuration)
         {
             float[] intervals = { 0.001f, 0.005f, 0.01f, 0.05f, 0.1f, 0.25f, 0.5f, 1f, 2f, 5f, 10f, 30f, 60f };
@@ -286,6 +309,12 @@ namespace TheBirdOfHermes
             }
         }
 
+        /// <summary>
+        /// Draws the playhead on the specified rectangle area based on the current playback time.
+        /// </summary>
+        /// <param name="rect">The rectangular area where the playhead will be drawn.</param>
+        /// <param name="startTime">The start time of the visible portion of the audio timeline.</param>
+        /// <param name="visibleDuration">The duration of the visible portion of the audio timeline.</param>
         private void DrawPlayhead(Rect rect, float startTime, float visibleDuration)
         {
             float normX = (TL._playbackTime - startTime) / visibleDuration;
@@ -296,6 +325,14 @@ namespace TheBirdOfHermes
                 ScaleMode.StretchToFill, false);
         }
 
+        /// <summary>
+        /// Handles user input interactions with the selected waveform visualization,
+        /// such as zooming, scrubbing, or panning within the specified rectangular area.
+        /// </summary>
+        /// <param name="rect">The rectangular area where the waveform is displayed and interacted with.</param>
+        /// <param name="startTime">The start time of the visible waveform segment within the given area.</param>
+        /// <param name="visibleDuration">The duration of the waveform segment visible within the given area.</param>
+        /// <param name="track">The audio track associated with the waveform being interacted with.</param
         private void HandleSelectedWaveformInput(Rect rect, float startTime, float visibleDuration, AudioTrack track)
         {
             Event e = Event.current;
@@ -346,6 +383,11 @@ namespace TheBirdOfHermes
                 Input.ResetInputAxes();
         }
 
+        /// <summary>
+        /// Sets the zoom level of the timeline view while maintaining positioning relative to a specified anchor point.
+        /// </summary>
+        /// <param name="newZoom">The new zoom level to apply, where values greater than 1 indicate zooming in.</param>
+        /// <param name="anchorNormX">The normalized horizontal position (0 to 1) of the anchor point relative to the visible area.</param>
         private void SetZoom(float newZoom, float anchorNormX)
         {
             GetViewWindow(out float startTime, out float visibleDuration);
@@ -353,6 +395,12 @@ namespace TheBirdOfHermes
             SetZoomAtPoint(newZoom, timeAtAnchor, anchorNormX);
         }
 
+        /// <summary>
+        /// Adjusts the zoom level of the waveform display and aligns the view such that the specified point remains at the same relative position within the display.
+        /// </summary>
+        /// <param name="newZoom">The new zoom level to be applied.</param>
+        /// <param name="timeAtPoint">The time position in the waveform corresponding to the specified point.</param>
+        /// <param name="normX">The normalized horizontal position (0.0 to 1.0) of the specified point within the display.</param>
         private void SetZoomAtPoint(float newZoom, float timeAtPoint, float normX)
         {
             _waveZoom = Mathf.Clamp(newZoom, 0.1f, 5000f);
@@ -363,6 +411,10 @@ namespace TheBirdOfHermes
             ClampScrollOffset();
         }
 
+        /// <summary>
+        /// Restricts the waveform scroll offset value to ensure it remains within valid bounds.
+        /// This ensures the visible section of the waveform does not exceed the allowed range based on the timeline's duration and zoom level.
+        /// </summary>
         private void ClampScrollOffset()
         {
             float duration = TL._duration;

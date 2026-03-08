@@ -53,6 +53,9 @@ namespace TheBirdOfHermes.UI
             _manager = manager;
         }
 
+        /// <summary>
+        /// Renders the audio window and its associated content if the window is open.
+        /// </summary>
         public void Draw()
         {
             if (!IsOpen) return;
@@ -64,6 +67,10 @@ namespace TheBirdOfHermes.UI
                 Input.ResetInputAxes();
         }
 
+        /// <summary>
+        /// Draws the content of the window with the specified window ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the window being drawn.</param>
         private void DrawWindowContent(int id)
         {
             var totalRect = new Rect(0, 0, _windowRect.width, _windowRect.height);
@@ -83,6 +90,10 @@ namespace TheBirdOfHermes.UI
             GUI.DragWindow(new Rect(0, 0, _windowRect.width, 18));
         }
 
+        /// <summary>
+        /// Draws the toolbar within the specified rect.
+        /// </summary>
+        /// <param name="rect">The rect where the toolbar will be drawn.</param>
         private void DrawToolbar(Rect rect)
         {
             GUI.DrawTexture(rect, WindowStyles.GetTexture(WindowStyles.ToolbarBg));
@@ -107,11 +118,11 @@ namespace TheBirdOfHermes.UI
             if (GUILayout.Button("Fit", GUILayout.Width(30)))
                 FitToContent();
 
-            GUILayout.Space(10);
+            /*GUILayout.Space(10);
             GUI.color = _manager.SnapEnabled ? Color.green : Color.gray;
             if (GUILayout.Button("Snap", GUILayout.Width(46)))
                 _manager.SnapEnabled = !_manager.SnapEnabled;
-            GUI.color = Color.white;
+            GUI.color = Color.white;*/
 
             GUILayout.FlexibleSpace();
 
@@ -122,6 +133,10 @@ namespace TheBirdOfHermes.UI
             GUILayout.EndArea();
         }
 
+        /// <summary>
+        /// Draws the ruler inside the specified rect.
+        /// </summary>
+        /// <param name="rect">The rect where the ruler will be drawn.</param>
         private void DrawRuler(Rect rect)
         {
             GUI.DrawTexture(rect, WindowStyles.GetTexture(WindowStyles.RulerBg));
@@ -150,38 +165,56 @@ namespace TheBirdOfHermes.UI
             }
         }
 
+        /// <summary>
+        /// Renders the track lanes within the audio window, applying appropriate styling, layout, and user interaction handling.
+        /// </summary>
+        /// <param name="rect">The rectangular area within the audio window where the track lanes will be drawn.</param>
         private void DrawTrackLanes(Rect rect)
         {
-            var tracks = _manager.Tracks;
-            float totalHeight = tracks.Count * WindowStyles.LaneHeight;
-            bool needsScroll = totalHeight > rect.height;
-
-            if (needsScroll)
+            try
             {
-                _trackScroll = GUI.BeginScrollView(rect, _trackScroll,
-                    new Rect(0, 0, rect.width - 16, totalHeight));
-            }
+                var tracks = _manager.Tracks;
+                float totalHeight = tracks.Count * WindowStyles.LaneHeight;
+                bool needsScroll = totalHeight > rect.height;
 
-            for (int i = 0; i < tracks.Count; i++)
+                if (needsScroll)
+                {
+                    _trackScroll = GUI.BeginScrollView(rect, _trackScroll,
+                        new Rect(0, 0, rect.width - 16, totalHeight));
+                }
+
+                for (int i = 0; i < tracks.Count; i++)
+                {
+                    float y = needsScroll ? i * WindowStyles.LaneHeight : rect.y + i * WindowStyles.LaneHeight;
+                    float laneWidth = needsScroll ? rect.width - 16 : rect.width;
+                    var laneRect = new Rect(needsScroll ? 0 : rect.x, y, laneWidth, WindowStyles.LaneHeight);
+
+                    DrawTrackLane(laneRect, tracks[i], i);
+                }
+
+                if (needsScroll)
+                    GUI.EndScrollView();
+
+                DrawLanesPlayhead(rect);
+
+                HandleLaneAreaInput(rect);
+
+                if (_dragMode == DragMode.MoveTrack && _activeSnapLines != null)
+                    DrawSnapLines(rect);
+            }
+            catch (NullReferenceException e)
             {
-                float y = needsScroll ? i * WindowStyles.LaneHeight : rect.y + i * WindowStyles.LaneHeight;
-                float laneWidth = needsScroll ? rect.width - 16 : rect.width;
-                var laneRect = new Rect(needsScroll ? 0 : rect.x, y, laneWidth, WindowStyles.LaneHeight);
-
-                DrawTrackLane(laneRect, tracks[i], i);
+                Entry.Logger.LogWarning($"Object reference not set to an instance of an object for object: {e.TargetSite} | {e.Message} | {e.StackTrace}");
             }
-
-            if (needsScroll)
-                GUI.EndScrollView();
-
-            DrawLanesPlayhead(rect);
-
-            HandleLaneAreaInput(rect);
-
-            if (_dragMode == DragMode.MoveTrack && _activeSnapLines != null)
-                DrawSnapLines(rect);
         }
 
+        /// <summary>
+        /// Renders a track lane within the audio window, including background, header, waveform,
+        /// and handling user input for the specified audio track.
+        /// </summary>
+        /// <param name="laneRect">The rectangle defining the dimensions and position of the track lane to draw.</param>
+        /// <param name="track">The audio track represented by the track lane.</param>
+        /// <param name="index">The index of the track lane being drawn, used for styling alternations and logic.</param>
         private void DrawTrackLane(Rect laneRect, AudioTrack track, int index)
         {
             bool isSelected = track == _manager.SelectedTrack;
@@ -201,6 +234,13 @@ namespace TheBirdOfHermes.UI
             HandleTrackInput(waveArea, track, index);
         }
 
+        /// <summary>
+        /// Draws the track header section within the specified rectangular area,
+        /// displaying track details, volume controls, and action buttons.
+        /// </summary>
+        /// <param name="rect">The rectangular area where the track header will be drawn.</param>
+        /// <param name="track">The track associated with the header, providing its name, color, and other details.</param>
+        /// <param name="index">The index of the track within the list of tracks.</param>
         private void DrawTrackHeader(Rect rect, AudioTrack track, int index)
         {
             Color hdrBg = track == _manager.SelectedTrack ? WindowStyles.HeaderBgSelected : WindowStyles.HeaderBg;
@@ -246,6 +286,11 @@ namespace TheBirdOfHermes.UI
                 _manager.MoveTrack(index, index + 1);
         }
 
+        /// <summary>
+        /// Draws the waveform representation of the provided audio track in the specified rectangular area.
+        /// </summary>
+        /// <param name="areaRect">The rectangular area within which the track waveform is rendered.</param>
+        /// <param name="track">The audio track whose waveform is to be drawn.</param>
         private void DrawTrackWaveform(Rect areaRect, AudioTrack track)
         {
             if (!track.HasAudio) return;
@@ -322,6 +367,12 @@ namespace TheBirdOfHermes.UI
             DrawTrimHandle(new Rect(activeStartX + activeWidth - WindowStyles.HandleWidth / 2, areaRect.y, WindowStyles.HandleWidth, areaRect.height), areaRect);
         }
 
+        /// <summary>
+        /// Draws the trim handle at the specified position, applying clip bounds and visual styles.
+        /// Handles hover and drag states for visual feedback.
+        /// </summary>
+        /// <param name="handleRect">The rectangular area representing the position and size of the trim handle.</param>
+        /// <param name="clipTo">The bounds to clip the trim handle rendering within.</param>
         private void DrawTrimHandle(Rect handleRect, Rect clipTo)
         {
             handleRect = ClipRect(handleRect, clipTo);
@@ -337,6 +388,10 @@ namespace TheBirdOfHermes.UI
             GUI.DrawTexture(handleRect, WindowStyles.GetTexture(handleColor));
         }
 
+        /// <summary>
+        /// Draws the playhead on the track lanes, indicating the current playback position within the visible portion of the audio timeline.
+        /// </summary>
+        /// <param name="lanesRect">The rectangular area representing the track lanes in which the playhead will be drawn.</param>
         private void DrawLanesPlayhead(Rect lanesRect)
         {
             float duration = GetViewDuration();
@@ -348,6 +403,10 @@ namespace TheBirdOfHermes.UI
             GUI.DrawTexture(new Rect(x - 1, lanesRect.y, 2, lanesRect.height), WindowStyles.GetTexture(WindowStyles.Playhead));
         }
 
+        /// <summary>
+        /// Draws snap lines on the audio lanes to indicate points of alignment, such as snapping to time markers or other tracks.
+        /// </summary>
+        /// <param name="lanesRect">The rectangular region of the lanes where the snap lines should be drawn.</param>
         private void DrawSnapLines(Rect lanesRect)
         {
             if (_activeSnapLines == null) return;
@@ -367,6 +426,12 @@ namespace TheBirdOfHermes.UI
             }
         }
 
+        /// <summary>
+        /// Processes user input for manipulating an audio track in the specified area.
+        /// </summary>
+        /// <param name="waveArea">The rectangular area on the screen representing the waveform display for the track.</param>
+        /// <param name="track">The audio track being manipulated.</param>
+        /// <param name="index">The index of the track within the track list.</param>
         private void HandleTrackInput(Rect waveArea, AudioTrack track, int index)
         {
             Event e = Event.current;
@@ -421,6 +486,11 @@ namespace TheBirdOfHermes.UI
 
         }
 
+        /// <summary>
+        /// Handles user input within the lane area, including dragging, scrolling, zooming,
+        /// and seeking actions related to audio editing timelines.
+        /// </summary>
+        /// <param name="rect">The rectangular area representing the bounds of the lane region.</param>
         private void HandleLaneAreaInput(Rect rect)
         {
             Event e = Event.current;
@@ -503,6 +573,10 @@ namespace TheBirdOfHermes.UI
             }
         }
 
+        /// <summary>
+        /// Prompts the user to select an audio file using a file dialog and adds the selected file as a new track in the track manager.
+        /// Logs information about the added track or an error if the file loading fails.
+        /// </summary>
         private void LoadAudioFile()
         {
             string filter = AudioLoader.GetFileFilter();
@@ -521,6 +595,10 @@ namespace TheBirdOfHermes.UI
             }
         }
 
+        /// <summary>
+        /// Adjusts the zoom level of the audio window, modifying the visible duration while maintaining the view's center point.
+        /// </summary>
+        /// <param name="newZoom">The new zoom level to apply, clamped between a minimum and maximum value.</param>
         private void SetZoom(float newZoom)
         {
             float center = _viewStartTime + GetViewDuration() / 2f;
@@ -529,6 +607,10 @@ namespace TheBirdOfHermes.UI
             _viewStartTime = Mathf.Max(0f, center - newDuration / 2f);
         }
 
+        /// <summary>
+        /// Adjusts the audio window's view to ensure all loaded tracks fit within the visible timeline range.
+        /// Sets the view's starting time and adjusts the zoom level based on the maximum timeline endpoint of all tracks.
+        /// </summary>
         private void FitToContent()
         {
             if (_manager.TrackCount == 0)
@@ -551,26 +633,49 @@ namespace TheBirdOfHermes.UI
             _zoom = Mathf.Clamp(_zoom, 0.00001f, 500f);
         }
 
+        /// <summary>
+        /// Calculates and retrieves the visible duration of the audio timeline based on the current zoom level.
+        /// </summary>
+        /// <returns>
+        /// The duration of the visible portion of the audio timeline in seconds.
+        /// </returns>
         private float GetViewDuration()
         {
             return _viewDuration / _zoom;
         }
 
         private Func<float> _getPlaybackTime;
+        /// <summary>
+        /// Sets the function used to retrieve the current playback time.
+        /// </summary>
+        /// <param name="getter">A function that returns the current playback time as a float.</param>
         public void SetPlaybackTimeGetter(Func<float> getter) => _getPlaybackTime = getter;
 
+        /// <summary>
+        /// Retrieves the current playback time of the audio timeline.
+        /// </summary>
+        /// <returns>
+        /// The current playback time as a float. If no playback time function is set, returns 0.
+        /// </returns>
         private float GetPlaybackTime()
         {
             return _getPlaybackTime?.Invoke() ?? 0f;
         }
 
+        /// <summary>
+        /// Clips a rectangle to ensure it fits within the specified bounds.
+        /// </summary>
+        /// <param name="r">The rectangle to be clipped.</param>
+        /// <param name="bounds">The boundary rectangle within which <paramref name="r"/> will be clipped.</param>
+        /// <returns>A new rectangle representing the clipped area. If the rectangles do not overlap, the width and height will be zero.</returns>
         private static Rect ClipRect(Rect r, Rect bounds)
         {
             float x1 = Mathf.Max(r.x, bounds.x);
             float y1 = Mathf.Max(r.y, bounds.y);
             float x2 = Mathf.Min(r.xMax, bounds.xMax);
             float y2 = Mathf.Min(r.yMax, bounds.yMax);
-            if (x2 <= x1 || y2 <= y1) return new Rect(x1, y1, 0, 0);
+            if (x2 <= x1 || y2 <= y1) 
+                return new Rect(x1, y1, 0, 0);
             return new Rect(x1, y1, x2 - x1, y2 - y1);
         }
     }

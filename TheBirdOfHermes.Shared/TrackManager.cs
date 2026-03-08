@@ -11,11 +11,13 @@ namespace TheBirdOfHermes
         private readonly List<AudioTrack> _tracks = new List<AudioTrack>();
         private int _nextColorIndex;
 
-        public IReadOnlyList<AudioTrack> Tracks => _tracks as IReadOnlyList<AudioTrack>;
+        // public IEnumerable<AudioTrack> Tracks => _tracks;
+        public List<AudioTrack> Tracks => _tracks;
+        // public IReadOnlyList<AudioTrack> Tracks => (IReadOnlyList<AudioTrack>)_tracks;
         public float MasterVolume { get; set; } = 1f;
         public AudioTrack SelectedTrack { get; private set; }
         public float SnapThreshold { get; set; } = 0.1f;
-        public bool SnapEnabled { get; set; } = true;
+        // public bool SnapEnabled { get; set; } = true;
 
         public TrackManager(MonoBehaviour owner)
         {
@@ -104,7 +106,9 @@ namespace TheBirdOfHermes
 
         public float TrySnap(AudioTrack dragging, float proposedOffset)
         {
-            if (!SnapEnabled) return proposedOffset;
+            // if (!SnapEnabled) return proposedOffset;
+            // Switched to key press, rather than a button
+            if (!Input.GetKey(KeyCode.LeftShift)) return proposedOffset;
 
             float bestOffset = proposedOffset;
             float bestDist = SnapThreshold;

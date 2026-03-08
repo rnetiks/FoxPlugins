@@ -15,6 +15,14 @@ namespace TheBirdOfHermes.UI
 
         private static readonly Color[] Palette = WindowStyles.TrackColors;
 
+        /// <summary>
+        /// Opens the Track Properties Popup and initializes its state.
+        /// This method sets the target track, position, and the delegate to execute upon removal.
+        /// The popup's position is adjusted to ensure it remains within the screen boundaries.
+        /// </summary>
+        /// <param name="track">The <see cref="AudioTrack"/> that is the target of the popup.</param>
+        /// <param name="screenPos">The screen position where the popup should appear.</param>
+        /// <param name="onRemove">An action delegate that is called when the track is removed.</param>
         public void Open(AudioTrack track, Vector2 screenPos, Action<AudioTrack> onRemove)
         {
             Target = track;
@@ -28,12 +36,23 @@ namespace TheBirdOfHermes.UI
                 _windowRect.y = Screen.height - _windowRect.height;
         }
 
+        /// <summary>
+        /// Closes the Track Properties Popup by resetting its state.
+        /// This method sets the popup's visibility to false and clears the current target track.
+        /// It is typically used to dismiss or finalize the interaction with the popup interface.
+        /// </summary>
         public void Close()
         {
             IsOpen = false;
             Target = null;
         }
 
+        /// <summary>
+        /// Renders the graphical interface associated with the component.
+        /// This method invokes Unity's GUI system to set up window elements
+        /// and handles user interactions such as mouse clicks and keyboard events.
+        /// Typically used to display or manage data related to audio tracks or similar entities.
+        /// </summary>
         public void Draw()
         {
             if (!IsOpen || Target == null) return;
@@ -57,6 +76,13 @@ namespace TheBirdOfHermes.UI
                 Input.ResetInputAxes();
         }
 
+        /// <summary>
+        /// Renders the content of the "Track Properties" popup window.
+        /// This method defines the layout and functionality for various controls,
+        /// such as labels, text fields, sliders, and buttons, allowing users
+        /// to view and edit properties related to a track.
+        /// </summary>
+        /// <param name="id">The unique identifier for the window. Used internally by Unity's GUI system.</param>
         private void DrawContent(int id)
         {
             if (Target == null) { Close(); return; }

@@ -49,6 +49,11 @@ namespace TheBirdOfHermes.UI
 
         private static readonly Dictionary<int, Texture2D> TexCache = new Dictionary<int, Texture2D>();
 
+        /// Retrieves a texture filled with the specified color. If a texture with the same color
+        /// has already been created and cached, it reuses the cached texture. Otherwise, it generates
+        /// a new texture, applies the color, and caches it for future use.
+        /// <param name="c">The color to fill the texture.</param>
+        /// <returns>A Texture2D filled with the specified color.</returns>
         public static Texture2D GetTexture(Color c)
         {
             int key = c.GetHashCode();
@@ -63,6 +68,10 @@ namespace TheBirdOfHermes.UI
             return tex;
         }
 
+        /// Retrieves a color from the predefined track color palette based on the given index.
+        /// The method cycles through the palette if the index exceeds its length.
+        /// <param name="index">The index used to retrieve a color from the track color palette.</param>
+        /// <returns>A Color from the predefined track color palette corresponding to the given index.</returns>
         public static Color GetTrackColor(int index)
         {
             return TrackColors[index % TrackColors.Length];
@@ -93,6 +102,11 @@ namespace TheBirdOfHermes.UI
             padding = new RectOffset(2, 2, 18, 2)
         });
 
+        /// Formats a duration in seconds into a human-readable time string.
+        /// If the duration is less than a minute, it is displayed in seconds with two decimal places (e.g., "45.00s").
+        /// If the duration is one minute or longer, it is displayed in minutes and seconds (e.g., "2:30.00").
+        /// <param name="seconds">The duration in seconds to format. Negative values are treated as zero.</param>
+        /// <returns>A string representing the formatted time.</returns>
         public static string FormatTime(float seconds)
         {
             if (seconds < 0) seconds = 0;
