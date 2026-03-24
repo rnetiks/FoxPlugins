@@ -9,7 +9,7 @@
         <Import_RootNamespace>debug</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Debug.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logging.cs" />
 
     </ItemGroup>
 </Project>
