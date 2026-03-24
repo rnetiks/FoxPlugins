@@ -9,7 +9,9 @@ namespace TheBirdOfHermes.Audio
         private static readonly List<IAudioReader> Readers = new List<IAudioReader>
         {
             new WavReader(),
-            new OggReader()
+            new OggReader(),
+            new MP3Reader(),
+            new FlacReader()
         };
 
         /// <summary>
@@ -17,7 +19,7 @@ namespace TheBirdOfHermes.Audio
         /// </summary>
         /// <param name="reader">The audio reader to register for use with audio file loading.</param>
         public static void Register(IAudioReader reader) => Readers.Add(reader);
-        
+
         public static bool Unregister(IAudioReader reader) => Readers.Remove(reader);
 
         /// <summary>

@@ -12,7 +12,7 @@ namespace TheBirdOfHermes.Audio
             if (headerBytes == null || headerBytes.Length < 4)
                 return false;
             return headerBytes[0] == 0x4F && headerBytes[1] == 0x67
-                && headerBytes[2] == 0x67 && headerBytes[3] == 0x53;
+                                          && headerBytes[2] == 0x67 && headerBytes[3] == 0x53;
         }
 
         public AudioData Read(byte[] bytes)

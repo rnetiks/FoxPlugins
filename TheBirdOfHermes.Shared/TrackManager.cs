@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using TheBirdOfHermes.Audio;
+using System.Linq;
+using BepInEx;
 using TheBirdOfHermes.UI;
 using UnityEngine;
 
@@ -8,45 +9,63 @@ namespace TheBirdOfHermes
     public class TrackManager
     {
         private readonly MonoBehaviour _owner;
-        private readonly List<AudioTrack> _tracks = new List<AudioTrack>();
+        private readonly List<AudioLane> _lanes = new List<AudioLane>();
         private int _nextColorIndex;
 
-        // public IEnumerable<AudioTrack> Tracks => _tracks;
-        public List<AudioTrack> Tracks => _tracks;
-        // public IReadOnlyList<AudioTrack> Tracks => (IReadOnlyList<AudioTrack>)_tracks;
+        public List<AudioLane> Lanes => _lanes;
+        public IEnumerable<AudioTrack> AllTracks => _lanes.SelectMany(l => l.Tracks);
         public float MasterVolume { get; set; } = 1f;
-        public AudioTrack SelectedTrack { get; private set; }
-        public float SnapThreshold { get; set; } = 0.1f;
-        // public bool SnapEnabled { get; set; } = true;
+
+        public HashSet<AudioTrack> SelectedTracks { get; } = new HashSet<AudioTrack>();
+        public AudioTrack PrimarySelectedTrack { get; private set; }
+
+        public int SnapPixelDistance { get; set; } = 10;
 
         public TrackManager(MonoBehaviour owner)
         {
             _owner = owner;
+            EnsureEmptyLane();
         }
 
         public AudioTrack AddTrackFromFile(string path)
         {
+            var lane = new AudioLane();
             var track = new AudioTrack(_owner);
             track.LoadFromFile(path);
             track.TrackColor = WindowStyles.GetTrackColor(_nextColorIndex++);
-            _tracks.Add(track);
+            track.Lane = lane;
+            lane.Tracks.Add(track);
 
-            if (SelectedTrack == null)
-                SelectTrack(track);
+            int insertIndex = _lanes.Count > 0 && _lanes[_lanes.Count - 1].Tracks.Count == 0
+                ? _lanes.Count - 1
+                : _lanes.Count;
+            _lanes.Insert(insertIndex, lane);
 
+            if (PrimarySelectedTrack == null)
+                SelectTrack(track, false);
+
+            EnsureEmptyLane();
             return track;
         }
 
         public AudioTrack AddTrackFromBytes(byte[] audioBytes, string fileName)
         {
+            var lane = new AudioLane();
             var track = new AudioTrack(_owner);
             track.LoadFromBytes(audioBytes, fileName);
             track.TrackColor = WindowStyles.GetTrackColor(_nextColorIndex++);
-            _tracks.Add(track);
+            track.Lane = lane;
+            lane.Tracks.Add(track);
 
-            if (SelectedTrack == null)
-                SelectTrack(track);
+            int insertIndex = _lanes.Count > 0 && _lanes[_lanes.Count - 1].Tracks.Count == 0
+                ? _lanes.Count - 1
+                : _lanes.Count;
+            _lanes.Insert(insertIndex, lane);
 
+            if (PrimarySelectedTrack == null)
+                SelectTrack(track, false);
+
+            EnsureEmptyLane();
             return track;
         }
 
@@ -54,120 +73,256 @@ namespace TheBirdOfHermes
         {
             if (track == null) return;
 
-            _tracks.Remove(track);
+            var lane = track.Lane;
+            lane?.Tracks.Remove(track);
             track.Destroy();
 
-            if (SelectedTrack == track)
-                SelectedTrack = _tracks.Count > 0 ? _tracks[0] : null;
+            SelectedTracks.Remove(track);
+            if (PrimarySelectedTrack == track)
+                PrimarySelectedTrack = SelectedTracks.Count > 0 ? SelectedTracks.First() : null;
+
+            RemoveEmptyLanesExceptLast();
+            EnsureEmptyLane();
+        }
+
+        public void RemoveSelectedTracks()
+        {
+            var toRemove = SelectedTracks.ToList();
+            SelectedTracks.Clear();
+            PrimarySelectedTrack = null;
+
+            foreach (var track in toRemove)
+            {
+                track.Lane?.Tracks.Remove(track);
+                track.Destroy();
+            }
+
+            RemoveEmptyLanesExceptLast();
+            EnsureEmptyLane();
         }
 
         public void ClearAll()
         {
-            foreach (var track in _tracks)
+            foreach (var lane in _lanes)
+            foreach (var track in lane.Tracks)
                 track.Destroy();
-            _tracks.Clear();
-            SelectedTrack = null;
+
+            _lanes.Clear();
+            SelectedTracks.Clear();
+            PrimarySelectedTrack = null;
             _nextColorIndex = 0;
+            EnsureEmptyLane();
         }
 
-        public void SelectTrack(AudioTrack track)
+        public void SelectTrack(AudioTrack track, bool additive)
         {
-            if (SelectedTrack != null)
-                SelectedTrack.IsSelected = false;
-
-            SelectedTrack = track;
+            if (!additive)
+            {
+                foreach (var t in SelectedTracks)
+                    t.IsSelected = false;
+                SelectedTracks.Clear();
+            }
 
             if (track != null)
-                track.IsSelected = true;
+            {
+                if (additive && SelectedTracks.Contains(track))
+                {
+                    track.IsSelected = false;
+                    SelectedTracks.Remove(track);
+                    PrimarySelectedTrack = SelectedTracks.Count > 0 ? SelectedTracks.First() : null;
+                }
+                else
+                {
+                    track.IsSelected = true;
+                    SelectedTracks.Add(track);
+                    PrimarySelectedTrack = track;
+                }
+            }
         }
 
-        public void MoveTrack(int fromIndex, int toIndex)
+        public void DeselectAll()
         {
-            if (fromIndex < 0 || fromIndex >= _tracks.Count) return;
-            toIndex = Mathf.Clamp(toIndex, 0, _tracks.Count - 1);
-            if (fromIndex == toIndex) return;
+            foreach (var track in SelectedTracks)
+                track.IsSelected = false;
+            SelectedTracks.Clear();
+            PrimarySelectedTrack = null;
+        }
 
-            var track = _tracks[fromIndex];
-            _tracks.RemoveAt(fromIndex);
-            _tracks.Insert(toIndex, track);
+        /// <summary>
+        /// Moves a track to a target lane. Handles overlap clamping on the target lane.
+        /// </summary>
+        public void MoveTrackToLane(AudioTrack track, AudioLane targetLane)
+        {
+            if (track.Lane == targetLane) return;
+
+            var oldLane = track.Lane;
+            oldLane?.Tracks.Remove(track);
+
+            track.Lane = targetLane;
+            targetLane.Tracks.Add(track);
+
+            ClampTrackPosition(track, targetLane);
+
+            RemoveEmptyLanesExceptLast();
+            EnsureEmptyLane();
+        }
+
+        /// <summary>
+        /// Clamps a track's offset so it doesn't overlap with other tracks on the same lane.
+        /// </summary>
+        public void ClampTrackPosition(AudioTrack track, AudioLane lane)
+        {
+            foreach (var other in lane.Tracks)
+            {
+                if (other == track) continue;
+
+                if (track.AudibleStart < other.AudibleEnd && track.AudibleEnd > other.AudibleStart)
+                {
+                    float distToEnd = Mathf.Abs(track.AudibleStart - other.AudibleEnd);
+                    float distToStart = Mathf.Abs(track.AudibleEnd - other.AudibleStart);
+
+                    if (distToEnd <= distToStart)
+                    {
+                        track.Offset = other.AudibleEnd - track.TrimStart;
+                    }
+                    else
+                    {
+                        track.Offset = other.AudibleStart - track.EffectiveDuration - track.TrimStart;
+                    }
+
+                    track.Offset = Mathf.Max(0f, track.Offset);
+                }
+            }
+        }
+
+        public int GetLaneIndex(AudioLane lane) => _lanes.IndexOf(lane);
+
+        public AudioLane GetLaneAtIndex(int index)
+        {
+            if (index < 0 || index >= _lanes.Count) return null;
+            return _lanes[index];
         }
 
         public void SyncAllPlayback(float playbackTime, bool isPlaying)
         {
-            foreach (var track in _tracks)
-                track.SyncPlayback(playbackTime, isPlaying, MasterVolume);
+            foreach (var lane in _lanes)
+            foreach (var track in lane.Tracks)
+                track.SyncPlayback(playbackTime, isPlaying, lane.Volume, MasterVolume, lane.IsMuted);
         }
 
         public void SeekAll(float playbackTime)
         {
-            foreach (var track in _tracks)
+            foreach (var lane in _lanes)
+            foreach (var track in lane.Tracks)
                 track.SeekTo(playbackTime);
         }
 
-        public float TrySnap(AudioTrack dragging, float proposedOffset)
+        /// <summary>
+        /// Pixel-based snapping. Converts pixel threshold to time threshold using pxPerSecond.
+        /// </summary>
+        public float TrySnap(AudioTrack dragging, float proposedOffset, float pxPerSecond)
         {
-            // if (!SnapEnabled) return proposedOffset;
-            // Switched to key press, rather than a button
-            if (!Input.GetKey(KeyCode.LeftShift)) return proposedOffset;
-
+            float timeThreshold = SnapPixelDistance / pxPerSecond;
             float bestOffset = proposedOffset;
-            float bestDist = SnapThreshold;
+            float bestDist = timeThreshold;
 
-            float dragStart = proposedOffset;
-            float dragEnd = proposedOffset + dragging.EffectiveDuration;
+            float dragAudibleStart = proposedOffset + dragging.TrimStart;
+            float dragAudibleEnd = proposedOffset + dragging.FullDuration - dragging.TrimEnd;
 
-            foreach (var other in _tracks)
+            foreach (var lane in _lanes)
             {
-                if (other == dragging) continue;
-
-                float d = Mathf.Abs(dragStart - other.TimelineStart);
-                if (d < bestDist)
+                foreach (var other in lane.Tracks)
                 {
-                    bestDist = d;
-                    bestOffset = other.TimelineStart;
-                }
+                    if (other == dragging) continue;
+                    if (SelectedTracks.Contains(other)) continue;
 
-                d = Mathf.Abs(dragStart - other.TimelineEnd);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    bestOffset = other.TimelineEnd;
-                }
+                    float d = Mathf.Abs(dragAudibleStart - other.AudibleStart);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        bestOffset = other.AudibleStart - dragging.TrimStart;
+                    }
 
-                d = Mathf.Abs(dragEnd - other.TimelineStart);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    bestOffset = proposedOffset + (other.TimelineStart - dragEnd);
-                }
+                    d = Mathf.Abs(dragAudibleStart - other.AudibleEnd);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        bestOffset = other.AudibleEnd - dragging.TrimStart;
+                    }
 
-                d = Mathf.Abs(dragEnd - other.TimelineEnd);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    bestOffset = proposedOffset + (other.TimelineEnd - dragEnd);
+                    d = Mathf.Abs(dragAudibleEnd - other.AudibleStart);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        bestOffset = proposedOffset + (other.AudibleStart - dragAudibleEnd);
+                    }
+
+                    d = Mathf.Abs(dragAudibleEnd - other.AudibleEnd);
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        bestOffset = proposedOffset + (other.AudibleEnd - dragAudibleEnd);
+                    }
                 }
             }
 
             if (Mathf.Abs(proposedOffset) < bestDist)
                 bestOffset = 0f;
 
-            return Mathf.Max(0f, bestOffset);
+            // return Mathf.Max(0f, bestOffset);
+            return bestOffset;
+        }
+
+        /// <summary>
+        /// Multi-element snap: snaps based on the dragged track, then returns the delta to apply to all selected tracks.
+        /// </summary>
+        public float TrySnapMulti(AudioTrack dragged, float proposedOffset, float pxPerSecond, out float snapDelta)
+        {
+            float snappedOffset = TrySnap(dragged, proposedOffset, pxPerSecond);
+            snapDelta = snappedOffset - proposedOffset;
+            return snappedOffset;
         }
 
         public List<float> GetSnapLines(AudioTrack excluding)
         {
             var lines = new List<float>();
-            foreach (var track in _tracks)
+            foreach (var lane in _lanes)
             {
-                if (track == excluding) continue;
-                lines.Add(track.TimelineStart);
-                lines.Add(track.TimelineEnd);
+                foreach (var track in lane.Tracks)
+                {
+                    if (track == excluding) continue;
+                    if (SelectedTracks.Contains(track)) continue;
+                    lines.Add(track.AudibleStart);
+                    lines.Add(track.AudibleEnd);
+                }
             }
             return lines;
         }
 
-        public bool HasAudio => _tracks.Count > 0;
-        public int TrackCount => _tracks.Count;
+        private void EnsureEmptyLane()
+        {
+            while (_lanes.Count > 1 &&
+                   _lanes[_lanes.Count - 1].Tracks.Count == 0 &&
+                   _lanes[_lanes.Count - 2].Tracks.Count == 0)
+            {
+                _lanes.RemoveAt(_lanes.Count - 1);
+            }
+
+            if (_lanes.Count == 0 || _lanes[_lanes.Count - 1].Tracks.Count > 0)
+                _lanes.Add(new AudioLane());
+        }
+
+        private void RemoveEmptyLanesExceptLast()
+        {
+            for (int i = _lanes.Count - 1; i >= 0; i--)
+            {
+                if (_lanes[i].Tracks.Count == 0 && i < _lanes.Count - 1)
+                    _lanes.RemoveAt(i);
+            }
+        }
+
+        public bool HasAudio => _lanes.Any(l => l.Tracks.Count > 0);
+        public int TrackCount => _lanes.Sum(l => l.Tracks.Count);
+        public int LaneCount => _lanes.Count;
     }
 }

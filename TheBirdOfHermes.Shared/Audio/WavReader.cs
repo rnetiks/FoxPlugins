@@ -12,9 +12,9 @@ namespace TheBirdOfHermes.Audio
             if (headerBytes == null || headerBytes.Length < 12)
                 return false;
             return headerBytes[0] == 'R' && headerBytes[1] == 'I'
-                && headerBytes[2] == 'F' && headerBytes[3] == 'F'
-                && headerBytes[8] == 'W' && headerBytes[9] == 'A'
-                && headerBytes[10] == 'V' && headerBytes[11] == 'E';
+                                         && headerBytes[2] == 'F' && headerBytes[3] == 'F'
+                                         && headerBytes[8] == 'W' && headerBytes[9] == 'A'
+                                         && headerBytes[10] == 'V' && headerBytes[11] == 'E';
         }
 
         public AudioData Read(byte[] bytes)
@@ -74,28 +74,46 @@ namespace TheBirdOfHermes.Audio
 
         private static float[] Decode(BinaryReader br, int size, ushort fmt, int bits)
         {
+            byte[] raw = br.ReadBytes(size);
             int count = size / (bits / 8);
             float[] s = new float[count];
 
-            for (int i = 0; i < count; i++)
+            if (fmt == 1 && bits == 16)
+            {
+                short[] shorts = new short[count];
+                Buffer.BlockCopy(raw, 0, shorts, 0, size);
+                for (int i = 0; i < count; i++)
+                    s[i] = shorts[i] / 32768f;
+                return s;
+            }
+
+            if (fmt == 3 && bits == 32)
+            {
+                Buffer.BlockCopy(raw, 0, s, 0, size);
+                return s;
+            }
+
+            for (int i = 0, offset = 0; i < count; i++)
             {
                 if (fmt == 3)
-                    s[i] = bits == 64 ? (float)br.ReadDouble() : br.ReadSingle();
-                else if (fmt == 1)
                 {
-                    switch (bits)
-                    {
-                        case 8:  s[i] = (br.ReadByte() - 128) / 128f; break;
-                        case 16: s[i] = br.ReadInt16() / 32768f; break;
-                        case 24:
-                            int v = br.ReadByte() | (br.ReadByte() << 8) | (br.ReadByte() << 16);
-                            s[i] = ((v & 0x800000) != 0 ? v | unchecked((int)0xFF000000) : v) / 8388608f;
-                            break;
-                        case 32: s[i] = br.ReadInt32() / 2147483648f; break;
-                    }
+                    s[i] = bits == 64
+                        ? (float)BitConverter.ToDouble(raw, offset)
+                        : BitConverter.ToSingle(raw, offset);
                 }
+                else switch (bits)
+                {
+                    case 8:  s[i] = (raw[offset] - 128) / 128f; break;
+                    case 24:
+                        int v = raw[offset] | (raw[offset + 1] << 8) | (raw[offset + 2] << 16);
+                        s[i] = ((v & 0x800000) != 0 ? v | unchecked((int)0xFF000000) : v) / 8388608f;
+                        break;
+                    case 32:
+                        s[i] = BitConverter.ToInt32(raw, offset) / 2147483648f;
+                        break;
+                }
+                offset += bits / 8;
             }
             return s;
-        }
-    }
+        }    }
 }

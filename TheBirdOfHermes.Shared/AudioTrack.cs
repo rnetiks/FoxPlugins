@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using TheBirdOfHermes.Audio;
 using TheBirdOfHermes.Waveform;
@@ -6,6 +5,13 @@ using UnityEngine;
 
 namespace TheBirdOfHermes
 {
+    public enum WaveformMode
+    {
+        Normal,
+        Max,
+        Volume
+    }
+
     public class AudioTrack
     {
         public AudioManager Audio { get; private set; }
@@ -18,15 +24,30 @@ namespace TheBirdOfHermes
         public float Offset { get; set; }
         public float TrimStart { get; set; }
         public float TrimEnd { get; set; }
-        public float Volume { get; set; } = 1f;
         public bool IsSelected { get; set; }
-        public bool IsMuted { get; set; }
         public Color TrackColor { get; set; } = Color.white;
+
+        public float FadeInDuration { get; set; }
+        public float FadeOutDuration { get; set; }
+
+        public WaveformMode NormalizationMode { get; set; } = WaveformMode.Normal;
+
+        public AudioLane Lane { get; set; }
 
         public float FullDuration => Audio?.Data?.Duration ?? 0f;
         public float EffectiveDuration => Mathf.Max(0f, FullDuration - TrimStart - TrimEnd);
-        public float TimelineStart => Offset;
-        public float TimelineEnd => Offset + EffectiveDuration;
+
+        /// <summary>Visual start of the full track block (including trimmed regions).</summary>
+        public float VisualStart => Offset;
+        /// <summary>Visual end of the full track block (including trimmed regions).</summary>
+        public float VisualEnd => Offset + FullDuration;
+        /// <summary>Start of the audible (non-trimmed) region on the timeline.</summary>
+        public float AudibleStart => Offset + TrimStart;
+        /// <summary>End of the audible (non-trimmed) region on the timeline.</summary>
+        public float AudibleEnd => Offset + FullDuration - TrimEnd;
+
+        public float TimelineStart => AudibleStart;
+        public float TimelineEnd => AudibleEnd;
         public bool HasAudio => Audio != null && Audio.HasAudio;
 
         private readonly MonoBehaviour _owner;
@@ -38,10 +59,6 @@ namespace TheBirdOfHermes
             Waveform = new WaveformRenderer();
         }
 
-        /// <summary>
-        /// Loads audio data from a specified file path and initializes various associated properties and components of the audio track.
-        /// </summary>
-        /// <param name="path">The file path of the audio file to load.</param>
         public void LoadFromFile(string path)
         {
             Clear();
@@ -52,11 +69,6 @@ namespace TheBirdOfHermes
             Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
         }
 
-        /// <summary>
-        /// Loads audio data from a byte array, initializes the audio track, and updates associated properties and components.
-        /// </summary>
-        /// <param name="audioBytes">The byte array containing the audio data to load.</param>
-        /// <param name="fileName">The name of the file associated with the audio data.</param>
         public void LoadFromBytes(byte[] audioBytes, string fileName)
         {
             Clear();
@@ -68,24 +80,22 @@ namespace TheBirdOfHermes
         }
 
         /// <summary>
-        /// Synchronizes the playback state of the audio track with the provided playback time, play state, and master volume.
-        /// Adjusts the playback position and volume based on the timeline and audio settings.
+        /// Synchronizes playback with the timeline. Volume comes from lane and master only.
+        /// Applies fade in/out multiplier based on current position.
         /// </summary>
-        /// <param name="playbackTime">The current playback time of the timeline in seconds.</param>
-        /// <param name="isPlaying">Indicates whether the timeline is currently playing.</param>
-        /// <param name="masterVolume">The master volume level applied to the audio track.</param>
-        public void SyncPlayback(float playbackTime, bool isPlaying, float masterVolume)
+        public void SyncPlayback(float playbackTime, bool isPlaying, float laneVolume, float masterVolume, bool laneMuted)
         {
             if (!HasAudio || Audio.Source == null) return;
 
-            float effectiveVolume = IsMuted ? 0f : Volume * masterVolume;
+            float fadeMultiplier = GetFadeMultiplier(playbackTime);
+            float effectiveVolume = laneMuted ? 0f : laneVolume * masterVolume * fadeMultiplier;
             Audio.Source.volume = effectiveVolume;
 
-            bool inRange = playbackTime >= TimelineStart && playbackTime < TimelineEnd;
+            bool inRange = playbackTime >= AudibleStart && playbackTime < AudibleEnd;
 
             if (isPlaying && inRange)
             {
-                float audioTime = (playbackTime - Offset) + TrimStart;
+                float audioTime = (playbackTime - Offset);
                 audioTime = Mathf.Clamp(audioTime, TrimStart, FullDuration - TrimEnd);
 
                 if (!Audio.Source.isPlaying)
@@ -95,9 +105,8 @@ namespace TheBirdOfHermes
                 }
                 else
                 {
-                    float expectedTime = audioTime;
-                    if (Mathf.Abs(Audio.Source.time - expectedTime) > 0.1f)
-                        Audio.Source.time = expectedTime;
+                    if (Mathf.Abs(Audio.Source.time - audioTime) > 0.1f)
+                        Audio.Source.time = audioTime;
 
                     if (Audio.Source.time >= FullDuration - TrimEnd)
                         Audio.Source.Pause();
@@ -113,25 +122,39 @@ namespace TheBirdOfHermes
         }
 
         /// <summary>
-        /// Seeks the audio track to a specified playback time, adjusting time within the effective timeline range and applying necessary trims.
+        /// Calculates the fade multiplier (0-1) for a given timeline playback time.
         /// </summary>
-        /// <param name="playbackTime">The target time in seconds to seek to within the audio track's timeline.</param>
+        private float GetFadeMultiplier(float playbackTime)
+        {
+            if (playbackTime < AudibleStart || playbackTime >= AudibleEnd)
+                return 0f;
+
+            float posInAudible = playbackTime - AudibleStart;
+            float audibleDuration = EffectiveDuration;
+
+            if (FadeInDuration > 0f && posInAudible < FadeInDuration)
+                return Mathf.Clamp01(posInAudible / FadeInDuration);
+
+            float fadeOutStart = audibleDuration - FadeOutDuration;
+            if (FadeOutDuration > 0f && posInAudible > fadeOutStart)
+                return Mathf.Clamp01((audibleDuration - posInAudible) / FadeOutDuration);
+
+            return 1f;
+        }
+
         public void SeekTo(float playbackTime)
         {
             if (!HasAudio || Audio.Source == null) return;
 
-            bool inRange = playbackTime >= TimelineStart && playbackTime < TimelineEnd;
+            bool inRange = playbackTime >= AudibleStart && playbackTime < AudibleEnd;
             if (inRange)
             {
-                float audioTime = (playbackTime - Offset) + TrimStart;
+                float audioTime = (playbackTime - Offset);
                 audioTime = Mathf.Clamp(audioTime, TrimStart, FullDuration - TrimEnd);
                 Audio.Source.time = audioTime;
             }
         }
 
-        /// <summary>
-        /// Clears all properties and components associated with the audio track, resetting it to its default state.
-        /// </summary>
         public void Clear()
         {
             Audio?.Clear();
@@ -139,6 +162,8 @@ namespace TheBirdOfHermes
             RawBytes = null;
             TrimStart = 0f;
             TrimEnd = 0f;
+            FadeInDuration = 0f;
+            FadeOutDuration = 0f;
         }
 
         public void Destroy()
@@ -148,15 +173,23 @@ namespace TheBirdOfHermes
             Waveform = null;
         }
 
-        /// <summary>
-        /// Adjusts the start and end trim values of the audio track to ensure they remain within valid bounds,
-        /// preventing overlaps and exceeding the full duration of the track.
-        /// </summary>
         public void ClampTrim()
         {
             if (!HasAudio) return;
             TrimStart = Mathf.Clamp(TrimStart, 0f, FullDuration - 0.01f);
             TrimEnd = Mathf.Clamp(TrimEnd, 0f, FullDuration - TrimStart - 0.01f);
+        }
+
+        public void ClampFade()
+        {
+            FadeInDuration = Mathf.Clamp(FadeInDuration, 0f, EffectiveDuration);
+            FadeOutDuration = Mathf.Clamp(FadeOutDuration, 0f, EffectiveDuration);
+            if (FadeInDuration + FadeOutDuration > EffectiveDuration)
+            {
+                float ratio = EffectiveDuration / (FadeInDuration + FadeOutDuration);
+                FadeInDuration *= ratio;
+                FadeOutDuration *= ratio;
+            }
         }
     }
 }

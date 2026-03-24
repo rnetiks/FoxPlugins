@@ -9,6 +9,9 @@
         <Import_RootNamespace>TheBirdOfHermes.Shared</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\FlacReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\MP3Reader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Properties\AssemblyInfo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScratchAudio.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SceneController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
@@ -19,11 +22,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Audio\OggReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Audio\WavReader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Waveform\WaveformRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AudioLane.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AudioTrack.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TrackManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\AudioWindow.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\TrackPropertiesPopup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\WindowStyles.cs" />
-
-    </ItemGroup>
+  </ItemGroup>
 </Project>

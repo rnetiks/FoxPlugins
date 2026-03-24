@@ -34,15 +34,20 @@ namespace TheBirdOfHermes.UI
         public static readonly Color HandleHover = new Color(1f, 1f, 1f, 0.8f);
         public static readonly Color HandleDrag = new Color(1f, 0.9f, 0.3f, 1f);
         public static readonly Color DragGhost = new Color(1f, 1f, 1f, 0.15f);
+        public static readonly Color SelectionBorder = new Color(0.4f, 0.7f, 1f, 0.9f);
+        public static readonly Color HoverBorder = new Color(1f, 1f, 1f, 0.25f);
+        public static readonly Color TrimmedWaveform = new Color(1f, 1f, 1f, 0.3f);
+        public static readonly Color FadeHandle = new Color(1f, 0.85f, 0.3f, 0.9f);
+        public static readonly Color TrackNameBg = new Color(0f, 0f, 0f, 0.6f);
 
         public static readonly Color[] TrackColors =
         {
-            new Color(0.3f, 0.6f, 1.0f),  
-            new Color(0.3f, 0.85f, 0.5f),  
-            new Color(1.0f, 0.5f, 0.3f),  
-            new Color(0.85f, 0.3f, 0.6f),  
-            new Color(0.6f, 0.4f, 1.0f),  
-            new Color(1.0f, 0.85f, 0.3f),  
+            new Color(0.3f, 0.6f, 1.0f),
+            new Color(0.3f, 0.85f, 0.5f),
+            new Color(1.0f, 0.5f, 0.3f),
+            new Color(0.85f, 0.3f, 0.6f),
+            new Color(0.6f, 0.4f, 1.0f),
+            new Color(1.0f, 0.85f, 0.3f),
             new Color(0.3f, 0.85f, 0.85f),
             new Color(1.0f, 0.4f, 0.4f),
         };
@@ -94,6 +99,16 @@ namespace TheBirdOfHermes.UI
             alignment = TextAnchor.UpperLeft,
             normal = { textColor = RulerText },
             padding = new RectOffset(2, 0, 2, 0)
+        });
+
+        private static GUIStyle _trackNameLabel;
+        public static GUIStyle TrackNameLabel => _trackNameLabel ?? (_trackNameLabel = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 10,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.UpperLeft,
+            normal = { textColor = Color.white },
+            padding = new RectOffset(3, 3, 1, 1)
         });
 
         private static GUIStyle _windowStyle;
