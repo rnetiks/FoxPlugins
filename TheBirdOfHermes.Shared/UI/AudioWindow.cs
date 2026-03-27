@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using KKAPI.Utilities;
 using TheBirdOfHermes.Audio;
+using TheBirdOfHermes.Undo;
 using UnityEngine;
 
 namespace TheBirdOfHermes.UI
@@ -14,7 +17,9 @@ namespace TheBirdOfHermes.UI
         private static readonly int WindowId = "TBOHAudioWindow".GetHashCode();
 
         private readonly TrackManager _manager;
+        private readonly UndoManager _undoManager;
         private readonly TrackPropertiesPopup _propsPopup = new TrackPropertiesPopup();
+        private readonly TrackContextMenu _contextMenu = new TrackContextMenu();
 
         public bool IsOpen { get; set; }
         public event Action<float> OnSeekEvent;
@@ -35,7 +40,8 @@ namespace TheBirdOfHermes.UI
             Pan,
             FadeInHandle,
             FadeOutHandle,
-            RulerSeek
+            RulerSeek,
+            ResizeWindow
         }
 
         private DragMode _dragMode;
@@ -47,22 +53,52 @@ namespace TheBirdOfHermes.UI
         private float _dragMouseStartY;
 
         private Dictionary<AudioTrack, float> _dragOriginalOffsets;
+        private Vector2 _resizeStartMouse;
+        private Vector2 _resizeStartSize;
 
         private List<float> _activeSnapLines;
         private float? _snappedValue;
 
         private AudioTrack _hoveredTrack;
 
-        public AudioWindow(TrackManager manager)
+        private bool _followPlayhead;
+        private Func<bool> _getIsPlaying;
+
+        public AudioWindow(TrackManager manager, UndoManager undoManager = null)
         {
             _manager = manager;
+            _undoManager = undoManager;
         }
+
+        public void SetIsPlayingGetter(Func<bool> getter) => _getIsPlaying = getter;
 
         public void Draw()
         {
             if (!IsOpen) return;
 
+            if (_dragMode == DragMode.ResizeWindow)
+            {
+                Event e = Event.current;
+                if (e.type == EventType.MouseDrag)
+                {
+                    float localX = e.mousePosition.x - _windowRect.x;
+                    float localY = e.mousePosition.y - _windowRect.y;
+                    float newWidth = _resizeStartSize.x + (localX - _resizeStartMouse.x);
+                    float newHeight = _resizeStartSize.y + (localY - _resizeStartMouse.y);
+                    _windowRect.width = Mathf.Clamp(newWidth, WindowStyles.MinWindowWidth, Screen.width - _windowRect.x);
+                    _windowRect.height = Mathf.Clamp(newHeight, WindowStyles.MinWindowHeight, Screen.height - _windowRect.y);
+                    e.Use();
+                }
+                else if (e.type == EventType.MouseUp)
+                {
+                    _dragMode = DragMode.None;
+                    e.Use();
+                }
+            }
+
             _windowRect = GUI.Window(WindowId, _windowRect, DrawWindowContent, "Audio Tracks", WindowStyles.WindowStyle);
+
+            _contextMenu.Draw();
             _propsPopup.Draw();
 
             if (_windowRect.Contains(Event.current.mousePosition))
@@ -75,7 +111,16 @@ namespace TheBirdOfHermes.UI
 
             GUI.DrawTexture(totalRect, WindowStyles.GetTexture(WindowStyles.WindowBg));
 
+            HandleResizeInput(totalRect);
+
             DrawToolbar(new Rect(0, 18, totalRect.width, WindowStyles.ToolbarHeight));
+
+            if (_followPlayhead)
+            {
+                float playbackTime = GetPlaybackTime();
+                float viewDuration = GetViewDuration();
+                _viewStartTime = Mathf.Max(0f, playbackTime - viewDuration / 2f);
+            }
 
             float rulerY = 18 + WindowStyles.ToolbarHeight;
             DrawRuler(new Rect(WindowStyles.HeaderWidth, rulerY, totalRect.width - WindowStyles.HeaderWidth, WindowStyles.RulerHeight));
@@ -84,7 +129,43 @@ namespace TheBirdOfHermes.UI
             float lanesHeight = totalRect.height - WindowStyles.ToolbarHeight - WindowStyles.RulerHeight - 4;
             DrawTrackLanes(new Rect(0, lanesY, totalRect.width, lanesHeight));
 
+            DrawResizeGrip(totalRect);
+
             GUI.DragWindow(new Rect(0, 0, _windowRect.width, 18));
+        }
+
+        private const float ResizeGripSize = 16f;
+
+        private void HandleResizeInput(Rect totalRect)
+        {
+            Event e = Event.current;
+            var gripRect = new Rect(totalRect.xMax - ResizeGripSize, totalRect.yMax - ResizeGripSize, ResizeGripSize, ResizeGripSize);
+
+            if (e.type == EventType.MouseDown && e.button == 0 && gripRect.Contains(e.mousePosition) && _dragMode == DragMode.None)
+            {
+                _dragMode = DragMode.ResizeWindow;
+                _resizeStartMouse = e.mousePosition;
+                _resizeStartSize = new Vector2(_windowRect.width, _windowRect.height);
+                e.Use();
+            }
+        }
+
+        private void DrawResizeGrip(Rect totalRect)
+        {
+            var gripRect = new Rect(totalRect.xMax - ResizeGripSize, totalRect.yMax - ResizeGripSize, ResizeGripSize, ResizeGripSize);
+            var gripColor = _dragMode == DragMode.ResizeWindow
+                ? new Color(0.8f, 0.8f, 0.85f, 0.8f)
+                : new Color(0.6f, 0.6f, 0.65f, 0.6f);
+
+            for (int i = 0; i < 3; i++)
+            {
+                float xOffset = 3 + i * 4;
+                float hOffset = 3 + (2 - i) * 4;
+                float x1 = gripRect.xMax - xOffset;
+                float y2 = gripRect.yMax - hOffset;
+                float y1 = gripRect.yMax - 2;
+                GUI.DrawTexture(new Rect(x1, y2, 2, y1 - y2), WindowStyles.GetTexture(gripColor));
+            }
         }
 
         private void DrawToolbar(Rect rect)
@@ -111,6 +192,13 @@ namespace TheBirdOfHermes.UI
             if (GUILayout.Button("Fit", GUILayout.Width(30)))
                 FitToContent();
 
+            GUILayout.Space(6);
+            var prevBg = GUI.backgroundColor;
+            GUI.backgroundColor = _followPlayhead ? Color.green : Color.gray;
+            if (GUILayout.Button("Follow", GUILayout.Width(50)))
+                _followPlayhead = !_followPlayhead;
+            GUI.backgroundColor = prevBg;
+
             GUILayout.FlexibleSpace();
 
             if (_manager.TrackCount > 0 && GUILayout.Button("Clear All", GUILayout.Width(75)))
@@ -127,11 +215,13 @@ namespace TheBirdOfHermes.UI
             GUI.DrawTexture(rect, WindowStyles.GetTexture(WindowStyles.RulerBg));
 
             float duration = GetViewDuration();
+            const float minLabelSpacingPx = 60f;
+            int maxLabels = Mathf.Max(2, Mathf.FloorToInt(rect.width / minLabelSpacingPx));
             float[] intervals = { 0.00001f, 0.0001f, 0.001f, 0.01f, 0.05f, 0.1f, 0.25f, 0.5f, 1f, 2f, 5f, 10f, 30f, 60f, 120f, 240f, 480f, 1000f, 10000f, 100000f };
             float interval = intervals[intervals.Length - 1];
             foreach (float iv in intervals)
             {
-                if (duration / iv <= 20)
+                if (duration / iv <= maxLabels)
                 {
                     interval = iv;
                     break;
@@ -285,22 +375,65 @@ namespace TheBirdOfHermes.UI
                 lane.IsMuted = !lane.IsMuted;
             GUI.backgroundColor = prevBgColor;
 
-            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && rect.Contains(Event.current.mousePosition))
-            {
-                if (Event.current.mousePosition.y > y + 18)
-                {
-                    _propsPopup.Open(lane, null, Event.current.mousePosition, t => _manager.RemoveTrack(t));
-                    Event.current.Use();
-                }
-            }
         }
 
         #endregion
 
         #region Track Waveform Drawing
 
+        private static readonly Color ProgressBg = new Color(0.1f, 0.1f, 0.12f, 0.85f);
+        private static readonly Color ProgressFill = new Color(0.3f, 0.6f, 1f, 0.8f);
+        private static readonly Color ProgressFilterFill = new Color(1f, 0.6f, 0.2f, 0.8f);
+
+        private void DrawTrackProgressOverlay(Rect areaRect, AudioTrack track)
+        {
+            if (!track.IsBusy) return;
+
+            float duration = GetViewDuration();
+            float pxPerSecond = areaRect.width / duration;
+
+            float blockX = areaRect.x;
+            float blockW = areaRect.width * 0.4f;
+            if (track.HasAudio)
+            {
+                float audibleStartX = areaRect.x + (track.AudibleStart - _viewStartTime) * pxPerSecond;
+                float audibleWidth = track.EffectiveDuration * pxPerSecond;
+                blockX = audibleStartX;
+                blockW = audibleWidth;
+            }
+
+            var overlayRect = new Rect(blockX, areaRect.y + 2, Mathf.Max(blockW, 120f), areaRect.height - 4);
+            overlayRect = ClipRect(overlayRect, areaRect);
+            if (overlayRect.width <= 0) return;
+
+            GUI.DrawTexture(overlayRect, WindowStyles.GetTexture(ProgressBg));
+
+            float barHeight = 8f;
+            float barMargin = 6f;
+            float barY = overlayRect.y + overlayRect.height / 2f + 2f;
+            var barBgRect = new Rect(overlayRect.x + barMargin, barY, overlayRect.width - barMargin * 2, barHeight);
+            GUI.DrawTexture(barBgRect, WindowStyles.GetTexture(new Color(0.05f, 0.05f, 0.07f)));
+
+            float progress = track.AsyncProgress;
+            Color fillColor = track.IsFiltering ? ProgressFilterFill : ProgressFill;
+            var fillRect = new Rect(barBgRect.x, barBgRect.y, barBgRect.width * progress, barBgRect.height);
+            GUI.DrawTexture(fillRect, WindowStyles.GetTexture(fillColor));
+
+            string label = track.IsLoading
+                ? $"Decoding... {progress * 100:F0}%"
+                : $"Filtering ({track.AsyncDescription})... {progress * 100:F0}%";
+            var labelRect = new Rect(overlayRect.x + barMargin, barY - 16f, overlayRect.width - barMargin * 2, 16f);
+            GUI.Label(labelRect, label, WindowStyles.TrackNameLabel);
+        }
+
         private void DrawTrackWaveform(Rect areaRect, AudioTrack track)
         {
+            if (track.IsBusy)
+            {
+                DrawTrackProgressOverlay(areaRect, track);
+                return;
+            }
+
             if (!track.HasAudio) return;
 
             float duration = GetViewDuration();
@@ -481,8 +614,17 @@ namespace TheBirdOfHermes.UI
 
             if (e.type == EventType.MouseDown && e.button == 1 && blockRect.Contains(e.mousePosition))
             {
-                _manager.SelectTrack(track, false);
-                _propsPopup.Open(lane, track, e.mousePosition, t => _manager.RemoveTrack(t));
+                if (!track.IsSelected)
+                    _manager.SelectTrack(track, false);
+                var screenPos = GUIUtility.GUIToScreenPoint(e.mousePosition);
+                _contextMenu.Open(track, _manager.SelectedTracks, lane, screenPos, () =>
+                {
+                    _propsPopup.Open(lane, track, screenPos, t =>
+                    {
+                        _undoManager?.Push(new RemoveTrackCommand(_manager, t));
+                        _manager.RemoveTrack(t);
+                    });
+                }, _undoManager);
                 e.Use();
                 return;
             }
@@ -599,6 +741,8 @@ namespace TheBirdOfHermes.UI
 
             if (e.type == EventType.MouseUp && _dragMode != DragMode.None)
             {
+                PushDragUndoCommand();
+
                 if (_dragMode == DragMode.MoveTrack)
                     FinalizeTrackMove();
 
@@ -672,6 +816,11 @@ namespace TheBirdOfHermes.UI
 
             if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Delete && _manager.SelectedTracks.Count > 0)
             {
+                if (_undoManager != null)
+                {
+                    foreach (var track in _manager.SelectedTracks)
+                        _undoManager.Push(new RemoveTrackCommand(_manager, track));
+                }
                 _manager.RemoveSelectedTracks();
                 e.Use();
             }
@@ -714,6 +863,79 @@ namespace TheBirdOfHermes.UI
             }
         }
 
+        private void PushDragUndoCommand()
+        {
+            if (_undoManager == null || _dragTrack == null) return;
+
+            switch (_dragMode)
+            {
+                case DragMode.MoveTrack when _dragOriginalOffsets != null:
+                {
+                    var newOffsets = new Dictionary<AudioTrack, float>();
+                    foreach (var kvp in _dragOriginalOffsets)
+                        newOffsets[kvp.Key] = kvp.Key.Offset;
+
+                    bool changed = false;
+                    foreach (var kvp in _dragOriginalOffsets)
+                    {
+                        if (Mathf.Abs(kvp.Value - kvp.Key.Offset) > 0.001f)
+                        {
+                            changed = true;
+                            break;
+                        }
+                    }
+
+                    if (changed)
+                        _undoManager.Push(new MultiMoveCommand("Move Track", _dragOriginalOffsets, newOffsets));
+                    break;
+                }
+
+                case DragMode.TrimLeft:
+                {
+                    float newVal = _dragTrack.TrimStart;
+                    if (Mathf.Abs(_dragStartValue - newVal) > 0.001f)
+                    {
+                        var track = _dragTrack;
+                        _undoManager.Push(new PropertyCommand<float>("Trim Start", _dragStartValue, newVal, v => { track.TrimStart = v; track.ClampTrim(); }));
+                    }
+                    break;
+                }
+
+                case DragMode.TrimRight:
+                {
+                    float newVal = _dragTrack.TrimEnd;
+                    if (Mathf.Abs(_dragStartValue - newVal) > 0.001f)
+                    {
+                        var track = _dragTrack;
+                        _undoManager.Push(new PropertyCommand<float>("Trim End", _dragStartValue, newVal, v => { track.TrimEnd = v; track.ClampTrim(); }));
+                    }
+                    break;
+                }
+
+                case DragMode.FadeInHandle:
+                {
+                    float newVal = _dragTrack.FadeInDuration;
+                    if (Mathf.Abs(_dragStartValue - newVal) > 0.001f)
+                    {
+                        var track = _dragTrack;
+                        _undoManager.Push(new PropertyCommand<float>("Fade In", _dragStartValue, newVal, v => { track.FadeInDuration = v; track.ClampFade(); }));
+                    }
+                    break;
+                }
+
+                case DragMode.FadeOutHandle:
+                {
+                    float newVal = _dragTrack.FadeOutDuration;
+                    if (Mathf.Abs(_dragStartValue - newVal) > 0.001f)
+                    {
+                        var track = _dragTrack;
+                        _undoManager.Push(new PropertyCommand<float>("Fade Out", _dragStartValue, newVal, v => { track.FadeOutDuration = v; track.ClampFade(); }));
+                    }
+                    break;
+                }
+            }
+        }
+
         private void FinalizeTrackMove()
         {
             foreach (var track in _manager.SelectedTracks)
@@ -739,7 +961,8 @@ namespace TheBirdOfHermes.UI
                 {
                     try
                     {
-                        _manager.AddTrackFromFile(se);
+                        var track = _manager.AddTrackFromFile(se);
+                        _undoManager?.Push(new AddTrackCommand(_manager, track));
                     }
                     catch (Exception e)
                     {

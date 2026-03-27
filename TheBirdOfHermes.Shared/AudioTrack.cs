@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using TheBirdOfHermes.Audio;
 using TheBirdOfHermes.Waveform;
@@ -34,6 +35,23 @@ namespace TheBirdOfHermes
 
         public AudioLane Lane { get; set; }
 
+        private AsyncTrackOperation _asyncOp;
+
+        /// <summary>True if a background decode or filter is in progress.</summary>
+        public bool IsBusy => _asyncOp != null && !_asyncOp.IsComplete;
+
+        /// <summary>True if a background decode is in progress.</summary>
+        public bool IsLoading => IsBusy && _asyncOp.Type == AsyncTrackOperation.OperationType.Decode;
+
+        /// <summary>True if a background filter is in progress.</summary>
+        public bool IsFiltering => IsBusy && _asyncOp.Type == AsyncTrackOperation.OperationType.Filter;
+
+        /// <summary>Progress of the current async operation (0..1).</summary>
+        public float AsyncProgress => _asyncOp?.Progress ?? 0f;
+
+        /// <summary>Description of the current async operation.</summary>
+        public string AsyncDescription => _asyncOp?.Description ?? "";
+
         public float FullDuration => Audio?.Data?.Duration ?? 0f;
         public float EffectiveDuration => Mathf.Max(0f, FullDuration - TrimStart - TrimEnd);
 
@@ -57,26 +75,6 @@ namespace TheBirdOfHermes
             _owner = owner;
             Audio = new AudioManager(owner);
             Waveform = new WaveformRenderer();
-        }
-
-        public void LoadFromFile(string path)
-        {
-            Clear();
-            Audio.LoadFromFile(path);
-            RawBytes = Audio.RawBytes;
-            FileName = Path.GetFileName(path);
-            Name = Path.GetFileNameWithoutExtension(path);
-            Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
-        }
-
-        public void LoadFromBytes(byte[] audioBytes, string fileName)
-        {
-            Clear();
-            Audio.LoadFromBytes(audioBytes, fileName);
-            RawBytes = audioBytes;
-            FileName = fileName;
-            Name = Path.GetFileNameWithoutExtension(fileName);
-            Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
         }
 
         /// <summary>
@@ -153,6 +151,114 @@ namespace TheBirdOfHermes
                 audioTime = Mathf.Clamp(audioTime, TrimStart, FullDuration - TrimEnd);
                 Audio.Source.time = audioTime;
             }
+        }
+
+        public void ApplyFilter(IAudioFilter filter)
+        {
+            if (!HasAudio) return;
+
+            if (filter is AudioFilterBase filterBase)
+            {
+                ApplyFilterAsync(filterBase);
+                return;
+            }
+
+            filter.Process(Audio.Data);
+            Audio.ReloadFromData();
+            RawBytes = Audio.Data.EncodeWav();
+            FileName = System.IO.Path.ChangeExtension(FileName, ".wav");
+            Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
+            ClampTrim();
+            ClampFade();
+        }
+
+        /// <summary>
+        /// Starts an async filter operation on a background thread.
+        /// </summary>
+        private void ApplyFilterAsync(AudioFilterBase filter)
+        {
+            if (IsBusy) return;
+            _asyncOp = AsyncTrackOperation.StartFilter(Audio.Data, filter, filter.Name);
+        }
+
+        /// <summary>
+        /// Starts an async decode operation. RawBytes and FileName are set immediately.
+        /// The actual decoding runs on a background thread.
+        /// </summary>
+        public void LoadFromBytesAsync(byte[] audioBytes, string fileName)
+        {
+            Clear();
+            RawBytes = audioBytes;
+            FileName = fileName;
+            Name = Path.GetFileNameWithoutExtension(fileName);
+            string extension = Path.GetExtension(fileName);
+            _asyncOp = AsyncTrackOperation.StartDecode(audioBytes, extension, fileName);
+        }
+
+        /// <summary>
+        /// Starts an async decode operation from a file path.
+        /// </summary>
+        public void LoadFromFileAsync(string path)
+        {
+            Clear();
+            var bytes = File.ReadAllBytes(path);
+            RawBytes = bytes;
+            FileName = Path.GetFileName(path);
+            Name = Path.GetFileNameWithoutExtension(path);
+            string extension = Path.GetExtension(path);
+            _asyncOp = AsyncTrackOperation.StartDecode(bytes, extension, FileName);
+        }
+
+        /// <summary>
+        /// Polls the current async operation. Must be called from the main thread (Update).
+        /// Returns true if the operation just completed this frame.
+        /// </summary>
+        public bool PollAsyncCompletion()
+        {
+            if (_asyncOp == null || !_asyncOp.IsComplete) return false;
+
+            var op = _asyncOp;
+            _asyncOp = null;
+
+            if (op.Error != null)
+            {
+                Entry.Logger.LogError($"Async {op.Type} failed for '{op.Description}': {op.Error}");
+                return true;
+            }
+
+            switch (op.Type)
+            {
+                case AsyncTrackOperation.OperationType.Decode:
+                    Audio.InitFromDecodedData(op.Result, FileName);
+                    Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
+                    break;
+
+                case AsyncTrackOperation.OperationType.Filter:
+                    Audio.ReloadFromData();
+                    RawBytes = Audio.Data.EncodeWav();
+                    FileName = Path.ChangeExtension(FileName, ".wav");
+                    Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
+                    ClampTrim();
+                    ClampFade();
+                    break;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Restores track audio from previously saved RawBytes (used by undo).
+        /// Re-decodes and rebuilds waveform.
+        /// </summary>
+        public void RestoreFromBytes(byte[] rawBytes, string fileName)
+        {
+            if (rawBytes == null) return;
+            Audio.LoadFromBytes(rawBytes, fileName);
+            RawBytes = rawBytes;
+            FileName = fileName;
+            Waveform.SetSamples(Audio.MonoSamples, Audio.Data.SampleRate);
+            ClampTrim();
+            ClampFade();
         }
 
         public void Clear()

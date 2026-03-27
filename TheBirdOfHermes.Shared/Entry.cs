@@ -7,14 +7,16 @@ using HarmonyLib;
 using KKAPI;
 using KKAPI.Studio.SaveLoad;
 using KKAPI.Utilities;
+using TheBirdOfHermes.Audio;
 using TheBirdOfHermes.UI;
+using TheBirdOfHermes.Undo;
 using TheBirdOfHermes.Waveform;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace TheBirdOfHermes
 {
-    [BepInPlugin(GUID, "The Bird of Hermes", "5.1.0.0")]
+    [BepInPlugin(GUID, "The Bird of Hermes", "5.3.0.0")]
     [BepInDependency(KoikatuAPI.GUID, KoikatuAPI.VersionConst)]
     [BepInDependency(Timeline.Timeline.GUID, Timeline.Timeline.Version)]
 #if KK || KKS
@@ -25,23 +27,18 @@ namespace TheBirdOfHermes
     public class Entry : BaseUnityPlugin
     {
         public const string GUID = "org.fox.thebirdofhermes";
-        public static new BepInEx.Logging.ManualLogSource Logger { get; private set; }
-
-        private const bool AllowScrubWhilePlaying = false;
+        public new static BepInEx.Logging.ManualLogSource Logger { get; private set; }
 
         private Harmony _harmony;
         private TrackManager _trackManager;
         private AudioWindow _audioWindow;
+        private UndoManager _undoManager;
 
         private WaveformRenderer _selectedWaveform = new WaveformRenderer();
         private AudioTrack _selectedWaveformTrack;
         private float _waveZoom = 1f;
         private float _waveScrollOffset = 0f;
         private bool _followPlayhead = true;
-
-        private Color _bgColor = new Color(0.15f, 0.15f, 0.18f);
-        private Color _playheadColor = Color.white;
-        private Color _gridColor = new Color(1f, 1f, 1f, 0.15f);
 
         private int _waveformHeight = 80;
 
@@ -60,12 +57,15 @@ namespace TheBirdOfHermes
         {
             _showWaveform = Config.Bind("General", "Show Waveform", new KeyboardShortcut(KeyCode.None));
             _showWindow = Config.Bind("General", "Show Audio Window", new KeyboardShortcut(KeyCode.None));
+
             Logger = base.Logger;
             _harmony = Harmony.CreateAndPatchAll(typeof(Entry));
 
             _trackManager = new TrackManager(this);
-            _audioWindow = new AudioWindow(_trackManager);
+            _undoManager = new UndoManager();
+            _audioWindow = new AudioWindow(_trackManager, _undoManager);
             _audioWindow.SetPlaybackTimeGetter(() => TL?._playbackTime ?? 0f);
+            _audioWindow.SetIsPlayingGetter(() => TL?._isPlaying ?? false);
             _audioWindow.OnSeekEvent += time =>
             {
                 if (TL == null) return;
@@ -105,6 +105,8 @@ namespace TheBirdOfHermes
             if (_showWindow.Value.IsDown())
                 _audioWindow.IsOpen = !_audioWindow.IsOpen;
 
+            _trackManager.PollAsyncOperations();
+
             if (TL != null && _trackManager.HasAudio)
                 _trackManager.SyncAllPlayback(TL._playbackTime, TL._isPlaying);
         }
@@ -112,6 +114,8 @@ namespace TheBirdOfHermes
         private void OnGUI()
         {
             if (TL == null || !_uiEnabled) return;
+
+            HandleUndoRedoInput();
 
             GUI.depth = 1000;
 
@@ -172,6 +176,24 @@ namespace TheBirdOfHermes
 
             if (new Rect(rect.x, rect.y, 90, rect.height).Contains(Event.current.mousePosition))
                 Input.ResetInputAxes();
+        }
+
+        private void HandleUndoRedoInput()
+        {
+            Event e = Event.current;
+            if (e.type != EventType.KeyDown) return;
+            if (!e.control) return;
+
+            if (e.keyCode == KeyCode.Z)
+            {
+                _undoManager.PerformUndo();
+                e.Use();
+            }
+            else if (e.keyCode == KeyCode.Y)
+            {
+                _undoManager.PerformRedo();
+                e.Use();
+            }
         }
 
         /// <summary>

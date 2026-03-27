@@ -89,5 +89,40 @@ namespace TheBirdOfHermes.Audio
                 .Select(e => "*" + e);
             return "Audio Files|" + string.Join(";", extensions.ToArray());
         }
+
+        /// <summary>
+        /// Loads audio data with progress reporting. Falls back to standard Load if the reader
+        /// doesn't implement IProgressAudioReader.
+        /// </summary>
+        public static AudioData LoadWithProgress(byte[] bytes, string extension, Action<float> onProgress)
+        {
+            extension = extension.ToLowerInvariant();
+            if (!extension.StartsWith("."))
+                extension = "." + extension;
+
+            foreach (var reader in Readers)
+            {
+                if (Array.IndexOf(reader.SupportedExtensions, extension) >= 0)
+                {
+                    if (reader is IProgressAudioReader progressReader)
+                        return progressReader.ReadWithProgress(bytes, onProgress);
+                    onProgress?.Invoke(1f);
+                    return reader.Read(bytes);
+                }
+            }
+
+            foreach (var reader in Readers)
+            {
+                if (reader.CanRead(bytes))
+                {
+                    if (reader is IProgressAudioReader progressReader)
+                        return progressReader.ReadWithProgress(bytes, onProgress);
+                    onProgress?.Invoke(1f);
+                    return reader.Read(bytes);
+                }
+            }
+
+            throw new Exception("Unsupported audio format");
+        }
     }
 }

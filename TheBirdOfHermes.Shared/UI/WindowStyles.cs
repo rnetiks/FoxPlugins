@@ -10,7 +10,7 @@ namespace TheBirdOfHermes.UI
         public const float RulerHeight = 22f;
         public const float ToolbarHeight = 24f;
         public const float HandleWidth = 6f;
-        public const float MinWindowWidth = 500f;
+        public const float MinWindowWidth = 600f;
         public const float MinWindowHeight = 200f;
 
         public static readonly Color WindowBg = new Color(0.12f, 0.12f, 0.14f);
@@ -109,6 +109,25 @@ namespace TheBirdOfHermes.UI
             alignment = TextAnchor.UpperLeft,
             normal = { textColor = Color.white },
             padding = new RectOffset(3, 3, 1, 1)
+        });
+
+        private static GUIStyle _menuItemLabel;
+        public static GUIStyle MenuItemLabel => _menuItemLabel ?? (_menuItemLabel = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 11,
+            alignment = TextAnchor.MiddleLeft,
+            normal = { textColor = new Color(0.9f, 0.9f, 0.9f) },
+            padding = new RectOffset(2, 2, 0, 0)
+        });
+
+        private static GUIStyle _hintLabel;
+        public static GUIStyle HintLabel => _hintLabel ?? (_hintLabel = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 10,
+            alignment = TextAnchor.UpperLeft,
+            normal = { textColor = new Color(0.55f, 0.55f, 0.6f) },
+            wordWrap = true,
+            padding = new RectOffset(2, 2, 0, 0)
         });
 
         private static GUIStyle _windowStyle;

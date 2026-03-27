@@ -31,6 +31,13 @@ namespace TheBirdOfHermes.Waveform
             _monoSamples = monoSamples;
             _sampleRate = sampleRate;
             BuildMips();
+
+            if (_waveformTex != null)
+            {
+                Object.Destroy(_waveformTex);
+                _waveformTex = null;
+            }
+            _pixelBuffer = null;
         }
 
         public void Clear()

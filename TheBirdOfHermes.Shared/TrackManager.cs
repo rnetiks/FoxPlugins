@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
+using TheBirdOfHermes.Audio;
 using TheBirdOfHermes.UI;
 using UnityEngine;
 
@@ -31,7 +32,9 @@ namespace TheBirdOfHermes
         {
             var lane = new AudioLane();
             var track = new AudioTrack(_owner);
-            track.LoadFromFile(path);
+
+            track.LoadFromFileAsync(path);
+
             track.TrackColor = WindowStyles.GetTrackColor(_nextColorIndex++);
             track.Lane = lane;
             lane.Tracks.Add(track);
@@ -52,7 +55,9 @@ namespace TheBirdOfHermes
         {
             var lane = new AudioLane();
             var track = new AudioTrack(_owner);
-            track.LoadFromBytes(audioBytes, fileName);
+
+            track.LoadFromBytesAsync(audioBytes, fileName);
+
             track.TrackColor = WindowStyles.GetTrackColor(_nextColorIndex++);
             track.Lane = lane;
             lane.Tracks.Add(track);
@@ -218,6 +223,16 @@ namespace TheBirdOfHermes
         }
 
         /// <summary>
+        /// Polls all tracks for async operation completion. Must be called from Update() on main thread.
+        /// </summary>
+        public void PollAsyncOperations()
+        {
+            foreach (var lane in _lanes)
+            foreach (var track in lane.Tracks)
+                track.PollAsyncCompletion();
+        }
+
+        /// <summary>
         /// Pixel-based snapping. Converts pixel threshold to time threshold using pxPerSecond.
         /// </summary>
         public float TrySnap(AudioTrack dragging, float proposedOffset, float pxPerSecond)
@@ -269,7 +284,6 @@ namespace TheBirdOfHermes
             if (Mathf.Abs(proposedOffset) < bestDist)
                 bestOffset = 0f;
 
-            // return Mathf.Max(0f, bestOffset);
             return bestOffset;
         }
 

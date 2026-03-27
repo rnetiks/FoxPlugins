@@ -50,9 +50,10 @@ namespace TheBirdOfHermes.UI
         {
             if (!IsOpen || TargetLane == null) return;
 
+            var prevDepth = GUI.depth;
             GUI.depth = -1000;
             _windowRect = GUI.Window(WindowId, _windowRect, DrawContent, "Track Properties", WindowStyles.WindowStyle);
-            GUI.depth = 0;
+            GUI.depth = prevDepth;
 
             Event e = Event.current;
             if (e.type == EventType.MouseDown && !_windowRect.Contains(e.mousePosition))

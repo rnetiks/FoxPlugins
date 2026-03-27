@@ -9,24 +9,58 @@
         <Import_RootNamespace>TheBirdOfHermes.Shared</Import_RootNamespace>
     </PropertyGroup>
     <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Audio\FlacReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Audio\MP3Reader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Dynamics\Amplifier.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Dynamics\Compressor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Dynamics\Normalizer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Dynamics\NoiseGate.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Effects\TremoloEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Effects\DistortionEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Effects\ChorusEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Effects\ReverbFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Effects\EchoEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Effects\PhaserEffect.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\EQ\LowPassFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\EQ\HighPassFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\EQ\Equalizer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\FFT.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Biquad.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Pitch_Speed\SpeedChanger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Pitch_Speed\PitchShifter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Utility\ReverseFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\Utility\InvertFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\VocalRemoval\VocalRemover.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\VocalRemoval\SpectralVocalRemover.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Filter\VocalRemoval\FrequencyMaskVocalRemover.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\IAudioFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Reader\WavReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Reader\OggReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Reader\MP3Reader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\Reader\FlacReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ContextGroup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Properties\AssemblyInfo.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ScratchAudio.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SceneController.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Entry.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Audio\AudioData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Audio\AudioLoader.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Audio\AudioManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Audio\IAudioReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Audio\OggReader.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Audio\WavReader.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Audio\AsyncTrackOperation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Waveform\WaveformRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AudioLane.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)AudioTrack.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TrackManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\AudioWindow.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\TrackPropertiesPopup.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\TrackContextMenu.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UI\FilterConfigModal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)UI\WindowStyles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\IUndoCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\UndoManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\PropertyCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\MultiMoveCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\MoveToLaneCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\ApplyFilterCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\AddTrackCommand.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Undo\RemoveTrackCommand.cs" />
   </ItemGroup>
 </Project>

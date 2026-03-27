@@ -11,7 +11,6 @@ namespace TheBirdOfHermes.Audio
         private GameObject _audioGO;
         private AudioClip _clip;
         private AudioSource _source;
-        private ScratchAudio _scratchAudio;
 
         private AudioData _audioData;
         private byte[] _rawBytes;
@@ -55,23 +54,6 @@ namespace TheBirdOfHermes.Audio
         }
 
         /// <summary>
-        /// Loads audio data from a file, initializes the audio system, and sets up
-        /// the internal state using the specified file path. This method reads the file
-        /// bytes and processes the audio data to prepare for playback and further operations.
-        /// </summary>
-        /// <param name="path">The full path to the audio file to be loaded.</param>
-        public void LoadFromFile(string path)
-        {
-            Clear();
-
-            _rawBytes = File.ReadAllBytes(path);
-            string extension = Path.GetExtension(path);
-            _audioData = AudioLoader.Load(_rawBytes, extension);
-
-            InitAudio(Path.GetFileName(path));
-        }
-
-        /// <summary>
         /// Initializes the audio system by preparing necessary components such as the audio clip,
         /// audio GameObject, AudioSource, and ScratchAudio. It sets up the audio clip using provided
         /// audio data and assigns it to an AudioSource for playback. Also, converts multi-channel
@@ -95,10 +77,40 @@ namespace TheBirdOfHermes.Audio
             _source.clip = _clip;
             _source.loop = false;
 
-            _scratchAudio = _audioGO.AddComponent<ScratchAudio>();
-            _scratchAudio.SetSamples(_audioData.Samples, _audioData.Channels, _audioData.SampleRate);
-
             FileName = fileName;
+        }
+
+        /// <summary>
+        /// Initializes the audio system from pre-decoded AudioData.
+        /// Called on the main thread after an async decode completes.
+        /// </summary>
+        public void InitFromDecodedData(AudioData audioData, string fileName)
+        {
+            Clear();
+            _audioData = audioData;
+            InitAudio(fileName);
+        }
+
+        public void ReloadFromData()
+        {
+            if (_audioData == null) return;
+
+            _monoSamples = _audioData.Channels == 1
+                ? _audioData.Samples
+                : MixToMono(_audioData.Samples, _audioData.Channels);
+
+            if (_clip != null)
+                UnityEngine.Object.Destroy(_clip);
+
+            _clip = AudioClip.Create(FileName, _audioData.Samples.Length / _audioData.Channels,
+                _audioData.Channels, _audioData.SampleRate, false);
+            _clip.SetData(_audioData.Samples, 0);
+
+            if (_source != null)
+            {
+                _source.Stop();
+                _source.clip = _clip;
+            }
         }
 
         /// <summary>
@@ -114,7 +126,7 @@ namespace TheBirdOfHermes.Audio
                 _source.Stop();
                 _source = null;
             }
-            _scratchAudio = null;
+
             if (_audioGO != null)
             {
                 UnityEngine.Object.Destroy(_audioGO);
@@ -129,98 +141,6 @@ namespace TheBirdOfHermes.Audio
             _rawBytes = null;
             _monoSamples = null;
             FileName = "";
-        }
-
-        /// <summary>
-        /// Synchronizes the audio playback state with the given playback time, playing or pausing the audio source as needed.
-        /// Adjusts the playback position and speed to maintain synchronization with the requested state, including optional handling of scrubbing effects.
-        /// </summary>
-        /// <param name="playbackTime">The desired playback time in seconds.</param>
-        /// <param name="isPlaying">Boolean indicating whether playback should be active.</param>
-        /// <param name="audioOffset">An offset to apply to the playback time, in seconds.</param>
-        public void SyncPlayback(float playbackTime, bool isPlaying, float audioOffset)
-        {
-            if (_source == null || _audioData == null) return;
-
-            if (!_isScrubbing)
-            {
-                if (isPlaying && !_source.isPlaying)
-                {
-                    _source.time = Mathf.Clamp(playbackTime + audioOffset, 0, _clip.length);
-                    _source.Play();
-                }
-                else if (!isPlaying && _source.isPlaying)
-                {
-                    _source.Pause();
-                }
-                else if (isPlaying)
-                {
-                    float expectedTime = playbackTime + audioOffset;
-                    if (Mathf.Abs(_source.time - expectedTime) > 0.1f)
-                        _source.time = Mathf.Clamp(expectedTime, 0, _clip.length);
-                }
-
-                _source.pitch = Time.timeScale;
-            }
-
-            if (!_isScrubbing && Mathf.Abs(_scrubSpeed) > 0.01f)
-            {
-                _scrubSpeed *= 0.85f;
-                if (Mathf.Abs(_scrubSpeed) < 0.01f)
-                    _scrubSpeed = 0f;
-            }
-
-            if (_scratchAudio != null)
-            {
-                if (_isScrubbing || Mathf.Abs(_scrubSpeed) > 0.01f)
-                {
-                    _scratchAudio.SetSpeed(_scrubSpeed);
-                    _scratchAudio.SetPosition(playbackTime + audioOffset);
-                    _scratchAudio.SetActive(true);
-                }
-                else
-                {
-                    _scratchAudio.SetActive(false);
-                }
-            }
-
-            _isScrubbing = false;
-        }
-
-        /// <summary>
-        /// Scrubs the audio playback to a specific time with an optional offset, possibly enabling scratch sound effects.
-        /// </summary>
-        /// <param name="time">The target time to scrub to, in seconds.</param>
-        /// <param name="audioOffset">An additional offset applied to the target scrub time, in seconds.</param>
-        /// <param name="enableScratchSound">Whether to enable scratch sound effects during scrubbing.</param>
-        public void Scrub(float time, float audioOffset, bool enableScratchSound)
-        {
-            if (_source == null || _audioData == null) return;
-
-            if (enableScratchSound && _scratchAudio != null)
-            {
-                float deltaTime = time - _lastScrubTime;
-                float frameTime = Time.unscaledDeltaTime > 0 ? Time.unscaledDeltaTime : 0.016f;
-                _scrubSpeed = Mathf.Clamp(deltaTime / frameTime, -8f, 8f);
-                _isScrubbing = true;
-            }
-
-            _lastScrubTime = time;
-
-            if (!_isScrubbing)
-                _source.time = Mathf.Clamp(time + audioOffset, 0, _clip.length);
-        }
-
-        /// <summary>
-        /// Seeks the audio playback to a specified time with an offset applied.
-        /// </summary>
-        /// <param name="time">The target time to seek to, in seconds.</param>
-        /// <param name="audioOffset">An offset applied to the target seek time, in seconds.</param>
-        public void SeekTo(float time, float audioOffset)
-        {
-            if (_source == null) return;
-            _lastScrubTime = time;
-            _source.time = Mathf.Clamp(time + audioOffset, 0, _clip.length);
         }
 
         /// <summary>
