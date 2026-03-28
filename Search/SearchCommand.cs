@@ -3,61 +3,60 @@ using UnityEngine.Assertions;
 
 namespace Search
 {
-	public interface ISearchCommand : IEquatable<ISearchCommand>
-	{
-		/// <summary>
-		/// The name of the command.
-		/// </summary>
-		string Name { get; }
-		/// <summary>
-		/// The description of the name, shows up last.
-		/// </summary>
-		string Description { get; }
-		/// <summary>
-		/// The method that will be executed upon a name press.
-		/// </summary>
-		void Execute();
-	}
+    public interface ISearchCommand : IEquatable<ISearchCommand>
+    {
+        string Name { get; }
+        string Description { get; }
+        string Category { get; }
+        void Execute();
+    }
 
-	public struct SearchCommand : ISearchCommand
-	{
-		public Action Callback { get; set; }
-		public string Name { get; set; }
-		public string Description { get; set; }
+    public struct SearchCommand : ISearchCommand
+    {
+        public Action Callback { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Category { get; set; }
 
-		public SearchCommand(string name, string description, Action callback)
-		{
-			Assert.IsNotNull(name, $"{nameof(name)} cannot be null!");
-			Assert.IsNotNull(description, $"{nameof(description)} cannot be null!");
-			Assert.IsNotNull(callback, $"{nameof(callback)} cannot be null!");
+        public SearchCommand(string name, string description, Action callback)
+            : this(name, description, string.Empty, callback)
+        {
+        }
 
-			Name = name;
-			Description = description;
-			Callback = callback;
-		}
+        public SearchCommand(string name, string description, string category, Action callback)
+        {
+            Assert.IsNotNull(name, $"{nameof(name)} cannot be null!");
+            Assert.IsNotNull(description, $"{nameof(description)} cannot be null!");
+            Assert.IsNotNull(callback, $"{nameof(callback)} cannot be null!");
 
-		public void Execute()
-		{
-			Callback?.Invoke();
-		}
+            Name = name;
+            Description = description;
+            Category = category ?? string.Empty;
+            Callback = callback;
+        }
 
-		public bool Equals(ISearchCommand other)
-		{
-			return other is SearchCommand searchCommand && 
-			       other.Name.Equals(Name) &&
-			       other.Description.Equals(Description) &&
-			       Callback == searchCommand.Callback;
-		}
+        public void Execute()
+        {
+            Callback?.Invoke();
+        }
 
-		public override int GetHashCode()
-		{
-			unchecked
-			{
-				var hashCode = (Name != null ? Name.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (Description != null ? Description.GetHashCode() : 0);
-				hashCode = (hashCode * 397) ^ (Callback != null ? Callback.GetHashCode() : 0);
-				return hashCode;
-			}
-		}
-	}
+        public bool Equals(ISearchCommand other)
+        {
+            return other is SearchCommand searchCommand &&
+                   other.Name.Equals(Name) &&
+                   other.Description.Equals(Description) &&
+                   Callback == searchCommand.Callback;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = Name != null ? Name.GetHashCode() : 0;
+                hashCode = hashCode * 397 ^ (Description != null ? Description.GetHashCode() : 0);
+                hashCode = hashCode * 397 ^ (Callback != null ? Callback.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+    }
 }

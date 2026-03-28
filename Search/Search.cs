@@ -1,113 +1,150 @@
+using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Configuration;
 using JetBrains.Annotations;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Search
 {
-	[BepInPlugin(GUID, "Search", "1.0.0")]
-	public partial class Search : BaseUnityPlugin
-	{
-		public const string GUID = "org.fox.search";
-		//Todo Not thread safe
-		private Dictionary<object, ISearchCommand> commands;
-		private ConfigEntry<KeyboardShortcut> toggleUI;
+    [BepInPlugin(GUID, "Search", "2.0.0")]
+    public partial class Search : BaseUnityPlugin
+    {
+        public const string GUID = "org.fox.search";
 
-		private bool showUI;
+        private const string SearchFieldControlName = "SearchPaletteField";
 
-		public static Search Instance;
+        public static Search Instance;
+        internal List<ISearchCommand> _filteredResults = new List<ISearchCommand>();
 
-		private void Awake()
-		{
-			Instance = this;
-			toggleUI = Config.Bind("General", "Toggle UI", new KeyboardShortcut(KeyCode.None));
-			commands = new Dictionary<object, ISearchCommand>();
-			BepinAwake();
-		}
+        private bool _needsFocus;
+        internal string _searchText = string.Empty;
+        internal int _selectedIndex;
 
-		private Rect _windowRect;
-		private Vector2 _scrollPosition;
-		private string _searchText;
-		private static int _tab;
+        internal Dictionary<object, ISearchCommand> commands;
+        internal ShortcutManager shortcuts;
 
-		private void Update()
-		{
-			var height = (float)(Screen.height * 0.3);
-			var width = (float)(Screen.width * 0.3);
+        internal bool showUI;
+        private ConfigEntry<KeyboardShortcut> toggleUI;
 
-			if (Event.current?.mousePosition == null)
-			{
-				return;
-			}
+        private void Awake()
+        {
+            Instance = this;
+            toggleUI = Config.Bind("General", "Toggle UI", new KeyboardShortcut(KeyCode.None));
+            commands = new Dictionary<object, ISearchCommand>();
+            shortcuts = new ShortcutManager(Config);
+            BepinAwake();
+        }
 
-			var mousePos = Event.current.mousePosition;
-			if (showUI && !_windowRect.Contains(mousePos))
-			{
-				GUI.FocusControl(null);
-				GUI.UnfocusWindow();
-				showUI = false;
-				return;
-			}
+        private void Update()
+        {
+            if (toggleUI.Value.IsDown() && !showUI)
+            {
+                _searchText = string.Empty;
+                _selectedIndex = 0;
+                _needsFocus = true;
+                showUI = true;
+            }
 
-			if (toggleUI.Value.IsDown() && !showUI)
-			{
-				_searchText = string.Empty;
-				_windowRect = new Rect(mousePos.x - width / 2, mousePos.y - height / 2, width, height);
-				showUI = true;
-			}
-		}
+            shortcuts.PollShortcuts(commands);
+        }
 
-		private void OnGUI()
-		{
-			if (!showUI)
-			{
-				return;
-			}
+        private void OnGUI()
+        {
+            if (!showUI)
+                return;
 
-			if (_windowRect.Contains(Event.current.mousePosition))
-			{
-				Input.ResetInputAxes();
-			}
+            var evt = Event.current;
 
-			_windowRect = GUILayout.Window(54098, _windowRect, WindowFunc, "Search");
-		}
+            if (shortcuts.IsBinding)
+            {
+                if (shortcuts.TryCaptureBinding(evt))
+                    return;
+                DrawPalette();
+                return;
+            }
 
-		bool IsNullOrWhiteSpace(string value)
-		{
-			return string.IsNullOrEmpty(value) || value.All(char.IsWhiteSpace);
-		}
+            if (evt.type == EventType.KeyDown)
+            {
+                switch (evt.keyCode)
+                {
+                    case KeyCode.Escape:
+                        ClosePalette();
+                        evt.Use();
+                        return;
 
-		[UsedImplicitly]
-		public bool AddCommand(ISearchCommand action)
-		{
-			if (commands == null)
-			{
-				return false;
-			}
+                    case KeyCode.DownArrow:
+                        _selectedIndex++;
+                        if (_selectedIndex >= _filteredResults.Count)
+                            _selectedIndex = 0;
+                        evt.Use();
+                        break;
 
-			var hash = action.GetHashCode();
+                    case KeyCode.UpArrow:
+                        _selectedIndex--;
+                        if (_selectedIndex < 0)
+                            _selectedIndex = _filteredResults.Count > 0 ? _filteredResults.Count - 1 : 0;
+                        evt.Use();
+                        break;
 
-			if (commands.ContainsKey(hash))
-			{
-				return false;
-			}
+                    case KeyCode.Return:
+                    case KeyCode.KeypadEnter:
+                        if (_selectedIndex >= 0 && _selectedIndex < _filteredResults.Count)
+                        {
+                            var cmd = _filteredResults[_selectedIndex];
+                            FuzzySearch.RecordUsage(cmd.Name);
+                            cmd.Execute();
+                            ClosePalette();
+                            evt.Use();
+                            return;
+                        }
+                        break;
+                }
+            }
 
-			commands[hash] = action;
-			return true;
-		}
+            if (evt.type == EventType.MouseDown)
+            {
+                var paletteRect = PaletteRect;
+                if (!paletteRect.Contains(evt.mousePosition))
+                {
+                    ClosePalette();
+                    evt.Use();
+                    return;
+                }
+            }
 
-		[UsedImplicitly]
-		public bool RemoveCommand(ISearchCommand action)
-		{
-			if (commands == null)
-			{
-				return false;
-			}
+            Input.ResetInputAxes();
 
-			var hash = action.GetHashCode();
-			return commands.Remove(hash);
-		}
-	}
+            DrawPalette();
+        }
+
+        private void ClosePalette()
+        {
+            showUI = false;
+            GUI.FocusControl(null);
+            GUI.UnfocusWindow();
+        }
+
+        [UsedImplicitly]
+        public bool AddCommand(ISearchCommand action)
+        {
+            if (commands == null)
+                return false;
+
+            int hash = action.GetHashCode();
+            if (commands.ContainsKey(hash))
+                return false;
+
+            commands[hash] = action;
+            return true;
+        }
+
+        [UsedImplicitly]
+        public bool RemoveCommand(ISearchCommand action)
+        {
+            if (commands == null)
+                return false;
+
+            return commands.Remove(action.GetHashCode());
+        }
+    }
 }

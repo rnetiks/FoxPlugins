@@ -5,28 +5,29 @@ namespace Addin
 {
     public class VirtualScrollView
     {
-        private Vector2 _scrollPosition;
-        private float _itemHeight;
-        private int _visibleStartIndex;
-        private int _visibleEndIndex;
+        private readonly float _itemHeight;
         private readonly Dictionary<int, float> _itemHeights = new Dictionary<int, float>();
-        private bool _useVariableHeight;
-        public Vector2 ScrollPosition => _scrollPosition;
-        public int VisibleStartIndex => _visibleStartIndex;
-        public int VisibleEndIndex => _visibleEndIndex;
+        private readonly bool _useVariableHeight;
+        private Vector2 _scrollPosition;
 
         public VirtualScrollView(float itemHeight = 20f, bool useVariableHeight = false)
         {
             _itemHeight = itemHeight > 0 ? itemHeight : 30f;
             _useVariableHeight = useVariableHeight;
         }
+        public Vector2 ScrollPosition => _scrollPosition;
+        public int VisibleStartIndex { get; private set; }
+        public int VisibleEndIndex { get; private set; }
 
         /// Begins a scroll view, allowing the contents to be scrollable within a specified area.
         /// Calculates the visible range of items based on the scroll position and area dimensions.
         /// The scroll view must be concluded with a corresponding call to EndScrollView.
         /// <param name="position">The area in which the scroll view is drawn.</param>
         /// <param name="totalItems">The total number of items to be potentially displayed within the scroll view.</param>
-        /// <param name="viewRect">The computed rectangle defining the complete scrollable content area, returned as an output parameter.</param>
+        /// <param name="viewRect">
+        ///     The computed rectangle defining the complete scrollable content area, returned as an output
+        ///     parameter.
+        /// </param>
         public void BeginScrollView(Rect position, int totalItems, out Rect viewRect)
         {
             float totalHeight = _useVariableHeight ? CalculateTotalHeight(totalItems) : totalItems * _itemHeight;
@@ -85,8 +86,8 @@ namespace Addin
 
             if (_useVariableHeight)
             {
-                _visibleStartIndex = 0;
-                _visibleEndIndex = totalItems - 1;
+                VisibleStartIndex = 0;
+                VisibleEndIndex = totalItems - 1;
 
                 bool foundStart = false;
                 float currentY = 0;
@@ -95,13 +96,13 @@ namespace Addin
                     float itemHeight = GetItemHeight(i);
                     if (!foundStart && currentY + itemHeight >= viewTop)
                     {
-                        _visibleStartIndex = i;
+                        VisibleStartIndex = i;
                         foundStart = true;
                     }
 
                     if (currentY > viewBottom)
                     {
-                        _visibleEndIndex = i - 1;
+                        VisibleEndIndex = i - 1;
                         break;
                     }
                     currentY += itemHeight;
@@ -109,8 +110,8 @@ namespace Addin
             }
             else
             {
-                _visibleStartIndex = Mathf.Max(0, Mathf.FloorToInt(viewTop / _itemHeight) - 1);
-                _visibleEndIndex = Mathf.Min(totalItems - 1, Mathf.CeilToInt(viewBottom / _itemHeight) + 1);
+                VisibleStartIndex = Mathf.Max(0, Mathf.FloorToInt(viewTop / _itemHeight) - 1);
+                VisibleEndIndex = Mathf.Min(totalItems - 1, Mathf.CeilToInt(viewBottom / _itemHeight) + 1);
             }
         }
     }

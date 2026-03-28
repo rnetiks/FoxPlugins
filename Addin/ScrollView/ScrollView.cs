@@ -4,13 +4,19 @@ namespace Addin
 {
     public class ScrollView
     {
-        private Vector2 _scrollPosition;
-        private int _scrollbarID;
-        private bool _isDraggingThumb;
-        private float _dragStartY;
         private float _dragStartScroll;
+        private float _dragStartY;
+        private bool _isDraggingThumb;
         private float _marginOfPixels = 0f;
-        
+        private int _scrollbarID;
+        private Vector2 _scrollPosition;
+
+        public ScrollView(float scrollbarThickness = 2f)
+        {
+            ScrollbarThickness = scrollbarThickness;
+            _scrollbarID = GUIUtility.GetControlID(FocusType.Passive);
+        }
+
         public float ScrollbarThickness { get; set; } = 2f;
         public Color ScrollbarBackgroundColor { get; set; } = new Color(0.1f, 0.1f, 0.1f, 0.3f);
         public Color ScrollThumbColor { get; set; } = new Color(0.4f, 0.4f, 0.4f, 0.8f);
@@ -19,17 +25,11 @@ namespace Addin
         public float ScrollSensitivity { get; set; } = 20f;
         public bool AutoHide { get; set; } = false;
         public float ThumbMinSize { get; set; } = 20f;
-        
+
         public Vector2 ScrollPosition => _scrollPosition;
 
-        public ScrollView(float scrollbarThickness = 2f)
-        {
-            ScrollbarThickness = scrollbarThickness;
-            _scrollbarID = GUIUtility.GetControlID(FocusType.Passive);
-        }
-
         /// <summary>
-        /// Begins a custom scroll view with a slim scrollbar
+        ///     Begins a custom scroll view with a slim scrollbar
         /// </summary>
         /// <param name="position">The area in which the scroll view is drawn</param>
         /// <param name="contentHeight">The total height of the scrollable content</param>
@@ -58,7 +58,7 @@ namespace Addin
                     Event.current.Use();
                 }
             }
-            
+
             /************************* I wanna have a foxgirl wife TT-TT */
 
             if (needsScrollbar)
@@ -67,7 +67,7 @@ namespace Addin
             }
 
             GUI.BeginGroup(new Rect(position.x, position.y, contentWidth, position.height));
-            
+
             return new Rect(0, -_scrollPosition.y, contentWidth, contentHeight);
         }
 
@@ -79,22 +79,22 @@ namespace Addin
         private void DrawCustomScrollbar(Rect viewRect, float contentHeight)
         {
             float scrollbarX = viewRect.x + viewRect.width - ScrollbarThickness;
-            Rect scrollbarRect = new Rect(scrollbarX, viewRect.y, ScrollbarThickness, viewRect.height);
-            
+            var scrollbarRect = new Rect(scrollbarX, viewRect.y, ScrollbarThickness, viewRect.height);
+
             GUI.color = ScrollbarBackgroundColor;
             GUI.DrawTexture(scrollbarRect, Texture2D.whiteTexture);
-            
+
             float visibleRatio = Mathf.Clamp01(viewRect.height / contentHeight);
             float thumbHeight = Mathf.Max(ThumbMinSize, viewRect.height * visibleRatio);
             float scrollRange = contentHeight - viewRect.height;
             float thumbRange = viewRect.height - thumbHeight;
-            float thumbY = thumbRange > 0 ? ((_scrollPosition.y / scrollRange) * thumbRange) : 0;
-            
-            Rect thumbRect = new Rect(scrollbarX, viewRect.y + thumbY, ScrollbarThickness, thumbHeight);
+            float thumbY = thumbRange > 0 ? _scrollPosition.y / scrollRange * thumbRange : 0;
 
-            Event e = Event.current;
+            var thumbRect = new Rect(scrollbarX, viewRect.y + thumbY, ScrollbarThickness, thumbHeight);
+
+            var e = Event.current;
             bool isHovering = thumbRect.Contains(e.mousePosition);
-            
+
             switch (e.type)
             {
                 case EventType.MouseDown:
@@ -109,22 +109,22 @@ namespace Addin
                     {
                         float clickY = e.mousePosition.y - viewRect.y;
                         float targetThumbY = clickY - thumbHeight * 0.5f;
-                        _scrollPosition.y = (targetThumbY / thumbRange) * scrollRange;
+                        _scrollPosition.y = targetThumbY / thumbRange * scrollRange;
                         _scrollPosition.y = Mathf.Clamp(_scrollPosition.y, 0, scrollRange);
                         e.Use();
                     }
                     break;
-                    
+
                 case EventType.MouseDrag:
                     if (_isDraggingThumb)
                     {
                         float dragDelta = e.mousePosition.y - _dragStartY;
-                        float scrollDelta = (dragDelta / thumbRange) * scrollRange;
+                        float scrollDelta = dragDelta / thumbRange * scrollRange;
                         _scrollPosition.y = Mathf.Clamp(_dragStartScroll + scrollDelta, 0, scrollRange);
                         e.Use();
                     }
                     break;
-                    
+
                 case EventType.MouseUp:
                     if (_isDraggingThumb && e.button == 0)
                     {
@@ -133,17 +133,17 @@ namespace Addin
                     }
                     break;
             }
-            
-            Color thumbColor = _isDraggingThumb ? ScrollThumbActiveColor :
-                              isHovering ? ScrollThumbHoverColor : ScrollThumbColor;
+
+            var thumbColor = _isDraggingThumb ? ScrollThumbActiveColor :
+                isHovering ? ScrollThumbHoverColor : ScrollThumbColor;
             GUI.color = thumbColor;
             GUI.DrawTexture(thumbRect, Texture2D.whiteTexture);
-            
+
             GUI.color = Color.white;
         }
 
         /// <summary>
-        /// Sets the scroll position programmatically
+        ///     Sets the scroll position programmatically
         /// </summary>
         public void SetScrollPosition(float y)
         {
@@ -151,7 +151,7 @@ namespace Addin
         }
 
         /// <summary>
-        /// Scrolls to a specific item position
+        ///     Scrolls to a specific item position
         /// </summary>
         public void ScrollTo(float targetY, float viewHeight, float contentHeight)
         {
@@ -160,13 +160,13 @@ namespace Addin
         }
 
         /// <summary>
-        /// Ensures a specific rect is visible in the scroll view
+        ///     Ensures a specific rect is visible in the scroll view
         /// </summary>
         public void ScrollToRect(Rect rect, float viewHeight)
         {
             float rectTop = rect.y;
             float rectBottom = rect.y + rect.height;
-            
+
             if (rectTop < _scrollPosition.y)
             {
                 _scrollPosition.y = rectTop;
